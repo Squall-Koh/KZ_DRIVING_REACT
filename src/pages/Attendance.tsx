@@ -1,14 +1,18 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import iconKz from '../assets/icon_kz.png';
 import iconMegaphone from '../assets/icon_megaphone.png';
+import { ALL_DUMMY_DAYS, type DayRecord } from '../data/attendanceDummyData';
 
 // ─── 타입 ────────────────────────────────────────────────────
 interface WeekRecord {
-  weekLabel: string;   // "26.03.30 ~26.03.31"
+  weekLabel: string;   // "26.03.02 (일) ~ 26.03.08 (토)"
+  dateFrom: string;    // "2026-03-02"
+  dateTo:   string;    // "2026-03-08"
   regularH: number;
   overtimeH: number;
   nightH: number;
+  days: DayRecord[];   // 해당 주간 일별 레코드
 }
 
 interface FlutterBridgeData {
@@ -16,8 +20,8 @@ interface FlutterBridgeData {
   isVehicleConnected: boolean;
   plateNumber: string;
   vehicleName: string;
-  checkIn: string;   // "07:30"
-  checkOut: string;  // "00:00" (퇴근 전이면 빈값)
+  checkIn: string;
+  checkOut: string;
 }
 
 // ─── 연월 선택지 ──────────────────────────────────────────────
@@ -32,66 +36,92 @@ function generateMonthOptions(): string[] {
 }
 const MONTH_OPTIONS = generateMonthOptions();
 
-// ─── 더미 주간 데이터 (월별) ─────────────────────────────────
-const DUMMY_WEEKS: Record<string, WeekRecord[]> = {
-  '2026.03': [
-    { weekLabel: '26.03.30 ~26.03.31', regularH: 16, overtimeH: 0, nightH: 3 },
-    { weekLabel: '26.03.23 ~26.03.27', regularH: 40.5, overtimeH: 0, nightH: 3 },
-    { weekLabel: '26.03.16 ~26.03.20', regularH: 40, overtimeH: 0, nightH: 1 },
-    { weekLabel: '26.03.09 ~26.03.13', regularH: 40, overtimeH: 2, nightH: 8 },
-    { weekLabel: '26.03.01 ~26.03.07', regularH: 40, overtimeH: 5, nightH: 1 },
-    { weekLabel: '26.02.23 ~26.02.28', regularH: 32, overtimeH: 0, nightH: 0 },
-    { weekLabel: '26.02.16 ~26.02.20', regularH: 40, overtimeH: 1, nightH: 2 },
-    { weekLabel: '26.02.09 ~26.02.13', regularH: 40, overtimeH: 0, nightH: 0 },
-    { weekLabel: '26.02.02 ~26.02.07', regularH: 38, overtimeH: 2, nightH: 0 },
-    { weekLabel: '26.01.26 ~26.01.31', regularH: 40, overtimeH: 3, nightH: 4 },
-  ],
-  '2026.02': [
-    { weekLabel: '26.02.23 ~26.02.28', regularH: 40, overtimeH: 0, nightH: 0 },
-    { weekLabel: '26.02.16 ~26.02.20', regularH: 40, overtimeH: 3, nightH: 2 },
-    { weekLabel: '26.02.09 ~26.02.13', regularH: 40, overtimeH: 0, nightH: 0 },
-    { weekLabel: '26.02.01 ~26.02.07', regularH: 38, overtimeH: 1, nightH: 0 },
-  ],
-  '2026.01': [
-    { weekLabel: '26.01.26 ~26.01.31', regularH: 40, overtimeH: 2, nightH: 0 },
-    { weekLabel: '26.01.19 ~26.01.23', regularH: 40, overtimeH: 0, nightH: 1 },
-    { weekLabel: '26.01.12 ~26.01.16', regularH: 40, overtimeH: 4, nightH: 0 },
-    { weekLabel: '26.01.05 ~26.01.09', regularH: 36, overtimeH: 0, nightH: 0 },
-  ],
-};
+// ─── 달력 주간 계산 ───────────────────────────────────────────
+// 일요일(0) 기준 주간 리스트를 선택 월 기준으로 생성
+// 첫 주: 해당 월 포함된 일요일부터 시작
+// 마지막 주: 해당 월 마지막 날 포함된 주까지
+function generateWeeks(yearMonth: string): { weekLabel: string; dateFrom: string; dateTo: string }[] {
+  const [y, m] = yearMonth.split('.').map(Number);
+  const fmt = (d: Date) =>
+    `${String(d.getFullYear()).slice(2)}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+  const iso = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const DAY = ['일', '월', '화', '수', '목', '금', '토'];
+
+  // 해당 월 1일이 속한 주의 일요일 구하기
+  const firstDay = new Date(y, m - 1, 1);
+  const startSun = new Date(firstDay);
+  startSun.setDate(firstDay.getDate() - firstDay.getDay()); // 이전 일요일
+
+  // 해당 월 마지막 날
+  const lastDay = new Date(y, m, 0);
+
+  const weeks: { weekLabel: string; dateFrom: string; dateTo: string }[] = [];
+  const cur = new Date(startSun);
+
+  while (cur <= lastDay) {
+    const from = new Date(cur);
+    const to   = new Date(cur);
+    to.setDate(to.getDate() + 6);
+
+    const label = `${fmt(from)} (${DAY[from.getDay()]}) ~ ${fmt(to)} (${DAY[to.getDay()]})`;
+    weeks.push({ weekLabel: label, dateFrom: iso(from), dateTo: iso(to) });
+
+    cur.setDate(cur.getDate() + 7);
+  }
+
+  return weeks;
+}
+
+// ─── 주간 더미 데이터 빌더 (ALL_DUMMY_DAYS 합산) ──────────────
+function buildWeeks(yearMonth: string): WeekRecord[] {
+  return generateWeeks(yearMonth).map(w => {
+    const days = ALL_DUMMY_DAYS.filter(d => d.date >= w.dateFrom && d.date <= w.dateTo);
+    const regularH  = days.reduce((a, d) => a + d.regularH,  0);
+    const overtimeH = days.reduce((a, d) => a + d.overtimeH, 0);
+    const nightH    = days.reduce((a, d) => a + d.nightH,    0);
+    return { ...w, regularH, overtimeH, nightH, days };
+  });
+}
+
 
 // ─── 반원 게이지 ──────────────────────────────────────────────
+// stroke-dasharray 방식을 사용하여 이음새와 각도 문제를 완벽히 해결
 function SemiCircleGauge({ regular, overtime, night }: { regular: number; overtime: number; night: number }) {
   const total = regular + overtime + night || 1;
-  const rPct = regular / total;
-  const oPct = overtime / total;
 
-  const VW = 240, VH = 130;
+  // 비율
+  const rPct = regular  / total;
+  const oPct = overtime / total;
+  const nPct = night    / total;
+
+  const VW = 250;
+  const VH = 135;
   const cx = VW / 2;
   const cy = 115;
-  const R = 80;
-  const SW = 19;
+  const R  = 96;
+  const SW = 22;
 
-  function pt(pct: number) {
-    const a = Math.PI * pct - Math.PI; // -π(왼쪽) → 0(오른쪽)
-    return { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
-  }
+  // 반원의 총 길이 (π * r)
+  const arcLength = Math.PI * R;
 
-  function arcD(s: number, e: number) {
-    const p1 = pt(s), p2 = pt(e);
-    const large = e - s > 0.5 ? 1 : 0;
-    return `M ${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A ${R} ${R} 0 ${large} 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
-  }
+  // dashoffset 계산 (채워진 만큼 왼쪽으로 밀어냄)
+  // 가장 첫 번째(정규)는 offset=0, 그 다음(초과)은 offset = -rLen, 이런 식인데
+  // 간단하게 겹쳐 그리는 방식: 전부 다 그리고, 윗단부터 덮어씌움.
+  
+  // 1. 전체 (정규+초과+야간) : 배경(가장 아래) -> 야간 색상으로 칠함 (어차피 맨 오른쪽 끝만 남음)
+  const layer1Len = arcLength; // 100%
+  // 2. 정규+초과 : 그 위에 덧씌움 -> 초과 색상으로 칠함 (가운데+왼쪽)
+  const layer2Len = arcLength * (rPct + oPct);
+  // 3. 정규 : 가장 마지막(최상단)에 덧씌움 -> 정규 색상 (왼쪽만 남음)
+  const layer3Len = arcLength * rPct;
+
+  // 아크 경로 (왼쪽 끝 -> 오른쪽 끝, 시계방향 위쪽 반원 180도 고정)
+  const baseArcD = `M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}`;
 
   const totalH = regular + overtime + night;
-  const mins = Math.round((totalH % 1) * 60);
-  const label = mins > 0 ? `${Math.floor(totalH)}시간 ${mins}분` : `${totalH}시간`;
-
-  // 세그먼트 경계
-  const p0 = 0;
-  const p1 = rPct;
-  const p2 = rPct + oPct;
-  const p3 = 1;
+  const mins   = Math.round((totalH % 1) * 60);
+  const label  = mins > 0 ? `${Math.floor(totalH)}시간 ${mins}분` : `${totalH}시간`;
 
   return (
     <div style={gaugeStyles.wrapper}>
@@ -99,41 +129,45 @@ function SemiCircleGauge({ regular, overtime, night }: { regular: number; overti
         viewBox={`0 0 ${VW} ${VH}`}
         width="100%"
         style={{ display: 'block', maxWidth: 260, margin: '0 auto' }}
-        preserveAspectRatio="xMidYMid meet"
       >
         {/*
-          오른쪽 → 왼쪽 순서로 그림.
-          마지막에 그린 (왼쪽) arc가 맨 위에 오므로
-          각 세그먼트의 경계 round cap이 왼쪽 arc에 덮임.
-          결과: 양 끝(left=blue, right=last)만 round cap 보임.
+          stroke-dasharray="차오르는길이 안보이는길이" 형태로 구현.
+          가장 아래에 전체(야간색), 그 위에 부분(초과색), 가장 위에 부분(정규색)을 순서대로 쌓음.
+          단, 선 끝이 딱 떨어지게 butt 캡 사용.
         */}
 
-        {/* 배경 (wrap-color) — 빈 구간에만 보임 */}
-        <path
-          d={arcD(p0, p3)}
-          fill="none"
-          stroke="#d8deff"
-          strokeWidth={SW}
-          strokeLinecap="round"
-        />
+        {/* 1. 밑바탕 트랙 (투명/배경색, 180도 전체) */}
+        <path d={baseArcD} fill="none" stroke="#f0f4ff" strokeWidth={SW - 0.5} strokeLinecap="butt" />
 
-        {/* 야간 (오른쪽 끝) — 먼저 그림 */}
-        {p3 - p2 > 0.001 && (
-          <path d={arcD(p2, p3)} fill="none" stroke="#f59e0b" strokeWidth={SW} strokeLinecap="round" />
+        {/* 2. 가장 아래 레이어 (야간 - 주황색) : 100% 길이 */}
+        {nPct > 0 && (
+          <path
+            d={baseArcD} fill="none" stroke="#f59e0b" strokeWidth={SW} strokeLinecap="butt"
+            strokeDasharray={`${layer1Len} ${arcLength}`}
+            strokeDashoffset="0"
+          />
         )}
 
-        {/* 초과 (중간) */}
-        {p2 - p1 > 0.001 && (
-          <path d={arcD(p1, p2)} fill="none" stroke="#22c55e" strokeWidth={SW} strokeLinecap="round" />
+        {/* 3. 중간 레이어 (초과 - 초록색) : 정규+초과 길이만큼 */}
+        {oPct > 0 && (
+          <path
+            d={baseArcD} fill="none" stroke="#22c55e" strokeWidth={SW} strokeLinecap="butt"
+            strokeDasharray={`${layer2Len} ${arcLength}`}
+            strokeDashoffset="0"
+          />
         )}
 
-        {/* 정규 (왼쪽 끝, 마지막 = 최상단) */}
-        {p1 - p0 > 0.001 && (
-          <path d={arcD(p0, p1)} fill="none" stroke="#4f7cff" strokeWidth={SW} strokeLinecap="round" />
+        {/* 4. 최상단 레이어 (정규 - 파란색) : 정규 길이만큼 */}
+        {rPct > 0 && (
+          <path
+            d={baseArcD} fill="none" stroke="#4f7cff" strokeWidth={SW} strokeLinecap="butt"
+            strokeDasharray={`${layer3Len} ${arcLength}`}
+            strokeDashoffset="0"
+          />
         )}
 
-        {/* 시간 텍스트 */}
-        <text x={cx} y={cy - 10} textAnchor="middle" fontSize="18" fontWeight="700" fill="#111827">
+        {/* 총 시간 텍스트 */}
+        <text x={cx} y={cy - 10} textAnchor="middle" fontSize="22" fontWeight="700" fill="#111827">
           {label}
         </text>
       </svg>
@@ -150,16 +184,17 @@ function SemiCircleGauge({ regular, overtime, night }: { regular: number; overti
 
 const gaugeStyles: Record<string, React.CSSProperties> = {
   wrapper: {
-    backgroundColor: '#eef2ff',
+    backgroundColor: '#f0f4ff',
     borderRadius: 16,
     margin: '12px 16px',
-    padding: '20px 12px 16px',
-    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
+    padding: '16px 12px 14px',
+    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
   },
   legend: { display: 'flex', gap: 20, fontSize: 13, color: '#374151' },
   legendItem: { display: 'flex', alignItems: 'center', gap: 6 },
   dot: { display: 'inline-block', width: 12, height: 12, borderRadius: 3, flexShrink: 0 },
 };
+
 
 // ─── 메인 컴포넌트 ────────────────────────────────────────────
 export function Attendance() {
@@ -179,17 +214,42 @@ export function Attendance() {
       setBridge((p) => ({ ...p, ...data }));
   }, []);
 
-  const DEFAULT_MONTH = '2026.03';
-  const [selectedMonth, setSelectedMonth] = useState<string>(DEFAULT_MONTH);
+  const today = new Date();
+  const DEFAULT_MONTH = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}`;
+  
+  // sessionStorage에서 초기값 가져오기
+  const initMonth = sessionStorage.getItem('attendance_month') || DEFAULT_MONTH;
+
+  const [selectedMonth, setSelectedMonth] = useState<string>(initMonth);
   const [showPopup, setShowPopup] = useState(false);
-  const [weeks, setWeeks] = useState<WeekRecord[]>(DUMMY_WEEKS[DEFAULT_MONTH] ?? []);
+  const [weeks, setWeeks] = useState<WeekRecord[]>(buildWeeks(initMonth));
   const [loaded, setLoaded] = useState(true);
 
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  // 초기 렌더링 시 스크롤 복구
+  useEffect(() => {
+    const savedScroll = sessionStorage.getItem('attendance_scroll');
+    if (savedScroll && scrollRef.current) {
+      scrollRef.current.scrollTop = parseInt(savedScroll, 10);
+    }
+  }, []);
+
+  // 월 선택 변경 시 갱신 및 sessionStorage 저장
   const handleSelectMonth = (m: string) => {
     setSelectedMonth(m);
+    sessionStorage.setItem('attendance_month', m);
     setShowPopup(false);
-    setWeeks(DUMMY_WEEKS[m] ?? []);
+    setWeeks(buildWeeks(m));
     setLoaded(true);
+  };
+
+  // 라우팅 시 스크롤 저장 핸들러
+  const handleNavigate = (path: string, state?: any) => {
+    if (scrollRef.current) {
+      sessionStorage.setItem('attendance_scroll', scrollRef.current.scrollTop.toString());
+    }
+    navigate(path, { state });
   };
 
   const stats = useMemo(() => {
@@ -242,7 +302,7 @@ export function Attendance() {
             <span style={styles.todayTitle}>일일근태현황</span>
             <span
               style={styles.todayMore}
-              onClick={() => navigate('/attendance/detail', { state: { month: selectedMonth ?? '2026.03' } })}
+              onClick={() => handleNavigate('/attendance/detail', { month: selectedMonth ?? '2026.03' })}
             >더보기</span>
           </div>
           <div style={styles.timeAxis}>
@@ -262,7 +322,7 @@ export function Attendance() {
       </div>
 
       {/* ── 스크롤 영역 ──────────────────────────────────────── */}
-      <div style={styles.scrollArea}>
+      <div style={styles.scrollArea} ref={scrollRef}>
 
         {/* ── 그룹 박스 1: 근무내역 ───────────────────────── */}
         <div style={styles.sectionGroup}>
@@ -282,14 +342,24 @@ export function Attendance() {
             <>
               {/* 반원 게이지 */}
               <SemiCircleGauge regular={stats.regular} overtime={stats.overtime} night={stats.night} />
-              {/* 주간 목록 — 항목 수에 따라 자유롭게 늘어남 */}
+              {/* 주간 목록 */}
               <div style={styles.listWrapper}>
                 {weeks.map((w, i) => (
-                  <div key={i} style={{
-                    ...styles.weekRow,
-                    borderBottom: i < weeks.length - 1 ? '1px solid #f0f0f0' : 'none',
-                  }}>
-                    <span style={styles.weekLabel}>{w.weekLabel}</span>
+                  <div
+                    key={i}
+                    style={{
+                      ...styles.weekRow,
+                      borderBottom: i < weeks.length - 1 ? '1px solid #f0f0f0' : 'none',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => handleNavigate('/attendance/detail', {
+                      dateFrom: w.dateFrom, dateTo: w.dateTo, weekLabel: w.weekLabel, days: w.days
+                    })}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <span style={styles.weekLabel}>{w.weekLabel.split(' ~ ')[0]}</span>
+                      <span style={{ ...styles.weekLabel, color: '#999', fontSize: 11 }}>~ {w.weekLabel.split(' ~ ')[1]}</span>
+                    </div>
                     <div style={styles.weekRight}>
                       <span style={styles.weekTotal}>총 근무시간 : {w.regularH + w.overtimeH + w.nightH}시간</span>
                       <div style={styles.weekBadges}>
@@ -308,7 +378,7 @@ export function Attendance() {
         {/* ── 그룹 박스 2: 근태 결재요청 ──────────────────── */}
         <div style={styles.sectionGroup}>
           <div style={styles.sectionHeader}>근태 결재요청</div>
-          <button style={styles.adjustRow} onClick={() => navigate('/attendance/adjustment')}>
+          <button style={styles.adjustRow} onClick={() => handleNavigate('/attendance/adjustment')}>
             <span style={styles.adjustLabel}>근태조정 신청서 등록</span>
             <span style={styles.adjustArrow}>›</span>
           </button>

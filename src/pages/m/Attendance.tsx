@@ -279,7 +279,7 @@ export function Attendance() {
   return (
     <div style={styles.container}>
 
-      {/* ── 고정 헤더 (일일근태현황까지만) ──────────────────── */}
+      {/* ── 고정 헤더 (사용자/차량 바만) ─────────────────────── */}
       <div style={styles.fixedHeader}>
         {/* 사용자 바 */}
         <div style={styles.userBar}>
@@ -295,8 +295,12 @@ export function Attendance() {
           <span style={styles.vehicleBadge}>{bridge.isVehicleConnected ? '차량연결됨' : '차량미연결'}</span>
           <span style={styles.vehicleInfo}>[{bridge.plateNumber}] {bridge.vehicleName}</span>
         </div>
+      </div>
 
-        {/* 일일 근태 현황 카드 */}
+      {/* ── 스크롤 영역 ──────────────────────────────────────── */}
+      <div style={styles.scrollArea} ref={scrollRef}>
+
+        {/* 일일 근태 현황 카드 (스크롤 영역 최상단) */}
         <div style={styles.todayCard}>
           <div style={styles.todayHeader}>
             <span style={styles.todayTitle}>일일근태현황</span>
@@ -315,10 +319,6 @@ export function Attendance() {
           </div>
           <button style={styles.checkOutBtn}>퇴근등록</button>
         </div>
-      </div>
-
-      {/* ── 스크롤 영역 ──────────────────────────────────────── */}
-      <div style={styles.scrollArea} ref={scrollRef}>
 
         {/* ── 그룹 박스 1: 근무내역 ───────────────────────── */}
         <div style={styles.sectionGroup}>
@@ -437,7 +437,7 @@ const styles: Record<string, React.CSSProperties> = {
 
   /* 일일 근태 */
   todayCard: {
-    margin: '0 16px 8px', padding: '14px 16px',
+    margin: '8px 16px 8px', padding: '14px 16px',
     backgroundColor: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
   },
   todayHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },

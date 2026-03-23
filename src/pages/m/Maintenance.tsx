@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import iconKz from '../assets/icon_kz.png';
-import iconMegaphone from '../assets/icon_megaphone.png';
+import iconKz from '../../assets/icon_kz.png';
+import iconMegaphone from '../../assets/icon_megaphone.png';
 
 // ── 정비 항목 타입 ──────────────────────────────────────────
 interface MaintenanceItem {

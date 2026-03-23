@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import iconKz from '../assets/icon_kz.png';
-import iconMegaphone from '../assets/icon_megaphone.png';
-import { ALL_DUMMY_DAYS, type DayRecord } from '../data/attendanceDummyData';
+import iconKz from '../../assets/icon_kz.png';
+import iconMegaphone from '../../assets/icon_megaphone.png';
+import { ALL_DUMMY_DAYS, type DayRecord } from '../../data/attendanceDummyData';
 
 // ─── 타입 ────────────────────────────────────────────────────
 interface WeekRecord {

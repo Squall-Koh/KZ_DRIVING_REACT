@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import iconCalendar from '../assets/icon_calendar.png';
+import iconCalendar from '../../assets/icon_calendar.png';
 
 // ── 타입 ────────────────────────────────────────────────────
 interface MaintenanceItem {

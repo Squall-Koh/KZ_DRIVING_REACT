@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import iconCalendar from '../assets/icon_calendar.png';
-import iconClock from '../assets/icon_clock.png';
-import { ClockTimePicker } from '../components/ClockTimePicker';
+import iconCalendar from '../../assets/icon_calendar.png';
+import iconClock from '../../assets/icon_clock.png';
+import { ClockTimePicker } from '../../components/ClockTimePicker';
 import { useRef } from 'react';
 
 // ─── 더미 결재 데이터 ──────────────────────────────────────

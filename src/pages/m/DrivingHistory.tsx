@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import drivingHistoryImg from '../assets/driving_history.png';
-import iconKz from '../assets/icon_kz.png';
-import iconMegaphone from '../assets/icon_megaphone.png';
+import drivingHistoryImg from '../../assets/driving_history.png';
+import iconKz from '../../assets/icon_kz.png';
+import iconMegaphone from '../../assets/icon_megaphone.png';
 
 // ─── 타입 정의 ───────────────────────────────────────────────
 interface TripRecord {
@@ -78,7 +78,7 @@ const DUMMY_TRIPS: Record<string, DayGroup[]> = {
 // ─── 연월 선택지 생성 ─────────────────────────────────────
 function generateMonthOptions(): string[] {
   const options: string[] = [];
-  const now = new Date(2026, 2); // 2026.03
+  const now = new Date();
   for (let i = 0; i < 12; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i);
     const y = d.getFullYear();
@@ -89,6 +89,7 @@ function generateMonthOptions(): string[] {
 }
 
 const MONTH_OPTIONS = generateMonthOptions();
+const TODAY_MONTH = MONTH_OPTIONS[0]; // 항상 현재 월이 첫 번째
 
 // ─── 컴포넌트 ─────────────────────────────────────────────────
 export function DrivingHistory() {
@@ -107,10 +108,10 @@ export function DrivingHistory() {
     };
   }, []);
 
-  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(TODAY_MONTH);
   const [showPopup, setShowPopup] = useState(false);
-  const [trips, setTrips] = useState<DayGroup[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const [trips, setTrips] = useState<DayGroup[]>(DUMMY_TRIPS[TODAY_MONTH] ?? []);
+  const [loaded, setLoaded] = useState(true);
 
   // ── 통계 동적 계산 ────────────────────────────────────
   const stats = useMemo(() => {
@@ -236,9 +237,14 @@ export function DrivingHistory() {
                     <div key={trip.id} style={styles.timelineRow}>
                       <div style={styles.timelineDotCol}>
                         <div style={styles.timelineDot} />
-                        {idx < day.trips.length - 1 && <div style={styles.timelineLine} />}
+                        {idx < day.trips.length - 1 && (
+                          <div style={styles.timelineLine} />
+                        )}
                       </div>
-                      <div style={styles.tripCard}>
+                      <div style={{
+                        ...styles.tripCard,
+                        marginBottom: idx < day.trips.length - 1 ? '8px' : '0',
+                      }}>
                         <div style={styles.tripTop}>
                           <span style={styles.tripTime}>
                             {trip.departureAt.slice(11, 16)} ~ {trip.arrivalAt.slice(11, 16)}
@@ -535,15 +541,15 @@ const styles: Record<string, React.CSSProperties> = {
   timelineRow: {
     display: 'flex',
     gap: '10px',
-    position: 'relative' as const,
   },
   timelineDotCol: {
+    position: 'relative' as const,   // 선의 absolute 기준점
     display: 'flex',
-    flexDirection: 'column',
     alignItems: 'center',
-    paddingTop: '16px',
+    justifyContent: 'center',        // dot을 카드 세로 중앙에 정렬
     width: '12px',
     flexShrink: 0,
+    alignSelf: 'stretch' as const,   // 카드 높이만큼 확장
   },
   timelineDot: {
     width: '10px',
@@ -551,12 +557,17 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '50%',
     backgroundColor: '#cbd5e1',
     flexShrink: 0,
+    position: 'relative' as const,
+    zIndex: 1,
   },
   timelineLine: {
+    position: 'absolute' as const,
+    top: 'calc(50% + 5px)',      // 현재 dot 중앙(50%) + 반지름(5px) = dot 바로 아래
+    bottom: 'calc(-50% - 8px)', // 다음 카드 중앙(50%) + 카드간격(8px) = 다음 dot 중앙까지
+    left: '5px',                 // (12 - 2) / 2 = 중앙 정렬
     width: '2px',
-    flex: 1,
     backgroundColor: '#e2e8f0',
-    minHeight: '16px',
+    zIndex: 0,
   },
 
   /* 운행 카드 */
@@ -565,7 +576,6 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: '#ffffff',
     borderRadius: '10px',
     padding: '12px 14px',
-    marginBottom: '8px',
     boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
   },
   tripTop: {

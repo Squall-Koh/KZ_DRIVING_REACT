@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import React from 'react';
-import { type DayRecord } from '../data/attendanceDummyData';
+import { type DayRecord } from '../../data/attendanceDummyData';
 
 // ─── BadgeItem ────────────────────────────────────────────
 function BadgeItem({ color, value }: { color: string; value: number }) {

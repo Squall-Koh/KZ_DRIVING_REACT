@@ -300,10 +300,6 @@ export function Attendance() {
         <div style={styles.todayCard}>
           <div style={styles.todayHeader}>
             <span style={styles.todayTitle}>일일근태현황</span>
-            <span
-              style={styles.todayMore}
-              onClick={() => handleNavigate('/attendance/detail', { month: selectedMonth ?? '2026.03' })}
-            >더보기</span>
           </div>
           <div style={styles.timeAxis}>
             <span style={styles.timeAxisLabel}>0h</span>
@@ -446,7 +442,6 @@ const styles: Record<string, React.CSSProperties> = {
   },
   todayHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   todayTitle: { fontSize: 14, fontWeight: 700, color: '#111' },
-  todayMore: { fontSize: 12, color: '#2563eb' },
   timeAxis: { display: 'flex', justifyContent: 'space-between', marginBottom: 4 },
   timeAxisLabel: { fontSize: 10, color: '#aaa' },
   progressBg: { height: 8, backgroundColor: '#e5e7eb', borderRadius: 4, marginBottom: 6 },
@@ -464,7 +459,7 @@ const styles: Record<string, React.CSSProperties> = {
   monthSelector: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '14px 16px', width: '100%',
-    backgroundColor: '#fff', border: 'none',
+    backgroundColor: 'transparent', border: 'none',
     cursor: 'pointer', textAlign: 'left' as const,
     borderBottom: 'none',
   },
@@ -484,6 +479,7 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: '#fff',
     borderRadius: 12,
     margin: '8px 16px',
+    overflow: 'hidden',
   },
 
   /* 빈 상태 */
@@ -526,7 +522,7 @@ const styles: Record<string, React.CSSProperties> = {
   adjustRow: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     padding: '14px 16px', width: '100%',
-    backgroundColor: '#fff', border: 'none',
+    backgroundColor: 'transparent', border: 'none',
     cursor: 'pointer',
   },
   adjustLabel: { fontSize: 14, color: '#222' },

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 // ─── Mobile Pages ─────────────────────────────────────────────
 import { Notifications }        from './pages/m/Notifications';
@@ -9,6 +9,8 @@ import { AttendanceAdjustment } from './pages/m/AttendanceAdjustment';
 import { Maintenance }          from './pages/m/Maintenance';
 import { MaintenanceDetail }    from './pages/m/MaintenanceDetail';
 import { Receipts }             from './pages/m/Receipts';
+import { ReceiptsList }         from './pages/m/ReceiptsList';
+import { ReceiptsHistory }      from './pages/m/ReceiptsHistory';
 
 // ─── Web Pages ────────────────────────────────────────────────
 import { MainPage } from './pages/web/MainPage';
@@ -29,6 +31,8 @@ function App() {
         <Route path="/maintenance"            element={<Maintenance />} />
         <Route path="/maintenance/detail"     element={<MaintenanceDetail />} />
         <Route path="/receipts"               element={<Receipts />} />
+        <Route path="/receipts/list"          element={<ReceiptsList />} />
+        <Route path="/receipts/history"       element={<ReceiptsHistory />} />
       </Routes>
     </BrowserRouter>
   );

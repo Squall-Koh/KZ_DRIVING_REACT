@@ -108,24 +108,29 @@ export interface UseDrivingHistoryReturn {
 
 // ─── Custom Hook ─────────────────────────────────────────────
 export function useDrivingHistory(): UseDrivingHistoryReturn {
+  // 초깃값 없음 - Flutter에서 window.updateDriverInfo()로 주입받음
   const [bridge, setBridge] = useState<FlutterBridgeData>({
-    userName: '강무호',
-    isVehicleConnected: true,
-    plateNumber: '123 허 4567',
-    vehicleName: '카니발 하이리무진',
+    userName: '',
+    isVehicleConnected: false,
+    plateNumber: '',
+    vehicleName: '',
   });
 
-  // Flutter → WebView bridge
+  // Flutter → React bridge: window.updateDriverInfo({ userName, plateNumber, ... }) 호출
   useEffect(() => {
     (window as any).updateDriverInfo = (data: Partial<FlutterBridgeData>) => {
       setBridge((prev) => ({ ...prev, ...data }));
     };
+    // React → Flutter: 준비 완료 알림 (Flutter가 페이지 로드 후 데이터를 보낼 수 있도록)
+    if ((window as any).FlutterBridge) {
+      (window as any).FlutterBridge.postMessage('pageReady');
+    }
   }, []);
 
   const [selectedMonth, setSelectedMonth] = useState<string | null>(TODAY_MONTH);
   const [showPopup, setShowPopup] = useState(false);
-  const [trips, setTrips] = useState<DayGroup[]>(DUMMY_TRIPS[TODAY_MONTH] ?? []);
-  const [loaded, setLoaded] = useState(true);
+  const [trips, setTrips] = useState<DayGroup[]>([]);  // 빈 배열 - API 연동 전까지는 월 선택 시 로드
+  const [loaded, setLoaded] = useState(false);         // false = 아직 데이터 없음
 
   // ── 통계 동적 계산 ────────────────────────────────────────
   const stats = useMemo<TripStats>(() => {
@@ -149,12 +154,18 @@ export function useDrivingHistory(): UseDrivingHistoryReturn {
   const onSelectMonth = (month: string) => {
     setSelectedMonth(month);
     setShowPopup(false);
+    setLoaded(false);
     // ── 실제 API 호출 (추후 활성화) ──────────────────────────
-    // const res = await fetch('/api/driving-history', { ... });
+    // const res = await fetch('/api/driving-history', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({ month }),
+    // });
     // const data: DayGroup[] = await res.json();
     // setTrips(data);
+    // setLoaded(true);
 
-    // ── 더미 데이터 ────────────────────────────────────────
+    // ── 개발용 임시: DUMMY_TRIPS 참조 (API 연동 후 제거) ─────
     setTrips(DUMMY_TRIPS[month] ?? []);
     setLoaded(true);
   };

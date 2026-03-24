@@ -102,19 +102,28 @@ export function DrivingHistoryView({
         <div style={styles.userBar}>
           <div style={styles.userLeft}>
             <img src={iconKz} alt="kz" style={styles.logoIcon} />
-            <span style={styles.userName}>{bridge.userName}님</span>
+            <span style={styles.userName}>
+              {bridge.userName ? `${bridge.userName}` : '연결 대기중...'}
+            </span>
           </div>
         </div>
 
         {/* 차량 연결 바 */}
         <div style={styles.vehicleBar}>
           <img src={iconMegaphone} alt="차량" style={styles.megaphoneIcon} />
-          <span style={styles.vehicleBadge}>
+          <span style={{
+            ...styles.vehicleBadge,
+            color: bridge.isVehicleConnected ? '#2563eb' : '#aaaaaa',
+          }}>
             {bridge.isVehicleConnected ? '차량연결됨' : '차량미연결'}
           </span>
-          <span style={styles.vehicleInfo}>
-            [{bridge.plateNumber}] {bridge.vehicleName}
-          </span>
+          {bridge.plateNumber ? (
+            <span style={styles.vehicleInfo}>
+              [{bridge.plateNumber}] {bridge.vehicleName}
+            </span>
+          ) : (
+            <span style={{ ...styles.vehicleInfo, color: '#bbbbbb' }}>차량 정보를 기다리는 중...</span>
+          )}
         </div>
 
         {/* 통계 박스 */}

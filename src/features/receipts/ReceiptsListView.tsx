@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SelectDropdown } from '../../components/SelectDropdown';
 import type { ReceiptItem } from './useReceipts';
 import type { UseReceiptsListReturn } from './useReceiptsList';
@@ -122,6 +122,16 @@ function ReceiptPopup({
 }) {
   const [purpose, setPurpose] = useState('');
   const [slipType, setSlipType] = useState('purchase');
+  const [attachedFiles, setAttachedFiles] = useState<{name: string; base64: string}[]>([]);
+
+  useEffect(() => {
+    (window as any).onImageAttached = (name: string, base64: string) => {
+      setAttachedFiles(prev => [...prev, { name, base64 }]);
+    };
+    return () => {
+      delete (window as any).onImageAttached;
+    };
+  }, []);
 
   return (
     <div style={s.popupOverlay}>
@@ -189,7 +199,32 @@ function ReceiptPopup({
           
           <div style={s.formGroup}>
             <label style={s.formLabel}>첨부파일</label>
-            <button style={s.attachBtn}>첨부파일 추가 <span style={s.attachPlus}>+</span></button>
+            <button 
+              style={s.attachBtn}
+              onClick={() => {
+                if ((window as any).FlutterBridge) {
+                  (window as any).FlutterBridge.postMessage(JSON.stringify({ action: 'requestImageAttachment' }));
+                } else {
+                  alert('모바일 앱 환경에서만 사진 첨부가 가능합니다.');
+                }
+              }}
+            >
+              첨부파일 추가 <span style={s.attachPlus}>+</span>
+            </button>
+            {attachedFiles.length > 0 && (
+              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {attachedFiles.map((f, idx) => (
+                  <div key={idx} style={s.attachedFileItem}>
+                    <span style={s.attachedFileIcon}>📎</span>
+                    <span style={s.attachedFileName}>{f.name}</span>
+                    <button 
+                      style={s.attachedFileRemove}
+                      onClick={() => setAttachedFiles(prev => prev.filter((_, i) => i !== idx))}
+                    >✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           
           <div style={s.instructionText}>
@@ -335,6 +370,16 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6
   },
   attachPlus: { color: '#4f7cff', fontWeight: 'bold' },
+  
+  attachedFileItem: {
+    display: 'flex', alignItems: 'center', padding: '8px 12px',
+    backgroundColor: '#eff6ff', borderRadius: 6, gap: 8
+  },
+  attachedFileIcon: { fontSize: 14 },
+  attachedFileName: { flex: 1, fontSize: 13, color: '#4f7cff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  attachedFileRemove: { 
+    background: 'none', border: 'none', color: '#94a3b8', fontSize: 14, cursor: 'pointer', padding: '0 4px'
+  },
   
   instructionText: {
     fontSize: 12, color: '#8e8e93', textAlign: 'center' as const, marginTop: 4, marginBottom: 8

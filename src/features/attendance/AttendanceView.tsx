@@ -87,10 +87,14 @@ export function AttendanceView({
   workProgress,
   monthOptions,
   scrollRef,
+  btnLabel,
+  btnDisabled,
+  btnBg,
   onSelectMonth,
   onTogglePopup,
   onClosePopup,
   onNavigate,
+  onToggleAttendance,
 }: UseAttendanceReturn) {
   return (
     <div style={styles.container}>
@@ -140,7 +144,18 @@ export function AttendanceView({
             <span style={styles.timeMid}>{workProgress.label}</span>
             <span style={styles.timeLabel}>퇴근 : {bridge.checkOut || '-'}</span>
           </div>
-          <button style={styles.checkOutBtn}>퇴근등록</button>
+          <button 
+            style={{ 
+              ...styles.checkOutBtn, 
+              backgroundColor: btnDisabled ? '#e5e7eb' : btnBg,
+              color: btnDisabled ? '#9ca3af' : '#fff',
+              cursor: btnDisabled ? 'not-allowed' : 'pointer'
+            }}
+            onClick={onToggleAttendance}
+            disabled={btnDisabled}
+          >
+            {btnLabel}
+          </button>
         </div>
 
         {/* ── 근무내역 섹션 ─────────────────────────────────── */}

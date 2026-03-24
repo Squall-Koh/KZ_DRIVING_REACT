@@ -113,10 +113,14 @@ export interface UseAttendanceReturn {
   workProgress: WorkProgress;
   monthOptions: string[];
   scrollRef: React.RefObject<HTMLDivElement | null>;
+  btnLabel: string;
+  btnDisabled: boolean;
+  btnBg: string;
   onSelectMonth: (m: string) => void;
   onTogglePopup: () => void;
   onClosePopup: () => void;
   onNavigate: (path: string, state?: any) => void;
+  onToggleAttendance: () => void;
 }
 
 // ─── Custom Hook ─────────────────────────────────────────────
@@ -187,6 +191,41 @@ export function useAttendance(): UseAttendanceReturn {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const isCheckedIn = !!bridge.checkIn;
+  const isCheckedOut = !!bridge.checkOut;
+
+  let btnLabel = '출근 등록';
+  let btnDisabled = false;
+  let btnBg = '#3b82f6';
+
+  if (!isCheckedIn) {
+    btnLabel = '출근 등록';
+    btnBg = '#3b82f6';
+  } else if (!isCheckedOut) {
+    btnLabel = `퇴근 등록 (출근: ${bridge.checkIn})`;
+    btnBg = '#22c55e';
+  } else {
+    btnLabel = `업무 종료 (${bridge.checkIn} ~ ${bridge.checkOut})`;
+    btnBg = '#9ca3af';
+    btnDisabled = true;
+  }
+
+  const handleToggleAttendance = () => {
+    if (!isCheckedIn) {
+      if (window.confirm('지금 출근을 등록하시겠습니까?')) {
+        if ((window as any).FlutterBridge) {
+          (window as any).FlutterBridge.postMessage(JSON.stringify({ action: 'toggleAttendance', type: 'in' }));
+        }
+      }
+    } else if (!isCheckedOut) {
+      if (window.confirm(`지금 퇴근을 등록하시겠습니까?\\n\\n출근: ${bridge.checkIn}`)) {
+        if ((window as any).FlutterBridge) {
+          (window as any).FlutterBridge.postMessage(JSON.stringify({ action: 'toggleAttendance', type: 'out' }));
+        }
+      }
+    }
+  };
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -204,6 +243,9 @@ export function useAttendance(): UseAttendanceReturn {
   }), [weeks]);
 
   const workProgress = useMemo<WorkProgress>(() => {
+    if (!bridge.checkIn) {
+      return { pct: 0, label: '0시간 0분' };
+    }
     const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
     const inMin  = toMin(bridge.checkIn);
     const outMin = bridge.checkOut ? toMin(bridge.checkOut) : inMin;
@@ -239,9 +281,13 @@ export function useAttendance(): UseAttendanceReturn {
     workProgress,
     monthOptions: MONTH_OPTIONS,
     scrollRef,
+    btnLabel,
+    btnDisabled,
+    btnBg,
     onSelectMonth,
     onTogglePopup: () => setShowPopup((v) => !v),
     onClosePopup:  () => setShowPopup(false),
     onNavigate,
+    onToggleAttendance: handleToggleAttendance,
   };
 }

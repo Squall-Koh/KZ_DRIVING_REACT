@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { SelectDropdown } from '../../components/SelectDropdown';
+import type { ReceiptItem } from './useReceipts';
 import type { UseReceiptsListReturn } from './useReceiptsList';
 
 export function ReceiptsListView({
@@ -8,6 +10,11 @@ export function ReceiptsListView({
   personalReceipts,
   corporateCardInfo,
   personalCardInfo,
+  selectedReceipt,
+  purposeOptions,
+  slipOptions,
+  onSelectReceipt,
+  onClosePopup,
   onBack,
 }: UseReceiptsListReturn) {
   const activeReceipts = tab === 'corporate' ? corporateReceipts : personalReceipts;
@@ -63,7 +70,11 @@ export function ReceiptsListView({
         {/* 영수증 리스트 */}
         <div style={s.listContainer}>
           {activeReceipts.map((receipt) => (
-            <div key={receipt.id} style={s.receiptCard}>
+            <div 
+              key={receipt.id} 
+              style={s.receiptCard}
+              onClick={() => onSelectReceipt(receipt)}
+            >
               <div style={s.receiptTop}>
                 <span style={s.receiptDate}>{receipt.date}</span>
                 <span style={s.receiptArrow}>›</span>
@@ -80,6 +91,124 @@ export function ReceiptsListView({
           )}
         </div>
       </div>
+
+      {/* 영수증 등록 팝업 오버레이 */}
+      {selectedReceipt && (
+        <ReceiptPopup
+          receipt={selectedReceipt}
+          tab={tab}
+          purposeOptions={purposeOptions}
+          slipOptions={slipOptions}
+          onClose={onClosePopup}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── 서브 컴포넌트: 영수증 등록 팝업 ──────────────────────────
+function ReceiptPopup({
+  receipt,
+  tab,
+  purposeOptions,
+  slipOptions,
+  onClose
+}: {
+  receipt: ReceiptItem;
+  tab: string;
+  purposeOptions: { label: string; value: string }[];
+  slipOptions: { label: string; value: string }[];
+  onClose: () => void;
+}) {
+  const [purpose, setPurpose] = useState('');
+  const [slipType, setSlipType] = useState('purchase');
+
+  return (
+    <div style={s.popupOverlay}>
+      <div style={s.popupContainer}>
+        <div style={s.popupHeader}>
+          <div style={s.popupHeaderEmpty} />
+          <span style={s.popupTitle}>영수증 등록</span>
+          <button style={s.popupCloseBtn} onClick={onClose}>✕</button>
+        </div>
+        
+        <div style={s.popupScroll}>
+          <div style={s.popupReceiptDate}>{receipt.date}</div>
+          <div style={s.popupReceiptStore}>{receipt.store}</div>
+          <div style={s.popupReceiptAddress}>{receipt.address}</div>
+          
+          <div style={s.separator} />
+          
+          <div style={s.amountRow}>
+            <span style={s.amountLabel}>승인금액 :</span>
+            <span style={s.amountValueTotal}>
+              <span style={s.amountNum}>{receipt.amount.toLocaleString()}</span> 원
+            </span>
+          </div>
+          <div style={s.amountRow}>
+            <span style={s.amountLabel}>공급금액 :</span>
+            <span style={s.amountValue}>
+              {Math.floor(receipt.amount / 1.1).toLocaleString()} 원
+            </span>
+          </div>
+          <div style={s.amountRow}>
+            <span style={s.amountLabel}>부가세 :</span>
+            <span style={s.amountValue}>
+              {(receipt.amount - Math.floor(receipt.amount / 1.1)).toLocaleString()} 원
+            </span>
+          </div>
+          
+          <div style={{ ...s.separator, margin: '20px 0 24px' }} />
+          
+          <div style={s.formGroup}>
+            <label style={s.formLabel}>지출증빙 <span style={s.required}>*</span></label>
+            <div style={s.inputDisabled}>{tab === 'corporate' ? '법인카드' : '개인카드'}</div>
+          </div>
+          
+          <div style={s.formGroup}>
+            <label style={s.formLabel}>사용목적 <span style={s.required}>*</span></label>
+            <SelectDropdown
+              value={purpose}
+              onChange={setPurpose}
+              options={purposeOptions}
+              placeholder="사용목적을 선택하세요."
+              headerLabel="사용목적 선택"
+            />
+          </div>
+          
+          <div style={s.formGroup}>
+            <label style={s.formLabel}>전표구분 <span style={s.required}>*</span></label>
+            <SelectDropdown
+              value={slipType}
+              onChange={setSlipType}
+              options={slipOptions}
+              placeholder="전표구분을 선택하세요."
+              headerLabel="전표구분 선택"
+            />
+          </div>
+          
+          <div style={s.formGroup}>
+            <label style={s.formLabel}>첨부파일</label>
+            <button style={s.attachBtn}>첨부파일 추가 <span style={s.attachPlus}>+</span></button>
+          </div>
+          
+          <div style={s.instructionText}>
+            실제 영수증 정보와 불일치하는 정보는 직접 수정해주세요.
+          </div>
+        </div>
+        
+        <div style={s.popupBottom}>
+          <button 
+            style={s.submitBtn}
+            onClick={() => {
+              alert('경비내역 등록을 완료했습니다. (기능 미구현)');
+              onClose();
+            }}
+          >
+            경비내역 등록
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -88,7 +217,7 @@ const s: Record<string, React.CSSProperties> = {
   container: {
     display: 'flex', flexDirection: 'column', height: '100vh',
     backgroundColor: '#fff', fontFamily: "'Pretendard','Noto Sans KR',sans-serif",
-    overflow: 'hidden',
+    overflow: 'hidden', position: 'relative'
   },
   header: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -145,5 +274,78 @@ const s: Record<string, React.CSSProperties> = {
   receiptDate: { fontSize: 13, color: '#4f7cff', fontWeight: 500 },
   receiptArrow: { fontSize: 18, color: '#cbd5e1', lineHeight: 1 },
   receiptStore: { fontSize: 16, fontWeight: 700, color: '#111', marginTop: 2 },
-  receiptInfo: { fontSize: 13, color: '#64748b' }
+  receiptInfo: { fontSize: 13, color: '#64748b' },
+
+  // --- 추가된 팝업 관련 스타일 ---
+  popupOverlay: {
+    position: 'absolute', top: 56, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    zIndex: 100, display: 'flex', flexDirection: 'column',
+    padding: '12px 0 20px 0', // 상/하 여백 (네비게이션 바 침범 방지)
+  },
+  popupContainer: {
+    flex: 1, display: 'flex', flexDirection: 'column',
+    backgroundColor: '#fff',
+    margin: '0 16px', // 좌우 여백 (필요 시 0으도로 변경 가능하나, 플로팅 느낌 선호 시 유지)
+    borderRadius: 16,
+    overflow: 'hidden',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+  },
+  popupHeader: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    padding: '16px', borderBottom: '1px dashed #e2e8f0', flexShrink: 0,
+    backgroundColor: '#fff',
+  },
+  popupHeaderEmpty: { width: 24 },
+  popupTitle: { fontSize: 16, fontWeight: 700, color: '#111' },
+  popupCloseBtn: { 
+    width: 24, height: 24, fontSize: 20, color: '#64748b', 
+    background: 'none', border: 'none', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1
+  },
+  
+  popupScroll: {
+    flex: 1, overflowY: 'auto' as const, padding: '24px 20px', display: 'flex', flexDirection: 'column',
+    backgroundColor: '#fff',
+  },
+  popupReceiptDate: { fontSize: 13, color: '#4f7cff', marginBottom: 6 },
+  popupReceiptStore: { fontSize: 18, fontWeight: 700, color: '#111', marginBottom: 6 },
+  popupReceiptAddress: { fontSize: 13, color: '#8e8e93', marginBottom: 20 },
+  
+  separator: { height: 1, backgroundColor: '#e2e8f0', width: '100%', marginBottom: 16 },
+  
+  amountRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  amountLabel: { fontSize: 14, color: '#333' },
+  amountValue: { fontSize: 14, color: '#111' },
+  amountValueTotal: { fontSize: 16, fontWeight: 700, color: '#111' },
+  amountNum: { fontSize: 16, fontWeight: 700 },
+
+  formGroup: { marginBottom: 20, display: 'flex', flexDirection: 'column', position: 'relative' as const },
+  formLabel: { fontSize: 13, color: '#64748b', marginBottom: 8 },
+  required: { color: '#ef4444' },
+  
+  inputDisabled: {
+    backgroundColor: '#f8fafc', padding: '12px', borderRadius: 8,
+    border: '1px solid #f1f5f9', color: '#64748b', fontSize: 15
+  },
+  
+  attachBtn: {
+    padding: '12px', backgroundColor: '#f8fafc', borderRadius: 8,
+    border: 'none', color: '#333', fontSize: 15, fontWeight: 500, cursor: 'pointer',
+    display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6
+  },
+  attachPlus: { color: '#4f7cff', fontWeight: 'bold' },
+  
+  instructionText: {
+    fontSize: 12, color: '#8e8e93', textAlign: 'center' as const, marginTop: 4, marginBottom: 8
+  },
+
+  popupBottom: {
+    padding: '16px 20px 24px', flexShrink: 0, backgroundColor: '#fff',
+  },
+  submitBtn: {
+    width: '100%', padding: '16px', backgroundColor: '#4f7cff',
+    color: '#fff', fontSize: 16, fontWeight: 700, borderRadius: 12,
+    border: 'none', cursor: 'pointer'
+  }
 };

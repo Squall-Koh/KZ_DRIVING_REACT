@@ -11,6 +11,11 @@ export interface UseReceiptsListReturn {
   personalReceipts: ReceiptItem[];
   corporateCardInfo: CardInfo;
   personalCardInfo: CardInfo;
+  selectedReceipt: ReceiptItem | null;
+  purposeOptions: { label: string; value: string }[];
+  slipOptions: { label: string; value: string }[];
+  onSelectReceipt: (receipt: ReceiptItem) => void;
+  onClosePopup: () => void;
   onBack: () => void;
 }
 
@@ -27,12 +32,40 @@ export function useReceiptsList(): UseReceiptsListReturn {
   const personalCardInfo = state?.personalCardInfo || { name: '등록된 개인카드 정보 없음', number: '' };
 
   const [tab, setTab] = useState<TabType>(initialTab);
+  const [selectedReceipt, setSelectedReceipt] = useState<ReceiptItem | null>(null);
+
+  // Mock API options
+  const [purposeOptions] = useState([
+    { label: '수행기사 식대 결제', value: 'meal' },
+    { label: '수행차량 주유비 결제', value: 'fuel' },
+    { label: '수행차량 비품 구매', value: 'supplies' },
+    { label: '수행차량 경·정비 결제', value: 'maintenance' },
+    { label: '수행차량 주차비 결제', value: 'parking' },
+    { label: '기타지출', value: 'other' },
+  ]);
+
+  const [slipOptions] = useState([
+    { label: '매입전표', value: 'purchase' },
+    { label: '기타전표', value: 'other' },
+  ]);
 
   const onTabChange = (newTab: TabType) => {
     setTab(newTab);
   };
 
+  const onSelectReceipt = (receipt: ReceiptItem) => {
+    setSelectedReceipt(receipt);
+  };
+
+  const onClosePopup = () => {
+    setSelectedReceipt(null);
+  };
+
   const onBack = () => {
+    if (selectedReceipt) {
+      setSelectedReceipt(null);
+      return;
+    }
     navigate(-1);
   };
 
@@ -43,6 +76,11 @@ export function useReceiptsList(): UseReceiptsListReturn {
     personalReceipts,
     corporateCardInfo,
     personalCardInfo,
+    selectedReceipt,
+    purposeOptions,
+    slipOptions,
+    onSelectReceipt,
+    onClosePopup,
     onBack,
   };
 }

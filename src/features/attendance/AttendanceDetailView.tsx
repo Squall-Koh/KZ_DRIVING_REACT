@@ -1,12 +1,12 @@
 import React from 'react';
-import { type DayRecord } from '../../data/attendanceDummyData';
+import { type DayRecord } from './useAttendance';
 import type { UseAttendanceDetailReturn } from './useAttendanceDetail';
 
 function BadgeItem({ color, value }: { color: string; value: number }) {
   return (
     <div style={styles.badgeItem}>
       <span style={{ ...styles.colorBox, backgroundColor: color }} />
-      <span style={styles.badgeValue}>{value}h</span>
+      <span style={styles.badgeValue}>{Math.floor(value)}h</span>
     </div>
   );
 }
@@ -18,7 +18,7 @@ function DayCard({ day }: { day: DayRecord }) {
         <div style={styles.cardLeft}>
           <span style={styles.dateText}>{day.dateLabel}</span>
           <span style={styles.timeText}>출근 : {day.checkIn} ~ 퇴근 {day.checkOut}</span>
-          <span style={styles.totalText}>총 근무시간 : {day.regularH + day.overtimeH + day.nightH}시간</span>
+          <span style={styles.totalText}>총 근무시간 : {Math.floor(day.regularH + day.overtimeH + day.nightH)}시간</span>
         </div>
         <div style={styles.cardRight}>
           <BadgeItem color="#3b82f6" value={day.regularH}  />

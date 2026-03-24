@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { type DayRecord } from '../../data/attendanceDummyData';
+import { type DayRecord } from './useAttendance';
 
 // ─── 타입 ────────────────────────────────────────────────────
 export interface UseAttendanceDetailReturn {

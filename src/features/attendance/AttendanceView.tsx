@@ -65,11 +65,11 @@ function WeekRow({ week, index, total, onNavigate }: {
         <span style={{ ...styles.weekLabel, color: '#999', fontSize: 11 }}>~ {week.weekLabel.split(' ~ ')[1]}</span>
       </div>
       <div style={styles.weekRight}>
-        <span style={styles.weekTotal}>총 근무시간 : {week.regularH + week.overtimeH + week.nightH}시간</span>
+        <span style={styles.weekTotal}>총 근무시간 : {Math.floor(week.regularH + week.overtimeH + week.nightH)}시간</span>
         <div style={styles.weekBadges}>
-          <span style={styles.badgeText}><span style={{ color: '#3b82f6' }}>■</span> {week.regularH}h</span>
-          <span style={styles.badgeText}><span style={{ color: '#22c55e' }}>■</span> {week.overtimeH}h</span>
-          <span style={styles.badgeText}><span style={{ color: '#f59e0b' }}>■</span> {week.nightH}h</span>
+          <span style={styles.badgeText}><span style={{ color: '#3b82f6' }}>■</span> {Math.floor(week.regularH)}h</span>
+          <span style={styles.badgeText}><span style={{ color: '#22c55e' }}>■</span> {Math.floor(week.overtimeH)}h</span>
+          <span style={styles.badgeText}><span style={{ color: '#f59e0b' }}>■</span> {Math.floor(week.nightH)}h</span>
         </div>
       </div>
     </div>

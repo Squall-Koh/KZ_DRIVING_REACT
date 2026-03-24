@@ -1,8 +1,17 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ALL_DUMMY_DAYS, type DayRecord } from '../../data/attendanceDummyData';
 
 // ─── 타입 ────────────────────────────────────────────────────
+export interface DayRecord {
+  date: string;        // "2026-03-01"  (ISO, 정렬·비교용)
+  dateLabel: string;   // "26.03.01 (토)"
+  checkIn: string;     // "07:30"
+  checkOut: string;    // "17:30"
+  regularH: number;
+  overtimeH: number;
+  nightH: number;
+}
+
 export interface WeekRecord {
   weekLabel: string;
   dateFrom: string;
@@ -80,9 +89,9 @@ export function generateWeeks(yearMonth: string): { weekLabel: string; dateFrom:
 }
 
 // ─── 주간 데이터 빌더 ────────────────────────────────────────
-export function buildWeeks(yearMonth: string): WeekRecord[] {
+export function buildWeeks(yearMonth: string, sourceDays: DayRecord[]): WeekRecord[] {
   return generateWeeks(yearMonth).map(w => {
-    const days = ALL_DUMMY_DAYS.filter(d => d.date >= w.dateFrom && d.date <= w.dateTo);
+    const days = sourceDays.filter(d => d.date >= w.dateFrom && d.date <= w.dateTo);
     return {
       ...w,
       regularH:  days.reduce((a, d) => a + d.regularH,  0),
@@ -128,6 +137,19 @@ export function useAttendance(): UseAttendanceReturn {
   useEffect(() => {
     (window as any).updateAttendanceInfo = (data: Partial<FlutterBridgeData>) =>
       setBridge((p) => ({ ...p, ...data }));
+      
+    (window as any).updateAttendance = (jsonString: string) => {
+      try {
+        const parsed = JSON.parse(jsonString) as DayRecord[];
+        setDayRecords(parsed);
+        setLoaded(true);
+      } catch(e) {
+        console.error('Failed to parse attendance JSON', e);
+        setDayRecords([]);
+        setLoaded(true);
+      }
+    };
+
     if ((window as any).FlutterBridge) {
       (window as any).FlutterBridge.postMessage('requestDriverInfo');
     }
@@ -139,8 +161,31 @@ export function useAttendance(): UseAttendanceReturn {
 
   const [selectedMonth, setSelectedMonth] = useState<string>(initMonth);
   const [showPopup, setShowPopup]         = useState(false);
-  const [weeks, setWeeks]                 = useState<WeekRecord[]>(buildWeeks(initMonth));
-  const [loaded, setLoaded]               = useState(true);
+  const [dayRecords, setDayRecords]       = useState<DayRecord[]>([]);
+  const [loaded, setLoaded]               = useState(false);
+
+  // 선택한 월에 해당하는 주간 데이터 자동 연산
+  const weeks = useMemo<WeekRecord[]>(() => buildWeeks(selectedMonth, dayRecords), [selectedMonth, dayRecords]);
+
+  // 화면 로드 시 또는 월 선택 시 데이터 요청 함수 분리
+  const fetchMonthData = (month: string) => {
+    const targetWeeks = generateWeeks(month);
+    if (targetWeeks.length > 0 && (window as any).FlutterBridge) {
+      const dateFrom = targetWeeks[0].dateFrom;
+      const dateTo   = targetWeeks[targetWeeks.length - 1].dateTo;
+      (window as any).FlutterBridge.postMessage(
+        JSON.stringify({ action: 'requestAttendance', dateFrom, dateTo })
+      );
+    } else {
+      setTimeout(() => setLoaded(true), 500);
+    }
+  };
+
+  // 초기 1회 로딩
+  useEffect(() => {
+    fetchMonthData(selectedMonth);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -173,8 +218,8 @@ export function useAttendance(): UseAttendanceReturn {
     setSelectedMonth(m);
     sessionStorage.setItem('attendance_month', m);
     setShowPopup(false);
-    setWeeks(buildWeeks(m));
-    setLoaded(true);
+    setLoaded(false);
+    fetchMonthData(m);
   };
 
   const onNavigate = (path: string, state?: any) => {

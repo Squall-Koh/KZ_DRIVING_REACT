@@ -29,55 +29,7 @@ export interface TripStats {
   totalVehicleCount: number;
 }
 
-// ─── Dummy 운행 데이터 (월별 Map) ───────────────────────────
-const DUMMY_TRIPS: Record<string, DayGroup[]> = {
-  '2026.03': [
-    {
-      date: '2026.03.03',
-      trips: [
-        { id: 1, departureAt: '2026-03-03T07:30:00', arrivalAt: '2026-03-03T08:50:00', distanceKm: 16, plateNumber: '154 후 5698', vehicleName: '벤츠 스프린터' },
-      ],
-    },
-    {
-      date: '2026.03.02',
-      trips: [
-        { id: 2, departureAt: '2026-03-02T07:30:00', arrivalAt: '2026-03-02T08:50:00', distanceKm: 22, plateNumber: '154 후 5698', vehicleName: '벤츠 스프린터' },
-        { id: 3, departureAt: '2026-03-02T09:10:00', arrivalAt: '2026-03-02T11:40:00', distanceKm: 123, plateNumber: '154 후 5698', vehicleName: '벤츠 스프린터' },
-        { id: 4, departureAt: '2026-03-02T13:00:00', arrivalAt: '2026-03-02T14:20:00', distanceKm: 23, plateNumber: '154 후 5698', vehicleName: '벤츠 스프린터' },
-      ],
-    },
-    {
-      date: '2026.03.01',
-      trips: [
-        { id: 5, departureAt: '2026-03-01T07:30:00', arrivalAt: '2026-03-01T08:50:00', distanceKm: 22, plateNumber: '154 후 5698', vehicleName: '벤츠 스프린터' },
-        { id: 6, departureAt: '2026-03-01T10:00:00', arrivalAt: '2026-03-01T12:30:00', distanceKm: 123, plateNumber: '154 후 5698', vehicleName: '벤츠 스프린터' },
-      ],
-    },
-  ],
-  '2026.02': [
-    {
-      date: '2026.02.28',
-      trips: [
-        { id: 7, departureAt: '2026-02-28T08:00:00', arrivalAt: '2026-02-28T09:15:00', distanceKm: 31, plateNumber: '154 후 5698', vehicleName: '벤츠 스프린터' },
-      ],
-    },
-    {
-      date: '2026.02.27',
-      trips: [
-        { id: 8, departureAt: '2026-02-27T07:45:00', arrivalAt: '2026-02-27T09:00:00', distanceKm: 18, plateNumber: '123 허 4567', vehicleName: '카니발 하이리무진' },
-        { id: 9, departureAt: '2026-02-27T14:00:00', arrivalAt: '2026-02-27T16:30:00', distanceKm: 87, plateNumber: '123 허 4567', vehicleName: '카니발 하이리무진' },
-      ],
-    },
-  ],
-  '2026.01': [
-    {
-      date: '2026.01.15',
-      trips: [
-        { id: 10, departureAt: '2026-01-15T09:00:00', arrivalAt: '2026-01-15T10:30:00', distanceKm: 45, plateNumber: '123 허 4567', vehicleName: '카니발 하이리무진' },
-      ],
-    },
-  ],
-};
+// ─── Dummy 더이상 사용 안함 (DB 실데이터 연동) ───────────
 
 // ─── 연월 선택지 생성 ─────────────────────────────────────────
 function generateMonthOptions(): string[] {
@@ -119,15 +71,32 @@ export function useDrivingHistory(): UseDrivingHistoryReturn {
   });
 
   // React → Flutter → React 양방향 bridge
-  // 1. window.updateDriverInfo 등록
-  // 2. Flutter에 'requestDriverInfo' 전송 → Flutter가 runJavaScript로 응답
   useEffect(() => {
     (window as any).updateDriverInfo = (data: Partial<FlutterBridgeData>) => {
       setBridge((prev) => ({ ...prev, ...data }));
     };
+    (window as any).updateDrivingHistory = (jsonString: string) => {
+      try {
+        const parsed = JSON.parse(jsonString) as DayGroup[];
+        setTrips(parsed);
+        setLoaded(true);
+      } catch (e) {
+        console.error('Failed to parse driving history JSON', e);
+        setTrips([]);
+        setLoaded(true);
+      }
+    };
+
     // 함수 등록 완료 후 Flutter에 데이터 요청
     if ((window as any).FlutterBridge) {
       (window as any).FlutterBridge.postMessage('requestDriverInfo');
+      // 초기 로딩 시 이번 달 내역 요청
+      (window as any).FlutterBridge.postMessage(
+        JSON.stringify({ action: 'requestDrivingHistory', month: TODAY_MONTH })
+      );
+    } else {
+      // 모바일이 아닌 환경(웹 브라우저)일 때 처리
+      setTimeout(() => setLoaded(true), 500);
     }
   }, []);
 
@@ -159,19 +128,18 @@ export function useDrivingHistory(): UseDrivingHistoryReturn {
     setSelectedMonth(month);
     setShowPopup(false);
     setLoaded(false);
-    // ── 실제 API 호출 (추후 활성화) ──────────────────────────
-    // const res = await fetch('/api/driving-history', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ month }),
-    // });
-    // const data: DayGroup[] = await res.json();
-    // setTrips(data);
-    // setLoaded(true);
 
-    // ── 개발용 임시: DUMMY_TRIPS 참조 (API 연동 후 제거) ─────
-    setTrips(DUMMY_TRIPS[month] ?? []);
-    setLoaded(true);
+    // Flutter에 해당 월 데이터 요청
+    if ((window as any).FlutterBridge) {
+      (window as any).FlutterBridge.postMessage(
+        JSON.stringify({ action: 'requestDrivingHistory', month })
+      );
+    } else {
+      setTimeout(() => {
+        setTrips([]); // 웹 테스트 환경
+        setLoaded(true);
+      }, 500);
+    }
   };
 
   const onTogglePopup = () => setShowPopup((v) => !v);

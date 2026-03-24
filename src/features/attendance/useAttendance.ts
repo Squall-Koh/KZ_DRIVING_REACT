@@ -18,6 +18,7 @@ export interface FlutterBridgeData {
   isVehicleConnected: boolean;
   plateNumber: string;
   vehicleName: string;
+  connectionStatus: string;
   checkIn: string;
   checkOut: string;
 }
@@ -113,18 +114,23 @@ export interface UseAttendanceReturn {
 export function useAttendance(): UseAttendanceReturn {
   const navigate = useNavigate();
 
+  // 초깃값 없음 - Flutter에서 window.updateAttendanceInfo()로 주입받음
   const [bridge, setBridge] = useState<FlutterBridgeData>({
-    userName: '강무호',
-    isVehicleConnected: true,
-    plateNumber: '123 허 4567',
-    vehicleName: '카니발 하이리무진',
-    checkIn: '07:30',
-    checkOut: '12:00',
+    userName: '',
+    isVehicleConnected: false,
+    plateNumber: '',
+    vehicleName: '',
+    connectionStatus: '연결 대기중',
+    checkIn: '',
+    checkOut: '',
   });
 
   useEffect(() => {
     (window as any).updateAttendanceInfo = (data: Partial<FlutterBridgeData>) =>
       setBridge((p) => ({ ...p, ...data }));
+    if ((window as any).FlutterBridge) {
+      (window as any).FlutterBridge.postMessage('requestDriverInfo');
+    }
   }, []);
 
   const today = new Date();

@@ -44,11 +44,7 @@ function MaintenanceCard({
 
 // ─── View 컴포넌트 (순수 UI) ─────────────────────────────────
 export function MaintenanceView({
-  userName,
-  isConnected,
-  plateNumber,
-  vehicleName,
-  selectedVehicle,
+  bridge,
   showVehicleMenu,
   items,
   onToggleVehicleMenu,
@@ -63,20 +59,34 @@ export function MaintenanceView({
         <div style={styles.userBar}>
           <div style={styles.userLeft}>
             <img src={iconKz} alt="kz" style={styles.logoIcon} />
-            <span style={styles.userName}>{userName}님</span>
+            <span style={styles.userName}>
+              {bridge.userName ? bridge.userName : '연결 대기중...'}
+            </span>
           </div>
         </div>
 
         <div style={styles.vehicleBar}>
           <img src={iconMegaphone} alt="차량" style={styles.megaphoneIcon} />
-          <span style={styles.vehicleBadge}>{isConnected ? '차량연결됨' : '연결대기중'}</span>
-          <span style={styles.vehicleInfo}>
-            {isConnected ? `[${plateNumber}] ${vehicleName}` : vehicleName}
+          <span style={{
+            ...styles.vehicleBadge,
+            color: bridge.isVehicleConnected ? '#2b5cff' : '#aaaaaa',
+          }}>
+            {bridge.connectionStatus}
           </span>
+          <div style={styles.divider} />
+          {bridge.plateNumber ? (
+            <span style={styles.vehicleInfo}>[{bridge.plateNumber}] {bridge.vehicleName}</span>
+          ) : (
+            <span style={{ ...styles.vehicleInfo, color: '#bbbbbb' }}>차량 정보를 기다리는 중...</span>
+          )}
         </div>
 
         <div style={styles.vehicleSelector} onClick={onToggleVehicleMenu}>
-          <span style={styles.vehicleSelectorName}>{selectedVehicle}</span>
+          <span style={styles.vehicleSelectorName}>
+            {bridge.plateNumber
+              ? `${bridge.plateNumber} ${bridge.vehicleName}`
+              : '선택된 차량 없음'}
+          </span>
           <span style={styles.chevron}>{showVehicleMenu ? '▲' : '▼'}</span>
         </div>
       </div>
@@ -111,16 +121,17 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '12px 16px 8px',
   },
   userLeft:  { display: 'flex', alignItems: 'center', gap: 8 },
-  logoIcon:  { width: 28, height: 28, objectFit: 'contain' as const },
-  userName:  { fontSize: 16, fontWeight: 700, color: '#111' },
+  logoIcon:  { width: 32, height: 32, objectFit: 'contain' as const },
+  userName:  { fontSize: 18, fontWeight: 700, color: '#111' },
   vehicleBar: {
     display: 'flex', alignItems: 'center', gap: 8,
-    margin: '0 16px 8px', padding: '10px 14px',
-    backgroundColor: '#fff', borderRadius: 24, border: '1px solid #e0e7ff',
+    margin: '0 16px 8px', padding: '8px 16px',
+    backgroundColor: '#fff', borderRadius: 30, border: '1.5px solid #2b5cff',
   },
-  megaphoneIcon: { width: 18, height: 18, objectFit: 'contain' as const },
-  vehicleBadge:  { fontSize: 12, fontWeight: 700, color: '#2563eb', whiteSpace: 'nowrap' as const },
-  vehicleInfo:   { fontSize: 12, color: '#444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
+  megaphoneIcon: { width: 20, height: 20, objectFit: 'contain' as const },
+  divider:       { width: 1, height: 14, backgroundColor: '#d1d5db', flexShrink: 0 },
+  vehicleBadge:  { fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap' as const },
+  vehicleInfo:   { fontSize: 14, color: '#444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
   vehicleSelector: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     margin: '0 16px 8px', padding: '10px 14px',

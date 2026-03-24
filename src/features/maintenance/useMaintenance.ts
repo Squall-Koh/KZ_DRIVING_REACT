@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // ─── 타입 정의 ───────────────────────────────────────────────
@@ -7,6 +7,14 @@ export interface MaintenanceItem {
   name: string;
   elapsedKm: number;
   intervalKm: number;
+}
+
+export interface FlutterBridgeData {
+  userName: string;
+  isVehicleConnected: boolean;
+  plateNumber: string;
+  vehicleName: string;
+  connectionStatus: string;
 }
 
 // ─── 유틸 함수 ───────────────────────────────────────────────
@@ -33,11 +41,7 @@ const MAINTENANCE_ITEMS: MaintenanceItem[] = [
 
 // ─── 반환 타입 ───────────────────────────────────────────────
 export interface UseMaintenanceReturn {
-  userName: string;
-  isConnected: boolean;
-  plateNumber: string;
-  vehicleName: string;
-  selectedVehicle: string;
+  bridge: FlutterBridgeData;
   showVehicleMenu: boolean;
   items: MaintenanceItem[];
   onToggleVehicleMenu: () => void;
@@ -50,12 +54,22 @@ export function useMaintenance(): UseMaintenanceReturn {
   const navigate = useNavigate();
   const [showVehicleMenu, setShowVehicleMenu] = useState(false);
 
-  // Flutter bridge로 대체될 값들
-  const userName = '강무호';
-  const isConnected = false;
-  const plateNumber = '';
-  const vehicleName = '연결된 차량이 없습니다';
-  const selectedVehicle = '154 후 5698 벤츠 스프린터';
+  // 초깃값 없음 - Flutter에서 window.updateMaintenanceInfo()로 주입받음
+  const [bridge, setBridge] = useState<FlutterBridgeData>({
+    userName: '',
+    isVehicleConnected: false,
+    plateNumber: '',
+    vehicleName: '',
+    connectionStatus: '연결 대기중',
+  });
+
+  useEffect(() => {
+    (window as any).updateMaintenanceInfo = (data: Partial<FlutterBridgeData>) =>
+      setBridge((p) => ({ ...p, ...data }));
+    if ((window as any).FlutterBridge) {
+      (window as any).FlutterBridge.postMessage('requestDriverInfo');
+    }
+  }, []);
 
   const onToggleVehicleMenu = () => setShowVehicleMenu((v) => !v);
 
@@ -68,11 +82,7 @@ export function useMaintenance(): UseMaintenanceReturn {
   };
 
   return {
-    userName,
-    isConnected,
-    plateNumber,
-    vehicleName,
-    selectedVehicle,
+    bridge,
     showVehicleMenu,
     items: MAINTENANCE_ITEMS,
     onToggleVehicleMenu,
@@ -80,3 +90,4 @@ export function useMaintenance(): UseMaintenanceReturn {
     onRegisterClick,
   };
 }
+

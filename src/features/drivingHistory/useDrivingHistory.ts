@@ -20,6 +20,7 @@ export interface FlutterBridgeData {
   isVehicleConnected: boolean;
   plateNumber: string;
   vehicleName: string;
+  connectionStatus: string;
 }
 
 export interface TripStats {
@@ -114,16 +115,19 @@ export function useDrivingHistory(): UseDrivingHistoryReturn {
     isVehicleConnected: false,
     plateNumber: '',
     vehicleName: '',
+    connectionStatus: '연결 대기중',
   });
 
-  // Flutter → React bridge: window.updateDriverInfo({ userName, plateNumber, ... }) 호출
+  // React → Flutter → React 양방향 bridge
+  // 1. window.updateDriverInfo 등록
+  // 2. Flutter에 'requestDriverInfo' 전송 → Flutter가 runJavaScript로 응답
   useEffect(() => {
     (window as any).updateDriverInfo = (data: Partial<FlutterBridgeData>) => {
       setBridge((prev) => ({ ...prev, ...data }));
     };
-    // React → Flutter: 준비 완료 알림 (Flutter가 페이지 로드 후 데이터를 보낼 수 있도록)
+    // 함수 등록 완료 후 Flutter에 데이터 요청
     if ((window as any).FlutterBridge) {
-      (window as any).FlutterBridge.postMessage('pageReady');
+      (window as any).FlutterBridge.postMessage('requestDriverInfo');
     }
   }, []);
 

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 export interface ReceiptItem {
   id: string;
@@ -21,6 +21,7 @@ export interface UseReceiptsReturn {
     isVehicleConnected: boolean;
     plateNumber: string;
     vehicleName: string;
+    connectionStatus: string;
   };
   expenseStatus: {
     period: string;
@@ -53,13 +54,22 @@ export function useReceipts(): UseReceiptsReturn {
   const [endDate, setEndDate] = useState<string>('2026-03-31');
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
 
-  // Mock data
-  const [bridge] = useState({
-    userName: '강무호',
-    isVehicleConnected: true,
-    plateNumber: '123 허 4567',
-    vehicleName: '카니발 하이리무진',
+  // 초깃값 없음 - Flutter에서 window.updateReceiptsInfo()로 주입받음
+  const [bridge, setBridge] = useState({
+    userName: '',
+    isVehicleConnected: false,
+    plateNumber: '',
+    vehicleName: '',
+    connectionStatus: '연결 대기중',
   });
+
+  useEffect(() => {
+    (window as any).updateReceiptsInfo = (data: Partial<typeof bridge>) =>
+      setBridge((p) => ({ ...p, ...data }));
+    if ((window as any).FlutterBridge) {
+      (window as any).FlutterBridge.postMessage('requestDriverInfo');
+    }
+  }, []);
 
   const expenseStatus = {
     period: `${startDate.replace(/-/g, '.')} ~ ${endDate.replace(/-/g, '.')}`,

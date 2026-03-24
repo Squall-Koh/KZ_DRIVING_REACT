@@ -100,13 +100,25 @@ export function AttendanceView({
         <div style={styles.userBar}>
           <div style={styles.userLeft}>
             <img src={iconKz} alt="kz" style={styles.logoIcon} />
-            <span style={styles.userName}>{bridge.userName}님</span>
+            <span style={styles.userName}>
+              {bridge.userName ? bridge.userName : '연결 대기중...'}
+            </span>
           </div>
         </div>
         <div style={styles.vehicleBar}>
           <img src={iconMegaphone} alt="차량" style={styles.megaphoneIcon} />
-          <span style={styles.vehicleBadge}>{bridge.isVehicleConnected ? '차량연결됨' : '차량미연결'}</span>
-          <span style={styles.vehicleInfo}>[{bridge.plateNumber}] {bridge.vehicleName}</span>
+          <span style={{
+            ...styles.vehicleBadge,
+            color: bridge.isVehicleConnected ? '#2b5cff' : '#aaaaaa',
+          }}>
+            {bridge.connectionStatus}
+          </span>
+          <div style={styles.divider} />
+          {bridge.plateNumber ? (
+            <span style={styles.vehicleInfo}>[{bridge.plateNumber}] {bridge.vehicleName}</span>
+          ) : (
+            <span style={{ ...styles.vehicleInfo, color: '#bbbbbb' }}>차량 정보를 기다리는 중...</span>
+          )}
         </div>
       </div>
 
@@ -196,12 +208,13 @@ const styles: Record<string, React.CSSProperties> = {
   fixedHeader: { flexShrink: 0, position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#f5f5f7' },
   userBar: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px 8px' },
   userLeft: { display: 'flex', alignItems: 'center', gap: 8 },
-  logoIcon: { width: 28, height: 28, objectFit: 'contain' },
-  userName: { fontSize: 16, fontWeight: 700, color: '#111' },
-  vehicleBar: { display: 'flex', alignItems: 'center', gap: 8, margin: '0 16px 8px', padding: '10px 14px', backgroundColor: '#fff', borderRadius: 24, border: '1px solid #e0e7ff' },
-  megaphoneIcon: { width: 18, height: 18, objectFit: 'contain' },
-  vehicleBadge: { fontSize: 12, fontWeight: 700, color: '#2563eb', whiteSpace: 'nowrap' as const },
-  vehicleInfo: { fontSize: 12, color: '#444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
+  logoIcon: { width: 32, height: 32, objectFit: 'contain' as const },
+  userName: { fontSize: 18, fontWeight: 700, color: '#111' },
+  vehicleBar: { display: 'flex', alignItems: 'center', gap: 8, margin: '0 16px 8px', padding: '8px 16px', backgroundColor: '#fff', borderRadius: 30, border: '1.5px solid #2b5cff' },
+  megaphoneIcon: { width: 20, height: 20, objectFit: 'contain' as const },
+  divider: { width: 1, height: 14, backgroundColor: '#d1d5db', flexShrink: 0 },
+  vehicleBadge: { fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap' as const },
+  vehicleInfo: { fontSize: 14, color: '#444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
   todayCard: { margin: '8px 16px', padding: '14px 16px', backgroundColor: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
   todayHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   todayTitle: { fontSize: 14, fontWeight: 700, color: '#111' },

@@ -113,14 +113,13 @@ export function DrivingHistoryView({
           <img src={iconMegaphone} alt="차량" style={styles.megaphoneIcon} />
           <span style={{
             ...styles.vehicleBadge,
-            color: bridge.isVehicleConnected ? '#2563eb' : '#aaaaaa',
+            color: bridge.isVehicleConnected ? '#2b5cff' : '#aaaaaa',
           }}>
-            {bridge.isVehicleConnected ? '차량연결됨' : '차량미연결'}
+            {bridge.connectionStatus}
           </span>
+          <div style={styles.divider} />
           {bridge.plateNumber ? (
-            <span style={styles.vehicleInfo}>
-              [{bridge.plateNumber}] {bridge.vehicleName}
-            </span>
+            <span style={styles.vehicleInfo}>[{bridge.plateNumber}] {bridge.vehicleName}</span>
           ) : (
             <span style={{ ...styles.vehicleInfo, color: '#bbbbbb' }}>차량 정보를 기다리는 중...</span>
           )}
@@ -225,21 +224,22 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '12px 16px 8px',
   },
   userLeft: { display: 'flex', alignItems: 'center', gap: '8px' },
-  logoIcon: { width: '28px', height: '28px', objectFit: 'contain' },
-  userName: { fontSize: '16px', fontWeight: '700', color: '#111111' },
+  logoIcon: { width: '32px', height: '32px', objectFit: 'contain' as const },
+  userName: { fontSize: '18px', fontWeight: '700', color: '#111111' },
   vehicleBar: {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
     margin: '0 16px 8px',
-    padding: '10px 14px',
+    padding: '8px 16px',
     backgroundColor: '#ffffff',
-    borderRadius: '24px',
-    border: '1px solid #e0e7ff',
+    borderRadius: '30px',
+    border: '1.5px solid #2b5cff',
   },
-  megaphoneIcon: { width: '18px', height: '18px', objectFit: 'contain' },
-  vehicleBadge: { fontSize: '12px', fontWeight: '700', color: '#2563eb', whiteSpace: 'nowrap' as const },
-  vehicleInfo: { fontSize: '12px', color: '#444444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
+  megaphoneIcon: { width: '20px', height: '20px', objectFit: 'contain' as const },
+  divider: { width: '1px', height: '14px', backgroundColor: '#d1d5db', flexShrink: 0 },
+  vehicleBadge: { fontSize: '14px', fontWeight: '700', whiteSpace: 'nowrap' as const },
+  vehicleInfo: { fontSize: '14px', color: '#444444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
   scrollArea: { flex: 1, overflowY: 'auto' as const, display: 'flex', flexDirection: 'column' },
   statsBox: {
     display: 'flex',

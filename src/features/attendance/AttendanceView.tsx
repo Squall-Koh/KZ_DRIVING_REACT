@@ -1,7 +1,7 @@
 import React from 'react';
 import iconKz from '../../assets/icon_kz.png';
 import iconMegaphone from '../../assets/icon_megaphone.png';
-import type { UseAttendanceReturn, WeekRecord, AttendanceStats } from './useAttendance';
+import type { UseAttendanceReturn, WeekRecord } from './useAttendance';
 
 // ─── 반원 게이지 ──────────────────────────────────────────────
 function SemiCircleGauge({ regular, overtime, night }: { regular: number; overtime: number; night: number }) {

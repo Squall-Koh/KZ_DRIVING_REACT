@@ -1,21 +1,17 @@
 import React, { useRef } from 'react';
 import iconCalendar from '../../assets/icon_calendar.png';
 import type {
-  MaintenanceItem,
   ReceiptRecord,
   HistoryRecord,
-  TabType,
   UseMaintenanceDetailReturn,
 } from './useMaintenanceDetail';
 
 // ─── 등록 탭 ─────────────────────────────────────────────────
 function RegisterTab({
-  item,
   mainDate,
   receipts,
   onDateChange,
 }: {
-  item: MaintenanceItem;
   mainDate: string;
   receipts: ReceiptRecord[];
   onDateChange: (date: string) => void;
@@ -152,7 +148,6 @@ export function MaintenanceDetailView({
         </div>
         {tab === 'register' ? (
           <RegisterTab
-            item={item}
             mainDate={mainDate}
             receipts={receipts}
             onDateChange={onDateChange}

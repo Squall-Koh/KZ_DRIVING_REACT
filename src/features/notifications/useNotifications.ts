@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 // ─── 타입 정의 ───────────────────────────────────────────────
@@ -9,77 +9,29 @@ export interface Notification {
   body: string;
 }
 
-// ─── Dummy 데이터 (실제 POST API 대체) ────────────────────────
-const DUMMY_NOTIFICATIONS: Notification[] = [
-  {
-    id: 1,
-    date: '2026-03-01 12:30',
-    title: '[운행종료 알림]',
-    body: '차량운행 종료가 감지되었습니다.\n운행일지 작성을 완료합니다.',
-  },
-  {
-    id: 2,
-    date: '2026-03-01 11:00',
-    title: '[운행감지 알림]',
-    body: '차량운행이 감지되었습니다.\n운행일지 작성을 시작합니다.',
-  },
-  {
-    id: 3,
-    date: '2026-03-01 07:31',
-    title: '[출근등록 알림]',
-    body: '2026.03.01 출근 등록이 완료 되었습니다.\n출근 시간 : 07시 30분',
-  },
-  {
-    id: 4,
-    date: '2026-03-01 07:29',
-    title: '[차량연결 알림]',
-    body: '차량탑승이 감지되었습니다.\n연결차량 : 123 허 4567',
-  },
-  {
-    id: 5,
-    date: '2026-02-28 09:00',
-    title: '[정비필요 알림]',
-    body: '정비가 필요한 항목이 있습니다.\n정비관리 메뉴를 확인해주세요.',
-  },
-  {
-    id: 6,
-    date: '2026-02-27 18:15',
-    title: '[운행종료 알림]',
-    body: '차량운행 종료가 감지되었습니다.\n운행일지 작성을 완료합니다.',
-  },
-  {
-    id: 7,
-    date: '2026-02-27 08:45',
-    title: '[출근등록 알림]',
-    body: '2026.02.27 출근 등록이 완료 되었습니다.\n출근 시간 : 08시 44분',
-  },
-  {
-    id: 8,
-    date: '2026-02-26 17:30',
-    title: '[퇴근등록 알림]',
-    body: '2026.02.26 퇴근 등록이 완료 되었습니다.\n퇴근 시간 : 17시 29분',
-  },
-  {
-    id: 9,
-    date: '2026-02-26 09:10',
-    title: '[차량연결 알림]',
-    body: '차량탑승이 감지되었습니다.\n연결차량 : 456 가 7890',
-  },
-  {
-    id: 10,
-    date: '2026-02-25 13:00',
-    title: '[운행감지 알림]',
-    body: '차량운행이 감지되었습니다.\n운행일지 작성을 시작합니다.',
-  },
-];
+// ─── Bridge 인터페이스 ──────────────────────────────────────────
+declare global {
+  interface Window {
+    FlutterBridge?: {
+      postMessage: (message: string) => void;
+    };
+    // Flutter -> React 응답 콜백
+    updateNotifications?: (jsonString: string) => void;
+  }
+}
 
 // ─── 반환 타입 ───────────────────────────────────────────────
 export interface UseNotificationsReturn {
   notifications: Notification[];
   loaded: boolean;
   loading: boolean;
+  hasMore: boolean;            // 다음 페이지 존재 여부
   selectedId: number | null;
   userId: string | null;
+  isFabVisible: boolean;
+  onRefresh: () => void;
+  observerRef: React.RefObject<HTMLDivElement | null>;
+  scrollAreaRef: React.RefObject<HTMLDivElement | null>;
   onLoadMore: () => void;
   onSelectItem: (id: number) => void;
 }
@@ -94,36 +46,166 @@ export function useNotifications(): UseNotificationsReturn {
   const [loading, setLoading] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
-  /**
-   * 더보기 클릭 핸들러
-   * 실제 환경에서는 fetch 블록을 활성화하고 dummy 부분을 제거하세요.
-   */
-  const onLoadMore = useCallback(async () => {
-    setLoading(true);
-    try {
-      // ── 실제 API 호출 (추후 활성화) ──────────────────────────
-      // const res = await fetch('/api/notifications', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ userId }),
-      // });
-      // const data: Notification[] = await res.json();
-      // setNotifications(data);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFabVisible, setIsFabVisible] = useState(false);
 
-      // ── 더미 데이터 (개발용) ──────────────────────────────────
-      await new Promise((r) => setTimeout(r, 500));
-      setNotifications(DUMMY_NOTIFICATIONS);
-    } catch (err) {
-      console.error('알림 로드 실패:', err);
-    } finally {
+  const observerRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // 1. Flutter에서 데이터 응답 수신
+  const handleUpdateNotifications = useCallback((jsonString: string) => {
+    try {
+      const data = JSON.parse(jsonString) as {
+        notifications: Notification[];
+        hasMore: boolean;
+        offset: number;
+      };
+
+      setNotifications((prev) => {
+        // offset이 0이면 새로운 데이터로 덮어쓰기 (새로고침)
+        if (data.offset === 0) {
+          return data.notifications;
+        }
+        // 그 외엔 기존 배열 끝에 추가
+        return [...prev, ...data.notifications];
+      });
+
+      setHasMore(data.hasMore);
       setLoaded(true);
       setLoading(false);
+    } catch (err) {
+      console.error('Failed to parse notifications:', err);
+      setLoading(false);
     }
-  }, [userId]);
+  }, []);
+
+  // 2. 초기 로드시 전역 콜백 등록 및 첫 데이터 요청 (offset: 0)
+  useEffect(() => {
+    window.updateNotifications = handleUpdateNotifications;
+
+    setLoading(true);
+    if (window.FlutterBridge) {
+      window.FlutterBridge.postMessage(
+        JSON.stringify({
+          action: 'requestNotifications',
+          offset: 0,
+          limit: 10,
+        })
+      );
+    } else {
+      // Flutter 브릿지가 없을 경우 (웹 단독 테스트)
+      setTimeout(() => {
+        setLoaded(true);
+        setLoading(false);
+      }, 500);
+    }
+
+    return () => {
+      // cleanup
+      delete window.updateNotifications;
+    };
+  }, [handleUpdateNotifications]);
+
+  /**
+   * 3. 더보기 (Paging) 스크롤 시 호출
+   */
+  const onLoadMore = useCallback(() => {
+    if (!hasMore || loading) return;
+
+    setLoading(true);
+    if (window.FlutterBridge) {
+      window.FlutterBridge.postMessage(
+        JSON.stringify({
+          action: 'requestNotifications',
+          offset: notifications.length,
+          limit: 10,
+        })
+      );
+    } else {
+      setLoading(false);
+    }
+  }, [hasMore, loading, notifications.length]);
+
+  /**
+   * 4. 당겨서 새로고침 호출 (offset: 0)
+   */
+  const onRefresh = useCallback(() => {
+    if (loading) return;
+    setLoading(true);
+    if (window.FlutterBridge) {
+      window.FlutterBridge.postMessage(
+        JSON.stringify({
+          action: 'requestNotifications',
+          offset: 0,
+          limit: 10,
+        })
+      );
+    } else {
+      // 웹 단독 테스트용
+      setTimeout(() => {
+        setLoading(false);
+      }, 500);
+    }
+  }, [loading]);
+
+  /**
+   * 5. 무한 스크롤 자동 로드 (IntersectionObserver)
+   */
+  useEffect(() => {
+    const currentTarget = observerRef.current;
+    if (!currentTarget || loading || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          onLoadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(currentTarget);
+
+    return () => {
+      observer.unobserve(currentTarget);
+    };
+  }, [loading, hasMore, onLoadMore]);
+
+  /**
+   * 6. FAB(위로가기) 버튼 표시를 위한 스크롤 위치 감지
+   */
+  useEffect(() => {
+    const scrollArea = scrollAreaRef.current;
+    if (!scrollArea) return;
+
+    const handleScroll = () => {
+      if (scrollArea.scrollTop > 100) {
+        setIsFabVisible(true);
+      } else {
+        setIsFabVisible(false);
+      }
+    };
+
+    scrollArea.addEventListener('scroll', handleScroll);
+    return () => scrollArea.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const onSelectItem = useCallback((id: number) => {
     setSelectedId((prev) => (prev === id ? null : id));
   }, []);
 
-  return { notifications, loaded, loading, selectedId, userId, onLoadMore, onSelectItem };
+  return {
+    notifications,
+    loaded,
+    loading,
+    hasMore,
+    selectedId,
+    userId,
+    isFabVisible,
+    onRefresh,
+    observerRef,
+    scrollAreaRef,
+    onLoadMore,
+    onSelectItem,
+  };
 }

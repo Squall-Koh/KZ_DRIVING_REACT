@@ -2,12 +2,19 @@ import React from 'react';
 import blankIcon from '../../assets/icon_blank_notification.png';
 import type { Notification } from './useNotifications';
 
+import { usePullToRefresh } from './usePullToRefresh';
+
 // ─── Props 타입 ──────────────────────────────────────────────
 interface NotificationsViewProps {
   notifications: Notification[];
   loaded: boolean;
   loading: boolean;
+  hasMore: boolean;
   selectedId: number | null;
+  isFabVisible: boolean;
+  onRefresh: () => void;
+  observerRef: React.RefObject<HTMLDivElement | null>;
+  scrollAreaRef: React.RefObject<HTMLDivElement | null>;
   onLoadMore: () => void;
   onSelectItem: (id: number) => void;
 }
@@ -49,22 +56,43 @@ function NotificationCard({
   );
 }
 
-// ─── View 컴포넌트 (순수 UI) ─────────────────────────────────
 export function NotificationsView({
   notifications,
   loaded,
   loading,
   selectedId,
-  onLoadMore,
+  isFabVisible,
+  onRefresh,
+  observerRef,
+  scrollAreaRef,
   onSelectItem,
 }: NotificationsViewProps) {
   const hasNotifications = notifications.length > 0;
+  
+  // Pull-to-Refresh 훅 적용
+  const { pullDist, isPullRate } = usePullToRefresh(scrollAreaRef, onRefresh);
+
+  const scrollToTop = () => {
+    scrollAreaRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <div style={styles.container}>
 
       {/* ── 스크롤 콘텐츠 영역 ────────────────────────────────── */}
-      <div style={styles.scrollArea}>
+      <div style={styles.scrollArea} ref={scrollAreaRef as unknown as React.RefObject<HTMLDivElement>}>
+        
+        {/* Pull to Refresh Indicator */}
+        <div 
+          style={{
+            ...styles.ptrIndicator,
+            height: `${pullDist}px`,
+            opacity: isPullRate,
+          }}
+        >
+          {pullDist > 50 ? '놓아서 새로고침...' : '아래로 당기세요'}
+        </div>
+
         {!loaded ? (
           <EmptyState />
         ) : hasNotifications ? (
@@ -77,22 +105,25 @@ export function NotificationsView({
                 onSelect={() => onSelectItem(noti.id)}
               />
             ))}
+            
+            {/* ── 무한 스크롤 관측 타겟 ─────────────────────── */}
+            <div ref={observerRef as unknown as React.RefObject<HTMLDivElement>} style={{ height: '20px', backgroundColor: 'transparent' }} />
+            
+            {loading && (
+              <div style={styles.loadingFooter}>알림 불러오는 중...</div>
+            )}
           </div>
         ) : (
           <EmptyState />
         )}
       </div>
 
-      {/* ── 더보기 버튼 (하단 고정) ───────────────────────────── */}
-      <div style={styles.footer}>
-        <button
-          style={styles.loadMoreBtn}
-          onClick={onLoadMore}
-          disabled={loading}
-        >
-          {loading ? '불러오는 중...' : '더보기'}
+      {/* ── FAB (위로 가기 버튼) ────────────────────────────── */}
+      {isFabVisible && (
+        <button style={styles.fabBtn} onClick={scrollToTop}>
+          ↑
         </button>
-      </div>
+      )}
     </div>
   );
 }
@@ -113,6 +144,18 @@ const styles: Record<string, React.CSSProperties> = {
     overflowY: 'auto' as const,
     display: 'flex',
     flexDirection: 'column',
+    position: 'relative' as const,
+  },
+  
+  /* Pull to Refresh 스타일 */
+  ptrIndicator: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#888888',
+    fontSize: '13px',
+    transition: 'height 0.1s ease-out, opacity 0.1s ease-out',
+    overflow: 'hidden',
   },
 
   /* 빈 상태 */
@@ -184,25 +227,31 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: '1.6',
   },
 
-  /* 더보기 버튼 영역 */
-  footer: {
-    flexShrink: 0,
-    padding: '10px 16px',
-    display: 'flex',
-    justifyContent: 'center',
-    backgroundColor: '#ffffff',
+  loadingFooter: {
+    padding: '15px 0',
+    textAlign: 'center' as const,
+    fontSize: '13px',
+    color: '#888',
   },
-  loadMoreBtn: {
-    width: '35%',
-    minWidth: '120px',
-    padding: '12px 0',
-    borderRadius: '24px',
+
+  /* FAB (Floating Action Button) */
+  fabBtn: {
+    position: 'absolute' as const,
+    bottom: '24px',
+    right: '24px',
+    width: '46px',
+    height: '46px',
+    borderRadius: '50%',
+    backgroundColor: '#2b5cff',
+    color: '#ffffff',
+    fontSize: '20px',
+    fontWeight: 'bold',
     border: 'none',
-    backgroundColor: '#f0f0f0',
-    color: '#444444',
-    fontSize: '14px',
-    fontWeight: '500',
+    boxShadow: '0 4px 10px rgba(43,92,255,0.4)',
     cursor: 'pointer',
-    letterSpacing: '0.3px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
   },
 };

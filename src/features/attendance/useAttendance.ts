@@ -103,7 +103,7 @@ export interface UseAttendanceReturn {
   stats: AttendanceStats;
   workProgress: WorkProgress;
   monthOptions: string[];
-  scrollRef: React.RefObject<HTMLDivElement>;
+  scrollRef: React.RefObject<HTMLDivElement | null>;
   onSelectMonth: (m: string) => void;
   onTogglePopup: () => void;
   onClosePopup: () => void;

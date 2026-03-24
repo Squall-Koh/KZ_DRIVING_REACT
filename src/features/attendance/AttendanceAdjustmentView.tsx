@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import iconCalendar from '../../assets/icon_calendar.png';
 import iconClock from '../../assets/icon_clock.png';
 import { ClockTimePicker } from '../../components/ClockTimePicker';
-import type { UseAttendanceAdjustmentReturn, AdjustmentRecord } from './useAttendanceAdjustment';
+import type { UseAttendanceAdjustmentReturn } from './useAttendanceAdjustment';
 import { STATUS_STYLE } from './useAttendanceAdjustment';
 
 // ─── 근태조정 신청 탭 ────────────────────────────────────────

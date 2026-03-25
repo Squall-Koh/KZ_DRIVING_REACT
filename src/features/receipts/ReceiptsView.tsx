@@ -1,6 +1,4 @@
 import React from 'react';
-import iconKz from '../../assets/icon_kz.png';
-import iconMegaphone from '../../assets/icon_megaphone.png';
 import { DateRangePicker } from '../../components/DateRangePicker';
 import type { UseReceiptsReturn } from './useReceipts';
 
@@ -24,31 +22,8 @@ export function ReceiptsView({
 }: UseReceiptsReturn) {
   return (
     <div style={styles.container}>
-      {/* ── 고정 헤더 ─────────────────────────────────────────── */}
+      {/* ── 고정 영역 (경비 현황) ─────────────────────────────────── */}
       <div style={styles.fixedHeader}>
-        <div style={styles.userBar}>
-          <div style={styles.userLeft}>
-            <img src={iconKz} alt="kz" style={styles.logoIcon} />
-            <span style={styles.userName}>
-              {bridge.userName ? bridge.userName : '연결 대기중...'}
-            </span>
-          </div>
-        </div>
-        <div style={styles.vehicleBar}>
-          <img src={iconMegaphone} alt="차량" style={styles.megaphoneIcon} />
-          <span style={{
-            ...styles.vehicleBadge,
-            color: bridge.isVehicleConnected ? '#2b5cff' : '#aaaaaa',
-          }}>
-            {bridge.connectionStatus}
-          </span>
-          <div style={styles.divider} />
-          {bridge.plateNumber ? (
-            <span style={styles.vehicleInfo}>[{bridge.plateNumber}] {bridge.vehicleName}</span>
-          ) : (
-            <span style={{ ...styles.vehicleInfo, color: '#bbbbbb' }}>차량 정보를 기다리는 중...</span>
-          )}
-        </div>
 
         {/* ── 경비 현황 (고정) ─────────────────────────────────── */}
         <div style={styles.expenseStatusCard}>

@@ -1,7 +1,5 @@
 import React from 'react';
 import drivingHistoryImg from '../../assets/driving_history.png';
-import iconKz from '../../assets/icon_kz.png';
-import iconMegaphone from '../../assets/icon_megaphone.png';
 import type {
   DayGroup,
   TripRecord,
@@ -96,34 +94,8 @@ export function DrivingHistoryView({
   return (
     <div style={styles.container}>
 
-      {/* ── 고정 헤더 ─────────────────────────────────────────── */}
+      {/* ── 고정 영역 (통계 및 필터) ────────────────────────── */}
       <div style={styles.fixedHeader}>
-        {/* 사용자 바 */}
-        <div style={styles.userBar}>
-          <div style={styles.userLeft}>
-            <img src={iconKz} alt="kz" style={styles.logoIcon} />
-            <span style={styles.userName}>
-              {bridge.userName ? `${bridge.userName}` : '연결 대기중...'}
-            </span>
-          </div>
-        </div>
-
-        {/* 차량 연결 바 */}
-        <div style={styles.vehicleBar}>
-          <img src={iconMegaphone} alt="차량" style={styles.megaphoneIcon} />
-          <span style={{
-            ...styles.vehicleBadge,
-            color: bridge.isVehicleConnected ? '#2b5cff' : '#aaaaaa',
-          }}>
-            {bridge.connectionStatus}
-          </span>
-          <div style={styles.divider} />
-          {bridge.plateNumber ? (
-            <span style={styles.vehicleInfo}>[{bridge.plateNumber}] {bridge.vehicleName}</span>
-          ) : (
-            <span style={{ ...styles.vehicleInfo, color: '#bbbbbb' }}>차량 정보를 기다리는 중...</span>
-          )}
-        </div>
 
         {/* 통계 박스 */}
         <div style={styles.statsBox}>

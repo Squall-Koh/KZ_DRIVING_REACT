@@ -1,6 +1,4 @@
 import React from 'react';
-import iconKz from '../../assets/icon_kz.png';
-import iconMegaphone from '../../assets/icon_megaphone.png';
 import { barColor, barWidth } from './useMaintenance';
 import type { MaintenanceItem, UseMaintenanceReturn } from './useMaintenance';
 
@@ -54,32 +52,8 @@ export function MaintenanceView({
   return (
     <div style={styles.container}>
 
-      {/* ── 고정 헤더 ─────────────────────────────────────────── */}
+      {/* ── 고정 헤더 (차량 선택기) ─────────────────────────── */}
       <div style={styles.fixedHeader}>
-        <div style={styles.userBar}>
-          <div style={styles.userLeft}>
-            <img src={iconKz} alt="kz" style={styles.logoIcon} />
-            <span style={styles.userName}>
-              {bridge.userName ? bridge.userName : '연결 대기중...'}
-            </span>
-          </div>
-        </div>
-
-        <div style={styles.vehicleBar}>
-          <img src={iconMegaphone} alt="차량" style={styles.megaphoneIcon} />
-          <span style={{
-            ...styles.vehicleBadge,
-            color: bridge.isVehicleConnected ? '#2b5cff' : '#aaaaaa',
-          }}>
-            {bridge.connectionStatus}
-          </span>
-          <div style={styles.divider} />
-          {bridge.plateNumber ? (
-            <span style={styles.vehicleInfo}>[{bridge.plateNumber}] {bridge.vehicleName}</span>
-          ) : (
-            <span style={{ ...styles.vehicleInfo, color: '#bbbbbb' }}>차량 정보를 기다리는 중...</span>
-          )}
-        </div>
 
         <div style={styles.vehicleSelector} onClick={onToggleVehicleMenu}>
           <span style={styles.vehicleSelectorName}>

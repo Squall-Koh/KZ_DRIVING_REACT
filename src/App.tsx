@@ -13,9 +13,13 @@ import { Receipts }             from './pages/m/Receipts';
 import { ReceiptsList }         from './pages/m/ReceiptsList';
 import { ReceiptsHistory }      from './pages/m/ReceiptsHistory';
 
+import { DailyTripHistory }     from './pages/m/DailyTripHistory';
+
 // ─── Web Pages ────────────────────────────────────────────────
 import { MainPage } from './pages/web/MainPage';
 import { OperationDashboard } from './pages/m/OperationDashboard';
+
+import { MainLayout } from './layouts/MainLayout';
 
 function AppRoutes() {
   useSwipeNavigation();
@@ -25,16 +29,21 @@ function AppRoutes() {
       {/* Web / Desktop Intro */}
       <Route path="/intro"    element={<MainPage />} />
 
-      {/* Mobile (Flutter WebView) */}
-      <Route path="/"                       element={<OperationDashboard />} />
+      {/* Main Tabs (Layout with Header, NavBar, Hero) */}
+      <Route element={<MainLayout />}>
+        <Route path="/"                       element={<OperationDashboard />} />
+        <Route path="/driving-history"        element={<DrivingHistory />} />
+        <Route path="/attendance"             element={<Attendance />} />
+        <Route path="/receipts"               element={<Receipts />} />
+        <Route path="/maintenance"            element={<Maintenance />} />
+      </Route>
+
+      {/* Full Screen Sub Pages (No NavBar) */}
       <Route path="/notifications"          element={<Notifications />} />
-      <Route path="/driving-history"        element={<DrivingHistory />} />
-      <Route path="/attendance"             element={<Attendance />} />
+      <Route path="/daily-trip-history"     element={<DailyTripHistory />} />
       <Route path="/attendance/detail"      element={<AttendanceDetail />} />
       <Route path="/attendance/adjustment"  element={<AttendanceAdjustment />} />
-      <Route path="/maintenance"            element={<Maintenance />} />
       <Route path="/maintenance/detail"     element={<MaintenanceDetail />} />
-      <Route path="/receipts"               element={<Receipts />} />
       <Route path="/receipts/list"          element={<ReceiptsList />} />
       <Route path="/receipts/history"       element={<ReceiptsHistory />} />
     </Routes>

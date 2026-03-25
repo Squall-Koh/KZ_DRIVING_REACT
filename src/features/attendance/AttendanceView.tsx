@@ -1,6 +1,3 @@
-import React from 'react';
-import iconKz from '../../assets/icon_kz.png';
-import iconMegaphone from '../../assets/icon_megaphone.png';
 import type { UseAttendanceReturn, WeekRecord } from './useAttendance';
 
 // ─── 반원 게이지 ──────────────────────────────────────────────
@@ -100,31 +97,10 @@ export function AttendanceView({
     <div style={styles.container}>
 
       {/* ── 고정 헤더 ─────────────────────────────────────────── */}
-      <div style={styles.fixedHeader}>
-        <div style={styles.userBar}>
-          <div style={styles.userLeft}>
-            <img src={iconKz} alt="kz" style={styles.logoIcon} />
-            <span style={styles.userName}>
-              {bridge.userName ? bridge.userName : '연결 대기중...'}
-            </span>
-          </div>
-        </div>
-        <div style={styles.vehicleBar}>
-          <img src={iconMegaphone} alt="차량" style={styles.megaphoneIcon} />
-          <span style={{
-            ...styles.vehicleBadge,
-            color: bridge.isVehicleConnected ? '#2b5cff' : '#aaaaaa',
-          }}>
-            {bridge.connectionStatus}
-          </span>
-          <div style={styles.divider} />
-          {bridge.plateNumber ? (
-            <span style={styles.vehicleInfo}>[{bridge.plateNumber}] {bridge.vehicleName}</span>
-          ) : (
-            <span style={{ ...styles.vehicleInfo, color: '#bbbbbb' }}>차량 정보를 기다리는 중...</span>
-          )}
-        </div>
-      </div>
+      {/* 
+        MainLayout에 공통 헤더가 생성되었으므로, 해당 서브 뷰 내부의 헤더는 제거합니다. 
+        사용자 정보 및 차량 정보는 MainLayout에서 관리됩니다.
+      */}
 
       {/* ── 스크롤 영역 ──────────────────────────────────────── */}
       <div style={styles.scrollArea} ref={scrollRef}>

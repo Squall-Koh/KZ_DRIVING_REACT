@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, RefreshCw } from 'lucide-react';
 import blankIcon from '../../assets/icon_blank_notification.png';
 import type { Notification } from './useNotifications';
 
@@ -73,7 +73,7 @@ export function NotificationsView({
   const hasNotifications = notifications.length > 0;
   
   // Pull-to-Refresh 훅 적용
-  const { pullDist, isPullRate } = usePullToRefresh(
+  const { pullDist, isPullRate, isPulling } = usePullToRefresh(
     scrollAreaRef as unknown as React.RefObject<HTMLDivElement>, 
     onRefresh, 
     loading && notifications.length > 0
@@ -103,9 +103,19 @@ export function NotificationsView({
             ...styles.ptrIndicator,
             height: `${pullDist}px`,
             opacity: isPullRate,
+            transition: isPulling ? 'none' : 'height 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
           }}
         >
-          {loading && pullDist > 0 ? '알림 목록을 갱신 중...' : (pullDist > 50 ? '놓아서 새로고침...' : '아래로 당기세요')}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, transform: `translateY(${pullDist < 60 ? (60 - pullDist)/2 : 0}px)` }}>
+            <RefreshCw 
+              size={16} 
+              color="#888" 
+              style={{ transform: `rotate(${isPullRate * 360}deg)` }} 
+            />
+            <span>
+              {loading && pullDist > 0 ? '알림 목록을 갱신 중...' : (pullDist > 50 ? '놓아서 새로고침...' : '아래로 당기세요')}
+            </span>
+          </div>
         </div>
 
         {!loaded ? (
@@ -186,6 +196,8 @@ const styles: Record<string, React.CSSProperties> = {
   scrollArea: {
     flex: 1,
     overflowY: 'auto' as const,
+    backgroundColor: '#fff',
+    overscrollBehaviorY: 'none', // 모바일 브라우저/플러터 오버스크롤 방지
     display: 'flex',
     flexDirection: 'column',
     position: 'relative' as const,
@@ -200,6 +212,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '13px',
     transition: 'height 0.1s ease-out, opacity 0.1s ease-out',
     overflow: 'hidden',
+    flexShrink: 0,
   },
 
   /* 빈 상태 */

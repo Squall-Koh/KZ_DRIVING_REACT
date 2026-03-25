@@ -5,7 +5,7 @@
 }
 
 @layer base {
-  body {
+html, body {
     background-color: var(--color-background);
     color: #1e293b; /* slate-800 */
     margin: 0;
@@ -13,5 +13,6 @@
     height: 100%;
     font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none; /* 플러터/크롬 네이티브 Pull-to-refresh 방지 */
   }
 }

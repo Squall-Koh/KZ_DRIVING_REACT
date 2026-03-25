@@ -20,8 +20,8 @@ export function usePullToRefresh(
   }, [isRefreshing, isPulling, threshold]);
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
-    // 스크롤이 최상단일 때만 당기기 시작
-    if (scrollRef.current && scrollRef.current.scrollTop === 0) {
+    // 스크롤이 최상단(또는 거의 최상단)일 때만 당기기 시작
+    if (scrollRef.current && scrollRef.current.scrollTop <= 2) {
       setStartY(e.touches[0].clientY);
       setIsPulling(true);
     }
@@ -32,10 +32,9 @@ export function usePullToRefresh(
     const currentY = e.touches[0].clientY;
     const dist = currentY - startY;
 
-    // 아래로 당길 때만 계산
+    // 아래로 당길 때만 계산 (저항값 없음 - 당긴 거리 = 화면 이동)
     if (dist > 0) {
-      // 당기는 저항력 적용 (실제 거리의 30%)
-      setPullDist(Math.min(dist * 0.3, threshold + 20));
+      setPullDist(Math.min(dist, threshold + 30));
       // 네이티브 스크롤 방지
       if (e.cancelable) e.preventDefault();
     }
@@ -65,7 +64,7 @@ export function usePullToRefresh(
       el.removeEventListener('touchmove', handleTouchMove);
       el.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [handleTouchStart, handleTouchMove, handleTouchEnd, scrollRef]);
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd, scrollRef, scrollRef.current]);
 
-  return { pullDist, isPullRate: Math.min(pullDist / threshold, 1) };
+  return { pullDist, isPullRate: Math.min(pullDist / threshold, 1), isPulling };
 }

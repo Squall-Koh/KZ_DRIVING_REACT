@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import iconCalendar from '../../assets/icon_calendar.png';
-import { Clock } from 'lucide-react';
+import { Clock, RefreshCw } from 'lucide-react';
 import { ClockTimePicker } from '../../components/ClockTimePicker';
 import { DatePicker } from '../../components/DatePicker';
 import { usePullToRefresh } from '../notifications/usePullToRefresh';
@@ -128,73 +128,97 @@ function AdjustTab({
 // ─── 결재현황 탭 ─────────────────────────────────────────────
 function ApprovalTab({
   adjustments, loading, hasMore, observerRef, 
-  pullDist, isPullRate, isFabVisible, scrollToTop, snackbarMessage
+  onRefresh, isRefreshing, snackbarMessage
 }: {
   adjustments: AdjustmentRecord[];
   loading: boolean;
   hasMore: boolean;
   observerRef: React.RefObject<HTMLDivElement | null>;
-  pullDist: number;
-  isPullRate: number;
-  isFabVisible: boolean;
-  scrollToTop: () => void;
+  onRefresh: () => void;
+  isRefreshing: boolean;
   snackbarMessage: string | null;
 }) {
   const [dialogConfig, setDialogConfig] = useState<{type: 'cancel' | 'edit'; id: number} | null>(null);
+  const [isFabVisible, setIsFabVisible] = useState(false);
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  const { pullDist, isPullRate, isPulling } = usePullToRefresh(
+    scrollRef as React.RefObject<HTMLDivElement>,
+    onRefresh,
+    isRefreshing
+  );
+
+  const scrollToTop = () => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+
+  const handleScroll = () => {
+    setIsFabVisible((scrollRef.current?.scrollTop ?? 0) > 100);
+  };
 
   return (
     <>
-      <div style={{
+      {/* 스크롤 가능한 영역 — 알림 화면과 동일하게 자체 관리 */}
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        style={{ flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehaviorY: 'none', display: 'flex', flexDirection: 'column', position: 'relative' }}
+      >
+        {/* Pull to Refresh Indicator */}
+        <div style={{
           ...ts.ptrIndicator,
           height: `${pullDist}px`,
           opacity: isPullRate,
+          transition: isPulling ? 'none' : 'height 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
         }}>
-        {loading && pullDist > 0 ? '데이터를 가져오는 중...' : (pullDist > 50 ? '놓아서 새로고침...' : '아래로 당기세요')}
-      </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <RefreshCw size={16} color="#888" style={{ transform: `rotate(${isPullRate * 360}deg)` }} />
+            <span>
+              {isRefreshing ? '데이터를 가져오는 중...' : (pullDist > 50 ? '놓아서 새로고침...' : '아래로 당기세요')}
+            </span>
+          </div>
+        </div>
 
-      <div style={ts.approvalList}>
-        {adjustments.map((item) => (
-          <div key={`${item.id}-${Math.random()}`} style={ts.approvalCard}>
-            <div style={ts.approvalTop}>
-              <span style={ts.approvalDate}>{item.submitDate} 제출</span>
-              <span style={{ ...ts.statusBadge, ...(STATUS_STYLE[item.status] || {}) }}>
-                {item.status}
-              </span>
-            </div>
-            <div style={ts.approvalTitle}>근태조정 신청서</div>
-            <div style={ts.approvalTime}>
-              근무일자: {item.workDate} <br/>
-              조정시간: {item.timeFrom} ~ {item.timeTo}
-            </div>
-            
-            {item.status === '결재대기' && (
-              <div style={ts.approvalActions}>
-                <button style={ts.cancelBtn} onClick={() => setDialogConfig({type: 'cancel', id: item.id})}>등록취소</button>
-                <button style={ts.editBtn} onClick={() => setDialogConfig({type: 'edit', id: item.id})}>수정</button>
+        <div style={ts.approvalList}>
+          {adjustments.map((item) => (
+            <div key={item.id} style={ts.approvalCard}>
+              <div style={ts.approvalTop}>
+                <span style={ts.approvalDate}>{item.submitDate}</span>
+                <span style={{ ...ts.statusBadge, ...(STATUS_STYLE[item.status] || {}) }}>
+                  {item.status}
+                </span>
               </div>
-            )}
-          </div>
-        ))}
+              <div style={ts.approvalTitle}>근태조정 신청서</div>
+              <div style={ts.approvalTime}>
+                근무일자: {item.workDate} <br/>
+                조정시간: {item.timeFrom} ~ {item.timeTo}
+              </div>
+              
+              {item.status === '결재대기' && (
+                <div style={ts.approvalActions}>
+                  <button style={ts.cancelBtn} onClick={() => setDialogConfig({type: 'cancel', id: item.id})}>등록취소</button>
+                  <button style={ts.editBtn} onClick={() => setDialogConfig({type: 'edit', id: item.id})}>수정</button>
+                </div>
+              )}
+            </div>
+          ))}
 
-        {hasMore && (
-           <div ref={observerRef as unknown as React.RefObject<HTMLDivElement>} style={{ height: '20px', backgroundColor: 'transparent' }} />
-        )}
-        {loading && (
-          <div style={{ textAlign: 'center', padding: '20px', color: '#888', fontSize: 13 }}>
-            목록 불러오는 중...
-          </div>
-        )}
-        {!loading && !hasMore && adjustments.length > 0 && (
-          <div style={{ textAlign: 'center', padding: '20px', color: '#bbb', fontSize: 13 }}>
-            더 이상 내역이 없습니다.
-          </div>
-        )}
+          {hasMore && (
+            <div ref={observerRef as unknown as React.RefObject<HTMLDivElement>} style={{ height: '20px' }} />
+          )}
+          {loading && (
+            <div style={{ textAlign: 'center', padding: '20px', color: '#888', fontSize: 13 }}>
+              목록 불러오는 중...
+            </div>
+          )}
+          {!loading && !hasMore && adjustments.length > 0 && (
+            <div style={{ textAlign: 'center', padding: '20px', color: '#bbb', fontSize: 13 }}>
+              더 이상 내역이 없습니다.
+            </div>
+          )}
+        </div>
       </div>
 
       {isFabVisible && (
-        <button style={ts.fabBtn} onClick={scrollToTop}>
-          ↑
-        </button>
+        <button style={ts.fabBtn} onClick={scrollToTop}>↑</button>
       )}
 
       {dialogConfig && (
@@ -211,9 +235,7 @@ function ApprovalTab({
       )}
 
       {snackbarMessage && (
-        <div style={ts.snackbar}>
-          {snackbarMessage}
-        </div>
+        <div style={ts.snackbar}>{snackbarMessage}</div>
       )}
     </>
   );
@@ -222,14 +244,6 @@ function ApprovalTab({
 // ─── View 컴포넌트 (순수 UI) ─────────────────────────────────
 export function AttendanceAdjustmentView(props: UseAttendanceAdjustmentReturn) {
   const { tab, onTabChange, onBack } = props;
-
-  // Pull-to-Refresh 훅 적용 (결재현황 탭일 때만 활성화)
-  const isApprovalRefreshing = tab === 'approval' && props.loading && props.adjustments.length > 0;
-  const { pullDist, isPullRate } = usePullToRefresh(props.scrollAreaRef, props.onRefresh, isApprovalRefreshing);
-
-  const scrollToTop = () => {
-    props.scrollAreaRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   return (
     <div style={styles.container}>
@@ -268,10 +282,8 @@ export function AttendanceAdjustmentView(props: UseAttendanceAdjustmentReturn) {
             loading={props.loading}
             hasMore={props.hasMore}
             observerRef={props.observerRef}
-            pullDist={pullDist}
-            isPullRate={isPullRate}
-            isFabVisible={props.isFabVisible}
-            scrollToTop={scrollToTop}
+            onRefresh={props.onRefresh}
+            isRefreshing={props.loading && props.adjustments.length > 0}
             snackbarMessage={props.snackbarMessage}
           />
         )}
@@ -281,15 +293,15 @@ export function AttendanceAdjustmentView(props: UseAttendanceAdjustmentReturn) {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: { display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#f5f5f7', fontFamily: "'Pretendard','Noto Sans KR',sans-serif", overflow: 'hidden', position: 'relative' },
+  container: { display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#ffffff', fontFamily: "'Pretendard','Noto Sans KR',sans-serif", overflow: 'hidden', position: 'relative' },
   header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', backgroundColor: '#fff', borderBottom: '1px solid #eee', flexShrink: 0 },
   backBtn: { fontSize: 24, color: '#333', background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px', lineHeight: 1 },
   title: { fontSize: 16, fontWeight: 700, color: '#111' },
-  tabRow: { display: 'flex', backgroundColor: '#ebebf0', margin: '16px 16px 12px', borderRadius: 12, padding: 4, flexShrink: 0 },
-  tabBtn: { flex: 1, padding: '10px 0', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.2s', borderRadius: 10, background: 'none' },
-  tabActive: { backgroundColor: '#fff', color: '#111', boxShadow: '0 1px 4px rgba(0,0,0,0.10)' },
-  tabInactive: { backgroundColor: 'transparent', color: '#8e8e93' },
-  content: { flex: 1, overflowY: 'auto' as const, display: 'flex', flexDirection: 'column' },
+  tabRow: { display: 'flex', backgroundColor: '#f3f4f6', margin: '20px 16px 16px', borderRadius: 50, padding: 4, flexShrink: 0 },
+  tabBtn: { flex: 1, padding: '12px 0', fontSize: 15, fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.2s', borderRadius: 50, background: 'none' },
+  tabActive: { backgroundColor: '#fff', color: '#111', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' },
+  tabInactive: { backgroundColor: 'transparent', color: '#9ca3af', fontWeight: 500 },
+  content: { flex: 1, overflowY: 'auto', backgroundColor: '#fff', position: 'relative', overscrollBehaviorY: 'none', display: 'flex', flexDirection: 'column', minHeight: 0 },
 };
 
 const ts: Record<string, React.CSSProperties> = {
@@ -320,20 +332,20 @@ const ts: Record<string, React.CSSProperties> = {
   submitBtn: { padding: '14px 0', fontSize: 15, fontWeight: 700, backgroundColor: '#3b82f6', color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer', marginBottom: 8 },
   
   // 결재현황 탭 스타일링
-  ptrIndicator: { display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888888', fontSize: '13px', transition: 'height 0.1s ease-out, opacity 0.1s ease-out', overflow: 'hidden' },
-  approvalList: { display: 'flex', flexDirection: 'column', padding: 16, gap: 10 },
-  approvalCard: { backgroundColor: '#fff', borderRadius: 12, padding: '14px 16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
-  approvalTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  approvalDate: { fontSize: 12, color: '#888' },
-  statusBadge: { fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 10 },
-  approvalTitle: { fontSize: 14, fontWeight: 700, color: '#111', marginBottom: 4 },
-  approvalTime: { fontSize: 13, color: '#555', marginBottom: 12, lineHeight: 1.5 },
-  approvalActions: { display: 'flex', gap: 8, borderTop: '1px dashed #eee', paddingTop: 12 },
-  cancelBtn: { flex: 1, padding: '10px 0', fontSize: 13, fontWeight: 600, backgroundColor: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: 8, cursor: 'pointer' },
-  editBtn: { flex: 1, padding: '10px 0', fontSize: 13, fontWeight: 600, backgroundColor: '#eff6ff', color: '#2563eb', border: 'none', borderRadius: 8, cursor: 'pointer' },
+  ptrIndicator: { display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888888', fontSize: '13px', transition: 'height 0.1s ease-out, opacity 0.1s ease-out', overflow: 'hidden', flexShrink: 0 },
+  approvalList: { display: 'flex', flexDirection: 'column', padding: 16, gap: 12 },
+  approvalCard: { backgroundColor: '#fff', borderRadius: 12, padding: '16px', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', border: '1px solid #f1f3f5' },
+  approvalTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  approvalDate: { fontSize: 14, color: '#3b82f6', fontWeight: 500 },
+  statusBadge: { fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 12 },
+  approvalTitle: { fontSize: 16, fontWeight: 700, color: '#111', marginBottom: 8 },
+  approvalTime: { fontSize: 14, color: '#6b7280', marginBottom: 16, lineHeight: 1.5 },
+  approvalActions: { display: 'flex', gap: 10 },
+  cancelBtn: { flex: 1, padding: '12px 0', fontSize: 14, fontWeight: 600, backgroundColor: '#f87171', color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer' },
+  editBtn: { flex: 1, padding: '12px 0', fontSize: 14, fontWeight: 600, backgroundColor: '#f3f4f6', color: '#6b7280', border: 'none', borderRadius: 10, cursor: 'pointer' },
 
   fabBtn: {
-    position: 'absolute' as const, bottom: 24, right: 16, width: 48, height: 48, 
+    position: 'fixed' as const, bottom: 24, right: 16, width: 48, height: 48, 
     borderRadius: '50%', backgroundColor: '#2563eb', color: '#fff', fontSize: 24, 
     fontWeight: 'bold', border: 'none', boxShadow: '0 4px 12px rgba(37,99,235,0.4)', 
     cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', 
@@ -342,7 +354,7 @@ const ts: Record<string, React.CSSProperties> = {
 
   // 1회용 스낵바
   snackbar: {
-    position: 'absolute' as const, bottom: 32, left: '50%', transform: 'translateX(-50%)',
+    position: 'fixed' as const, bottom: 32, left: '50%', transform: 'translateX(-50%)',
     backgroundColor: '#333', color: '#fff', padding: '12px 20px', borderRadius: 8,
     fontSize: 14, fontWeight: 500, boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
     zIndex: 100, pointerEvents: 'none' as const, animation: 'fadeInOut 3s ease-in-out',
@@ -351,8 +363,8 @@ const ts: Record<string, React.CSSProperties> = {
 
   // 팝업 모달
   modalOverlay: {
-    position: 'absolute' as const, top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 999,
+    position: 'fixed' as const, top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 9999,
     display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
   },
   modalContent: {

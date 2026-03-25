@@ -216,7 +216,7 @@ const styles: Record<string, React.CSSProperties> = {
   statsBox: {
     display: 'flex',
     backgroundColor: '#ffffff',
-    margin: '0 16px 8px',
+    margin: '16px 16px 8px',
     padding: '14px 0',
     borderRadius: '10px',
     boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
@@ -277,13 +277,11 @@ const styles: Record<string, React.CSSProperties> = {
   },
   popupItemSelected: { backgroundColor: '#eff6ff', color: '#2563eb', fontWeight: '600' },
   emptyWrapper: {
-    flex: 1,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingTop: '60px',
     gap: '16px',
-    padding: '60px 0',
   },
   emptyImage: { width: '130px', height: '130px', objectFit: 'contain' },
   emptyText: { fontSize: '14px', color: '#888888', margin: 0 },

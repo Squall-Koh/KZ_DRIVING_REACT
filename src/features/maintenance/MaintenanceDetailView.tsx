@@ -1,4 +1,5 @@
-import React, { useRef } from 'react';
+import React, { useState } from 'react';
+import { DatePicker } from '../../components/DatePicker';
 import iconCalendar from '../../assets/icon_calendar.png';
 import type {
   ReceiptRecord,
@@ -16,7 +17,7 @@ function RegisterTab({
   receipts: ReceiptRecord[];
   onDateChange: (date: string) => void;
 }) {
-  const dateRef = useRef<HTMLInputElement>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const displayDate = mainDate ? mainDate : '';
 
   return (
@@ -24,27 +25,18 @@ function RegisterTab({
       <div style={ts.fixedTop}>
         <div style={ts.fieldGroup}>
           <label style={ts.label}>정비일자 <span style={{ color: '#ef4444' }}>*</span></label>
-          <div style={ts.inputRow}>
+          <div style={{...ts.inputRow, cursor: 'pointer'}} onClick={() => setShowDatePicker(true)}>
             <input
-              style={ts.input}
+              style={{...ts.input, cursor: 'pointer'}}
               type="text"
               readOnly
               placeholder="정비일자를 선택해주세요."
               value={displayDate}
-              onClick={() => dateRef.current?.showPicker()}
-            />
-            <input
-              ref={dateRef}
-              type="date"
-              style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: 0, height: 0 }}
-              value={mainDate}
-              onChange={(e) => onDateChange(e.target.value)}
             />
             <img
               src={iconCalendar}
               alt="calendar"
-              style={{ ...ts.iconImg, cursor: 'pointer' }}
-              onClick={() => dateRef.current?.showPicker()}
+              style={ts.iconImg}
             />
           </div>
         </div>
@@ -55,6 +47,17 @@ function RegisterTab({
           <p style={ts.hint}>* 차량 정비를 위한 경비가 발생한 경우 경비를 등록해주세요.</p>
         </div>
       </div>
+
+      {showDatePicker && (
+        <DatePicker
+          initialDate={mainDate}
+          onConfirm={(date) => {
+            onDateChange(date);
+            setShowDatePicker(false);
+          }}
+          onCancel={() => setShowDatePicker(false)}
+        />
+      )}
 
       <div style={ts.receiptScroll}>
         {receipts.map((r) => (
@@ -164,7 +167,7 @@ export function MaintenanceDetailView({
 const s: Record<string, React.CSSProperties> = {
   container: {
     display: 'flex', flexDirection: 'column', height: '100vh',
-    backgroundColor: '#f5f5f7', fontFamily: "'Pretendard','Noto Sans KR',sans-serif",
+    backgroundColor: '#fff', fontFamily: "'Pretendard','Noto Sans KR',sans-serif",
     overflow: 'hidden',
   },
   header: {
@@ -216,7 +219,10 @@ const ts: Record<string, React.CSSProperties> = {
     backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: 10,
     cursor: 'pointer', color: '#555',
   },
-  receiptCard: { backgroundColor: '#fff', borderRadius: 12, padding: '14px 16px', border: '1px solid #e5e7eb' },
+  receiptCard: {
+    backgroundColor: '#fff', borderRadius: 12, padding: '14px 16px',
+    border: '1px solid #f1f3f5', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', transition: 'all 0.2s',
+  },
   receiptTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   receiptDate: { fontSize: 13, fontWeight: 700, color: '#4D7EFF' },
   editBtn: { fontSize: 13, color: '#555', cursor: 'pointer' },
@@ -228,7 +234,10 @@ const ts: Record<string, React.CSSProperties> = {
     border: 'none', borderRadius: 12, backgroundColor: '#4f7cff', color: '#fff', cursor: 'pointer',
   },
   historyList: { display: 'flex', flexDirection: 'column', gap: 10, padding: '12px 16px' },
-  historyCard: { backgroundColor: '#fff', borderRadius: 12, padding: '14px 16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' },
+  historyCard: {
+    backgroundColor: '#fff', borderRadius: 12, padding: '14px 16px',
+    border: '1px solid #f1f3f5', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', transition: 'all 0.2s',
+  },
   historyTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   historyDate: { fontSize: 13, fontWeight: 700, color: '#4D7EFF' },
   historyKm: { fontSize: 12, color: '#555', backgroundColor: '#f3f4f6', padding: '3px 10px', borderRadius: 20, fontWeight: 600 },

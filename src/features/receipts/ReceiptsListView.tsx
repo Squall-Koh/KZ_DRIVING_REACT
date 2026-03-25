@@ -264,7 +264,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   header: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '14px 16px', backgroundColor: '#fff', flexShrink: 0,
+    padding: '14px 16px', backgroundColor: '#fff', borderBottom: '1px solid #eee', flexShrink: 0,
   },
   backBtn: { fontSize: 24, color: '#333', background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px', lineHeight: 1 },
   title: { fontSize: 16, fontWeight: 700, color: '#111' },
@@ -305,15 +305,17 @@ const s: Record<string, React.CSSProperties> = {
   calendarIcon: { width: 18, height: 18, flexShrink: 0, cursor: 'pointer', opacity: 0.6 },
   dateTilde: { color: '#64748b', fontWeight: 600 },
 
-  sectionHeader: { padding: '0 16px 12px' },
-  sectionTitle: { fontSize: 16, fontWeight: 700, color: '#111', marginBottom: 6 },
+  sectionHeader: {
+    display: 'flex', flexDirection: 'column', padding: '16px 16px 8px'
+  },
+  sectionTitle: { fontSize: 16, fontWeight: 700, color: '#111', marginBottom: 4 },
   sectionDesc: { fontSize: 13, color: '#64748b' },
 
-  listContainer: { padding: '0 16px 24px', display: 'flex', flexDirection: 'column', gap: 12 },
+  listContainer: { padding: '8px 16px 24px', display: 'flex', flexDirection: 'column', gap: 12 },
   receiptCard: {
     padding: '16px', backgroundColor: '#fff', border: '1px solid #f1f3f5',
     borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 6,
-    boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+    boxShadow: '0 4px 16px rgba(0,0,0,0.18)', cursor: 'pointer', transition: 'all 0.2s',
   },
   receiptTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   receiptDate: { fontSize: 13, color: '#4f7cff', fontWeight: 500 },

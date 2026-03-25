@@ -39,9 +39,11 @@ const DUMMY_RECEIPTS: Record<string, ReceiptRecord[]> = {
 
 const DUMMY_HISTORY: Record<string, HistoryRecord[]> = {
   engine_oil: [
-    { id: 1, date: '2026.03.01', km: 19800, description: '엔진오일 교환', manager: '홍길동' },
-    { id: 2, date: '2025.12.13', km: 13200, description: '엔진오일 교환', manager: '홍길동' },
-    { id: 3, date: '2025.08.01', km:  7000, description: '엔진오일 교환', manager: '홍길동' },
+    { id: 1, date: '2026.03.01', km: 42800, description: '합성 엔진오일 교환 및 코팅제 주입', manager: '김철수' },
+    { id: 2, date: '2025.12.13', km: 33200, description: '순정 엔진오일 세트 교환', manager: '홍길동' },
+    { id: 3, date: '2025.08.01', km: 24000, description: '엔진오일 교환 및 에어필터 점검', manager: '이영희' },
+    { id: 4, date: '2025.03.15', km: 15500, description: '순정 엔진오일 교환', manager: '박지성' },
+    { id: 5, date: '2024.11.02', km:  8000, description: '성능점검 및 최초 엔진오일 교환', manager: '김철수' },
   ],
   air_filter: [
     { id: 1, date: '2025.11.10', km: 11500, description: '에어컨 필터 교환', manager: '김민준' },
@@ -72,8 +74,8 @@ export function useMaintenanceDetail(): UseMaintenanceDetailReturn {
   const [tab, setTab] = useState<TabType>('register');
   const [mainDate, setMainDate] = useState('');
 
-  const receipts      = DUMMY_RECEIPTS[item.id]  ?? [];
-  const historyRecords = DUMMY_HISTORY[item.id]   ?? [];
+  const receipts      = DUMMY_RECEIPTS[item.id]  ?? DUMMY_RECEIPTS['engine_oil'];
+  const historyRecords = DUMMY_HISTORY[item.id]   ?? DUMMY_HISTORY['engine_oil'];
 
   const onTabChange  = (t: TabType) => setTab(t);
   const onDateChange = (d: string)  => setMainDate(d);

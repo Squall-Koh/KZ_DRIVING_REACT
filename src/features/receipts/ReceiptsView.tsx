@@ -4,7 +4,6 @@ import { SelectDropdown } from '../../components/SelectDropdown';
 import type { UseReceiptsReturn } from './useReceipts';
 
 export function ReceiptsView({
-  bridge,
   expenseStatus,
   receiptsToProcess,
   corporateCardInfo,
@@ -302,8 +301,8 @@ function ManualReceiptPopup({ onClose }: { onClose: () => void }) {
 
 // ─── 스타일 ──────────────────────────────────────────────────
 const styles: Record<string, React.CSSProperties> = {
-  container: { display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#f5f5f7', fontFamily: "'Pretendard','Noto Sans KR',sans-serif", overflow: 'hidden' },
-  fixedHeader: { flexShrink: 0, position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#f5f5f7' },
+  container: { display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#fff', fontFamily: "'Pretendard','Noto Sans KR',sans-serif", overflow: 'hidden' },
+  fixedHeader: { flexShrink: 0, position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#fff', borderBottom: '1px solid #eee' },
   userBar: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px 8px' },
   userLeft: { display: 'flex', alignItems: 'center', gap: 8 },
   logoIcon: { width: 'auto', height: 'auto', objectFit: 'contain' as const },
@@ -315,7 +314,7 @@ const styles: Record<string, React.CSSProperties> = {
   vehicleInfo: { fontSize: 14, color: '#444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
   
   // Expense Status Card
-  expenseStatusCard: { margin: '16px 16px 8px', padding: '20px 16px', backgroundColor: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
+  expenseStatusCard: { margin: '16px 16px 8px', padding: '20px 16px', backgroundColor: '#fff', borderRadius: 12, border: '1px solid #f1f3f5', boxShadow: '0 4px 16px rgba(0,0,0,0.18)' },
   cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
   cardTitle: { fontSize: 16, fontWeight: 700, color: '#111' },
   expenseRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' },
@@ -327,7 +326,7 @@ const styles: Record<string, React.CSSProperties> = {
   scrollArea: { flex: 1, overflowY: 'auto' as const, display: 'block', paddingBottom: 32 },
   
   // Section Group
-  sectionGroup: { backgroundColor: '#fff', borderRadius: 12, margin: '8px 16px 16px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
+  sectionGroup: { backgroundColor: '#fff', borderRadius: 12, margin: '8px 16px 16px', overflow: 'hidden', border: '1px solid #f1f3f5', boxShadow: '0 4px 16px rgba(0,0,0,0.18)' },
   sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 16px 16px', fontSize: 15, fontWeight: 700, color: '#111' },
   
   // List Item for Receipts Process

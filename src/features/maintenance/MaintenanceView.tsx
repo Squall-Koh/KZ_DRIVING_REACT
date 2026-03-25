@@ -1,4 +1,5 @@
 import React from 'react';
+import { SelectDropdown } from '../../components/SelectDropdown';
 import { barColor, barWidth } from './useMaintenance';
 import type { MaintenanceItem, UseMaintenanceReturn } from './useMaintenance';
 
@@ -42,26 +43,32 @@ function MaintenanceCard({
 
 // ─── View 컴포넌트 (순수 UI) ─────────────────────────────────
 export function MaintenanceView({
-  bridge,
-  showVehicleMenu,
+  vehicles,
+  selectedVehicleId,
   items,
-  onToggleVehicleMenu,
+  onSelectVehicle,
   onItemClick,
   onRegisterClick,
 }: UseMaintenanceReturn) {
+  
+  const vehicleOptions = vehicles.map(v => ({
+    label: `${v.plateNumber} ${v.name}`,
+    value: v.id,
+  }));
+
   return (
     <div style={styles.container}>
 
       {/* ── 고정 헤더 (차량 선택기) ─────────────────────────── */}
       <div style={styles.fixedHeader}>
-
-        <div style={styles.vehicleSelector} onClick={onToggleVehicleMenu}>
-          <span style={styles.vehicleSelectorName}>
-            {bridge.plateNumber
-              ? `${bridge.plateNumber} ${bridge.vehicleName}`
-              : '선택된 차량 없음'}
-          </span>
-          <span style={styles.chevron}>{showVehicleMenu ? '▲' : '▼'}</span>
+        <div style={{ margin: '16px 16px 8px' }}>
+          <SelectDropdown
+            value={selectedVehicleId}
+            onChange={onSelectVehicle}
+            options={vehicleOptions}
+            placeholder="선택된 차량 없음"
+            headerLabel="차량 선택"
+          />
         </div>
       </div>
 
@@ -86,10 +93,10 @@ export function MaintenanceView({
 const styles: Record<string, React.CSSProperties> = {
   container: {
     display: 'flex', flexDirection: 'column', height: '100vh',
-    backgroundColor: '#f5f5f7', fontFamily: "'Pretendard','Noto Sans KR',sans-serif",
+    backgroundColor: '#fff', fontFamily: "'Pretendard','Noto Sans KR',sans-serif",
     overflow: 'hidden',
   },
-  fixedHeader: { flexShrink: 0, backgroundColor: '#f5f5f7' },
+  fixedHeader: { flexShrink: 0, backgroundColor: '#fff' },
   userBar: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '12px 16px 8px',
@@ -104,22 +111,13 @@ const styles: Record<string, React.CSSProperties> = {
   },
   megaphoneIcon: { width: 20, height: 20, objectFit: 'contain' as const },
   divider:       { width: 1, height: 14, backgroundColor: '#d1d5db', flexShrink: 0 },
-  vehicleBadge:  { fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap' as const },
   vehicleInfo:   { fontSize: 14, color: '#444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
-  vehicleSelector: {
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    margin: '0 16px 8px', padding: '10px 14px',
-    backgroundColor: '#fff', borderRadius: 24, border: '1px solid #e0e7ff',
-    cursor: 'pointer',
-  },
-  vehicleSelectorName: { fontSize: 14, fontWeight: 600, color: '#111' },
-  chevron:             { fontSize: 12, color: '#888' },
   scrollArea: { flex: 1, overflowY: 'auto' as const },
   listWrapper: { display: 'flex', flexDirection: 'column', gap: 0, padding: '8px 0' },
   card: {
     margin: '6px 16px', padding: '14px 16px',
-    backgroundColor: '#ffffff', borderRadius: 10,
-    border: '1px solid #eeeeee', boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+    backgroundColor: '#ffffff', borderRadius: 12,
+    border: '1px solid #f1f3f5', boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
     cursor: 'pointer',
   },
   cardHeader: {

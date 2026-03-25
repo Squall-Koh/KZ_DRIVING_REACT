@@ -86,7 +86,7 @@ const s: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between', alignItems: 'center',
   },
   dropdownMenuClose: { fontSize: 16, cursor: 'pointer', padding: '0 4px' },
-  dropdownList: { paddingBottom: 8 },
+  dropdownList: { paddingBottom: 8, maxHeight: 240, overflowY: 'auto' },
   dropdownItem: {
     padding: '12px 16px', fontSize: 15, color: '#111', cursor: 'pointer',
     transition: 'background-color 0.2s'

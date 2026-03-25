@@ -3,20 +3,20 @@ import type { UseAttendanceReturn, WeekRecord } from './useAttendance';
 // ─── 반원 게이지 ──────────────────────────────────────────────
 function SemiCircleGauge({ regular, overtime, night }: { regular: number; overtime: number; night: number }) {
   const total = regular + overtime + night || 1;
-  const rPct = regular  / total;
+  const rPct = regular / total;
   const oPct = overtime / total;
-  const nPct = night    / total;
+  const nPct = night / total;
 
   const VW = 250, VH = 135, cx = VW / 2, cy = 115, R = 96, SW = 22;
   const arcLength = Math.PI * R;
   const layer1Len = arcLength;
   const layer2Len = arcLength * (rPct + oPct);
   const layer3Len = arcLength * rPct;
-  const baseArcD  = `M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}`;
+  const baseArcD = `M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}`;
 
   const totalH = regular + overtime + night;
-  const mins   = Math.round((totalH % 1) * 60);
-  const label  = mins > 0 ? `${Math.floor(totalH)}시간 ${mins}분` : `${totalH}시간`;
+  const mins = Math.round((totalH % 1) * 60);
+  const label = mins > 0 ? `${Math.floor(totalH)}시간 ${mins}분` : `${totalH}시간`;
 
   return (
     <div style={gaugeStyles.wrapper}>
@@ -114,15 +114,15 @@ export function AttendanceView({
             </div>
             <div style={styles.progressBarBg}>
               <div style={{
-                ...styles.progressBarFill, 
-                width: `${progressPercent}%`, 
+                ...styles.progressBarFill,
+                width: `${progressPercent}%`,
                 backgroundColor: isCheckedOut ? '#22c55e' : '#2B5CFF'
               }} />
             </div>
           </div>
           <div style={styles.attendanceTimes}>
-            <div style={{color: isCheckedIn ? '#333' : '#999', fontSize: 14, fontWeight: 'bold' }}>출근 {checkInTimeStr}</div>
-            
+            <div style={{ color: isCheckedIn ? '#333' : '#999', fontSize: 14, fontWeight: 'bold' }}>출근 {checkInTimeStr}</div>
+
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 10px' }}>
               <div style={{ flex: 1, height: 1, backgroundColor: '#eee' }} />
               {workTimeStr && (
@@ -133,10 +133,10 @@ export function AttendanceView({
               <div style={{ flex: 1, height: 1, backgroundColor: '#eee' }} />
             </div>
 
-            <div style={{color: isCheckedOut ? '#333' : '#999', fontSize: 14, fontWeight: 'bold' }}>퇴근 {checkOutTimeStr}</div>
+            <div style={{ color: isCheckedOut ? '#333' : '#999', fontSize: 14, fontWeight: 'bold' }}>퇴근 {checkOutTimeStr}</div>
           </div>
-          <button 
-            style={{...styles.primaryBtn, backgroundColor: primaryBtnColor, cursor: isCheckedOut ? 'not-allowed' : 'pointer'}} 
+          <button
+            style={{ ...styles.primaryBtn, backgroundColor: primaryBtnColor, cursor: isCheckedOut ? 'not-allowed' : 'pointer' }}
             onClick={isCheckedIn ? onCheckOut : onCheckIn}
             disabled={isCheckedOut}
           >
@@ -205,8 +205,8 @@ export function AttendanceView({
 
 // ─── 스타일 ──────────────────────────────────────────────────
 const styles: Record<string, React.CSSProperties> = {
-  container: { display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#f5f5f7', fontFamily: "'Pretendard','Noto Sans KR',sans-serif", overflow: 'hidden' },
-  fixedHeader: { flexShrink: 0, position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#f5f5f7' },
+  container: { display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#fff', fontFamily: "'Pretendard','Noto Sans KR',sans-serif", overflow: 'hidden' },
+  fixedHeader: { flexShrink: 0, position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#fff', borderBottom: '1px solid #eee' },
   userBar: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px 8px' },
   userLeft: { display: 'flex', alignItems: 'center', gap: 8 },
   logoIcon: { width: 'auto', height: 'auto', objectFit: 'contain' as const },
@@ -216,7 +216,7 @@ const styles: Record<string, React.CSSProperties> = {
   divider: { width: 1, height: 14, backgroundColor: '#d1d5db', flexShrink: 0 },
   vehicleBadge: { fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap' as const },
   vehicleInfo: { fontSize: 14, color: '#444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
-  todayCard: { margin: '16px 16px 8px', padding: '14px 16px', backgroundColor: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
+  todayCard: { margin: '16px 16px 8px', padding: '14px 16px', backgroundColor: '#fff', borderRadius: 12, border: '1px solid #f1f3f5', boxShadow: '0 4px 16px rgba(0,0,0,0.18)' },
   todayHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   todayTitle: { fontSize: 14, fontWeight: 700, color: '#111' },
   progressContainer: { marginBottom: 12 },
@@ -228,7 +228,7 @@ const styles: Record<string, React.CSSProperties> = {
   monthSelectorText: { fontSize: 14, fontWeight: 600, color: '#222' },
   monthArrow: { fontSize: 11, color: '#888', transition: 'transform 0.2s' },
   scrollArea: { flex: 1, overflowY: 'auto' as const, display: 'block', paddingBottom: 32 },
-  sectionGroup: { backgroundColor: '#fff', borderRadius: 12, margin: '8px 16px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
+  sectionGroup: { backgroundColor: '#fff', borderRadius: 12, margin: '8px 16px', overflow: 'hidden', border: '1px solid #f1f3f5', boxShadow: '0 4px 16px rgba(0,0,0,0.18)' },
   emptyWrapper: { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 },
   emptyText: { fontSize: 14, color: '#aaa', margin: 0 },
   listWrapper: { display: 'flex', flexDirection: 'column', margin: '8px 16px', gap: 0 },

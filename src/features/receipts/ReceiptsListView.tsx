@@ -213,16 +213,24 @@ function ReceiptPopup({
             </button>
             {attachedFiles.length > 0 && (
               <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {attachedFiles.map((f, idx) => (
-                  <div key={idx} style={s.attachedFileItem}>
-                    <span style={s.attachedFileIcon}>📎</span>
-                    <span style={s.attachedFileName}>{f.name}</span>
-                    <button 
-                      style={s.attachedFileRemove}
-                      onClick={() => setAttachedFiles(prev => prev.filter((_, i) => i !== idx))}
-                    >✕</button>
-                  </div>
-                ))}
+                {attachedFiles.map((f, idx) => {
+                  const sizeBytes = Math.floor(f.base64.length * 0.75);
+                  let adjusted = sizeBytes;
+                  if (f.base64.endsWith('==')) adjusted -= 2;
+                  else if (f.base64.endsWith('=')) adjusted -= 1;
+                  const sizeKb = Math.floor(adjusted / 1024);
+
+                  return (
+                    <div key={idx} style={s.attachedFileItem}>
+                      <img src={f.base64} alt="thumb" style={s.attachedFileThumb} />
+                      <span style={s.attachedFileName}>{f.name} <span style={{ color: '#888' }}>({sizeKb}KB)</span></span>
+                      <button 
+                        style={s.attachedFileRemove}
+                        onClick={() => setAttachedFiles(prev => prev.filter((_, i) => i !== idx))}
+                      >✕</button>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -374,6 +382,9 @@ const s: Record<string, React.CSSProperties> = {
   attachedFileItem: {
     display: 'flex', alignItems: 'center', padding: '8px 12px',
     backgroundColor: '#eff6ff', borderRadius: 6, gap: 8
+  },
+  attachedFileThumb: {
+    width: 36, height: 36, borderRadius: 4, objectFit: 'cover' as const, flexShrink: 0, border: '1px solid #d1d5db'
   },
   attachedFileIcon: { fontSize: 14 },
   attachedFileName: { flex: 1, fontSize: 13, color: '#4f7cff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },

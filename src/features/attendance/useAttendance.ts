@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
+import type { DrivingStateContext } from '../dashboard/useOperationDashboard';
 
 // ─── 타입 ────────────────────────────────────────────────────
 export interface DayRecord {
@@ -22,16 +23,6 @@ export interface WeekRecord {
   days: DayRecord[];
 }
 
-export interface FlutterBridgeData {
-  userName: string;
-  isVehicleConnected: boolean;
-  plateNumber: string;
-  vehicleName: string;
-  connectionStatus: string;
-  checkIn: string;
-  checkOut: string;
-}
-
 export interface AttendanceStats {
   totalH: number;
   regular: number;
@@ -39,15 +30,10 @@ export interface AttendanceStats {
   night: number;
 }
 
-export interface WorkProgress {
-  pct: number;
-  label: string;
-}
-
 // ─── 연월 선택지 ──────────────────────────────────────────────
 function generateMonthOptions(): string[] {
   const opts: string[] = [];
-  const base = new Date(2026, 2);
+  const base = new Date();
   for (let i = 0; i < 12; i++) {
     const d = new Date(base.getFullYear(), base.getMonth() - i);
     opts.push(`${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}`);
@@ -66,9 +52,12 @@ export function generateWeeks(yearMonth: string): { weekLabel: string; dateFrom:
     `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const DAY = ['일', '월', '화', '수', '목', '금', '토'];
 
+  // Start with 1st of the month
   const firstDay = new Date(y, m - 1, 1);
   const startSun = new Date(firstDay);
   startSun.setDate(firstDay.getDate() - firstDay.getDay());
+  
+  // End with last of the month
   const lastDay = new Date(y, m, 0);
 
   const weeks: { weekLabel: string; dateFrom: string; dateTo: string }[] = [];
@@ -102,46 +91,46 @@ export function buildWeeks(yearMonth: string, sourceDays: DayRecord[]): WeekReco
   });
 }
 
+// ─── 시간 포맷 헬퍼 ──────────────────────────────────────────
+const formatTime = (isoString: string) => {
+  if (!isoString) return '--:--';
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return isoString;
+  const h = String(d.getHours()).padStart(2, '0');
+  const m = String(d.getMinutes()).padStart(2, '0');
+  return `${h}:${m}`;
+};
+
 // ─── 반환 타입 ───────────────────────────────────────────────
 export interface UseAttendanceReturn {
-  bridge: FlutterBridgeData;
+  syncPayload: any;
   selectedMonth: string;
   showPopup: boolean;
   weeks: WeekRecord[];
   loaded: boolean;
   stats: AttendanceStats;
-  workProgress: WorkProgress;
   monthOptions: string[];
   scrollRef: React.RefObject<HTMLDivElement | null>;
-  btnLabel: string;
-  btnDisabled: boolean;
-  btnBg: string;
+  workTimeStr: string;
+  progressPercent: number;
+  primaryBtnText: string;
+  primaryBtnColor: string;
+  checkInTimeStr: string;
+  checkOutTimeStr: string;
   onSelectMonth: (m: string) => void;
   onTogglePopup: () => void;
   onClosePopup: () => void;
   onNavigate: (path: string, state?: any) => void;
-  onToggleAttendance: () => void;
+  onCheckIn: () => void;
+  onCheckOut: () => void;
 }
 
 // ─── Custom Hook ─────────────────────────────────────────────
 export function useAttendance(): UseAttendanceReturn {
   const navigate = useNavigate();
-
-  // 초깃값 없음 - Flutter에서 window.updateAttendanceInfo()로 주입받음
-  const [bridge, setBridge] = useState<FlutterBridgeData>({
-    userName: '',
-    isVehicleConnected: false,
-    plateNumber: '',
-    vehicleName: '',
-    connectionStatus: '연결 대기중',
-    checkIn: '',
-    checkOut: '',
-  });
+  const { syncPayload } = useOutletContext<DrivingStateContext>();
 
   useEffect(() => {
-    (window as any).updateAttendanceInfo = (data: Partial<FlutterBridgeData>) =>
-      setBridge((p) => ({ ...p, ...data }));
-      
     (window as any).updateAttendance = (jsonString: string) => {
       try {
         const parsed = JSON.parse(jsonString) as DayRecord[];
@@ -153,10 +142,6 @@ export function useAttendance(): UseAttendanceReturn {
         setLoaded(true);
       }
     };
-
-    if ((window as any).FlutterBridge) {
-      (window as any).FlutterBridge.postMessage('requestDriverInfo');
-    }
   }, []);
 
   const today = new Date();
@@ -191,37 +176,45 @@ export function useAttendance(): UseAttendanceReturn {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const isCheckedIn = !!bridge.checkIn;
-  const isCheckedOut = !!bridge.checkOut;
+  const workDay = syncPayload?.workDay;
+  const isCheckedIn = !!workDay;
+  const isCheckedOut = !!workDay?.checkOutTime;
 
-  let btnLabel = '출근 등록';
-  let btnDisabled = false;
-  let btnBg = '#3b82f6';
+  const checkInTimeStr = workDay?.checkInTime ? formatTime(workDay.checkInTime) : '--:--';
+  const checkOutTimeStr = workDay?.checkOutTime ? formatTime(workDay.checkOutTime) : '--:--';
 
-  if (!isCheckedIn) {
-    btnLabel = '출근 등록';
-    btnBg = '#3b82f6';
-  } else if (!isCheckedOut) {
-    btnLabel = `퇴근 등록 (출근: ${bridge.checkIn})`;
-    btnBg = '#22c55e';
-  } else {
-    btnLabel = `업무 종료 (${bridge.checkIn} ~ ${bridge.checkOut})`;
-    btnBg = '#9ca3af';
-    btnDisabled = true;
+  let workTimeStr = '';
+  let progressPercent = 0;
+  const EIGHT_HOURS_MS = 8 * 60 * 60 * 1000;
+
+  if (isCheckedIn && workDay?.checkInTime) {
+    const dIn = new Date(workDay.checkInTime);
+    const dOut = isCheckedOut && workDay?.checkOutTime ? new Date(workDay.checkOutTime) : new Date();
+    const diffMs = dOut.getTime() - dIn.getTime();
+    if (!isNaN(diffMs) && diffMs >= 0) {
+      const diffMins = Math.floor(diffMs / 60000);
+      const h = Math.floor(diffMins / 60);
+      const m = diffMins % 60;
+      workTimeStr = `${h}시간 ${m}분`;
+      progressPercent = Math.min(100, (diffMs / EIGHT_HOURS_MS) * 100);
+    }
   }
 
-  const handleToggleAttendance = () => {
-    if (!isCheckedIn) {
-      if (window.confirm('지금 출근을 등록하시겠습니까?')) {
-        if ((window as any).FlutterBridge) {
-          (window as any).FlutterBridge.postMessage(JSON.stringify({ action: 'toggleAttendance', type: 'in' }));
-        }
+  const primaryBtnText = isCheckedIn ? (isCheckedOut ? `퇴근완료 (${checkInTimeStr} - ${checkOutTimeStr})` : '퇴근 등록') : '출근 등록';
+  const primaryBtnColor = isCheckedIn ? (isCheckedOut ? '#ced4da' : '#22c55e') : '#2B5CFF';
+
+  const onCheckIn = () => {
+    if (window.confirm('지금 출근을 등록하시겠습니까?')) {
+      if ((window as any).FlutterBridge) {
+        (window as any).FlutterBridge.postMessage(JSON.stringify({ action: 'CHECK_IN' }));
       }
-    } else if (!isCheckedOut) {
-      if (window.confirm(`지금 퇴근을 등록하시겠습니까?\\n\\n출근: ${bridge.checkIn}`)) {
-        if ((window as any).FlutterBridge) {
-          (window as any).FlutterBridge.postMessage(JSON.stringify({ action: 'toggleAttendance', type: 'out' }));
-        }
+    }
+  };
+
+  const onCheckOut = () => {
+    if (window.confirm(`지금 퇴근을 등록하시겠습니까?\\n\\n출근: ${checkInTimeStr}`)) {
+      if ((window as any).FlutterBridge) {
+        (window as any).FlutterBridge.postMessage(JSON.stringify({ action: 'CHECK_OUT' }));
       }
     }
   };
@@ -242,20 +235,6 @@ export function useAttendance(): UseAttendanceReturn {
     night:    weeks.reduce((a, w) => a + w.nightH,    0),
   }), [weeks]);
 
-  const workProgress = useMemo<WorkProgress>(() => {
-    if (!bridge.checkIn) {
-      return { pct: 0, label: '0시간 0분' };
-    }
-    const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
-    const inMin  = toMin(bridge.checkIn);
-    const outMin = bridge.checkOut ? toMin(bridge.checkOut) : inMin;
-    const elapsed = Math.max(0, outMin - inMin);
-    const pct     = Math.min(100, (elapsed / (8 * 60)) * 100);
-    const h  = Math.floor(elapsed / 60);
-    const mn = elapsed % 60;
-    return { pct, label: mn > 0 ? `${h}시간 ${mn}분` : `${h}시간` };
-  }, [bridge.checkIn, bridge.checkOut]);
-
   const onSelectMonth = (m: string) => {
     setSelectedMonth(m);
     sessionStorage.setItem('attendance_month', m);
@@ -272,22 +251,25 @@ export function useAttendance(): UseAttendanceReturn {
   };
 
   return {
-    bridge,
+    syncPayload,
     selectedMonth,
     showPopup,
     weeks,
     loaded,
     stats,
-    workProgress,
     monthOptions: MONTH_OPTIONS,
     scrollRef,
-    btnLabel,
-    btnDisabled,
-    btnBg,
+    workTimeStr,
+    progressPercent,
+    primaryBtnText,
+    primaryBtnColor,
+    checkInTimeStr,
+    checkOutTimeStr,
     onSelectMonth,
     onTogglePopup: () => setShowPopup((v) => !v),
     onClosePopup:  () => setShowPopup(false),
     onNavigate,
-    onToggleAttendance: handleToggleAttendance,
+    onCheckIn,
+    onCheckOut,
   };
 }

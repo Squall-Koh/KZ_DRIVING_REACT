@@ -3,12 +3,21 @@ import type { RefObject } from 'react';
 
 export function usePullToRefresh(
   scrollRef: RefObject<HTMLDivElement | null>,
-  onRefresh: () => void
+  onRefresh: () => void,
+  isRefreshing: boolean = false
 ) {
   const [startY, setStartY] = useState(0);
   const [pullDist, setPullDist] = useState(0);
   const [isPulling, setIsPulling] = useState(false);
   const threshold = 60; // 새로고침 발동 임계값 (px)
+
+  useEffect(() => {
+    if (isRefreshing) {
+      setPullDist(threshold);
+    } else if (!isPulling) {
+      setPullDist(0);
+    }
+  }, [isRefreshing, isPulling, threshold]);
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
     // 스크롤이 최상단일 때만 당기기 시작
@@ -19,7 +28,7 @@ export function usePullToRefresh(
   }, [scrollRef]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (!isPulling) return;
+    if (!isPulling || isRefreshing) return;
     const currentY = e.touches[0].clientY;
     const dist = currentY - startY;
 
@@ -30,16 +39,18 @@ export function usePullToRefresh(
       // 네이티브 스크롤 방지
       if (e.cancelable) e.preventDefault();
     }
-  }, [isPulling, startY, threshold]);
+  }, [isPulling, isRefreshing, startY, threshold]);
 
   const handleTouchEnd = useCallback(() => {
     if (!isPulling) return;
-    if (pullDist >= threshold) {
-      onRefresh();
-    }
-    setPullDist(0);
     setIsPulling(false);
-  }, [isPulling, pullDist, threshold, onRefresh]);
+    
+    if (pullDist >= threshold) {
+      if (!isRefreshing) onRefresh();
+    } else {
+      setPullDist(0);
+    }
+  }, [isPulling, pullDist, threshold, isRefreshing, onRefresh]);
 
   useEffect(() => {
     const el = scrollRef.current;

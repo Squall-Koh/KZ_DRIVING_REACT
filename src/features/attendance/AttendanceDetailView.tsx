@@ -38,10 +38,10 @@ export function AttendanceDetailView({ days, weekLabel, headerParts, month, onBa
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <span style={styles.title}>근무내역 상세보기</span>
           {headerParts.length > 0 && (
-            <>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 2 }}>
               <span style={styles.subTitle}>{headerParts[0]}</span>
               <span style={styles.subTitleSub}>~ {headerParts[1]}</span>
-            </>
+            </div>
           )}
           {!weekLabel && <span style={styles.subTitle}>{month} 전체</span>}
         </div>

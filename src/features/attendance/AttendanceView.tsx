@@ -75,62 +75,72 @@ function WeekRow({ week, index, total, onNavigate }: {
 
 // ─── View 컴포넌트 (순수 UI) ─────────────────────────────────
 export function AttendanceView({
-  bridge,
+  syncPayload,
   selectedMonth,
   showPopup,
   weeks,
   loaded,
   stats,
-  workProgress,
   monthOptions,
   scrollRef,
-  btnLabel,
-  btnDisabled,
-  btnBg,
+  workTimeStr,
+  progressPercent,
+  primaryBtnText,
+  primaryBtnColor,
+  checkInTimeStr,
+  checkOutTimeStr,
   onSelectMonth,
   onTogglePopup,
   onClosePopup,
   onNavigate,
-  onToggleAttendance,
+  onCheckIn,
+  onCheckOut,
 }: UseAttendanceReturn) {
+  const isCheckedIn = !!syncPayload?.workDay;
+  const isCheckedOut = !!syncPayload?.workDay?.checkOutTime;
+
   return (
     <div style={styles.container}>
-
-      {/* ── 고정 헤더 ─────────────────────────────────────────── */}
-      {/* 
-        MainLayout에 공통 헤더가 생성되었으므로, 해당 서브 뷰 내부의 헤더는 제거합니다. 
-        사용자 정보 및 차량 정보는 MainLayout에서 관리됩니다.
-      */}
 
       {/* ── 스크롤 영역 ──────────────────────────────────────── */}
       <div style={styles.scrollArea} ref={scrollRef}>
 
-        {/* 일일 근태 현황 카드 */}
+        {/* 일일 근태 현황 카드 (대시보드와 동일한 UI) */}
         <div style={styles.todayCard}>
           <div style={styles.todayHeader}><span style={styles.todayTitle}>일일근태현황</span></div>
-          <div style={styles.timeAxis}>
-            <span style={styles.timeAxisLabel}>0h</span>
-            <span style={styles.timeAxisLabel}>8h</span>
+          <div style={styles.progressContainer}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#999', marginBottom: 4 }}>
+              <span>0h</span><span>8h</span>
+            </div>
+            <div style={styles.progressBarBg}>
+              <div style={{
+                ...styles.progressBarFill, 
+                width: `${progressPercent}%`, 
+                backgroundColor: isCheckedOut ? '#22c55e' : '#2B5CFF'
+              }} />
+            </div>
           </div>
-          <div style={styles.progressBg}>
-            <div style={{ ...styles.progressFill, width: `${workProgress.pct}%` }} />
-          </div>
-          <div style={styles.timeRow}>
-            <span style={styles.timeLabel}>출근 : {bridge.checkIn}</span>
-            <span style={styles.timeMid}>{workProgress.label}</span>
-            <span style={styles.timeLabel}>퇴근 : {bridge.checkOut || '-'}</span>
+          <div style={styles.attendanceTimes}>
+            <div style={{color: isCheckedIn ? '#333' : '#999', fontSize: 14, fontWeight: 'bold' }}>출근 {checkInTimeStr}</div>
+            
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 10px' }}>
+              <div style={{ flex: 1, height: 1, backgroundColor: '#eee' }} />
+              {workTimeStr && (
+                <span style={{ fontSize: 12, color: '#2B5CFF', backgroundColor: '#eef2ff', padding: '4px 10px', borderRadius: 12, fontWeight: 'bold', margin: '0 8px' }}>
+                  {workTimeStr}
+                </span>
+              )}
+              <div style={{ flex: 1, height: 1, backgroundColor: '#eee' }} />
+            </div>
+
+            <div style={{color: isCheckedOut ? '#333' : '#999', fontSize: 14, fontWeight: 'bold' }}>퇴근 {checkOutTimeStr}</div>
           </div>
           <button 
-            style={{ 
-              ...styles.checkOutBtn, 
-              backgroundColor: btnDisabled ? '#e5e7eb' : btnBg,
-              color: btnDisabled ? '#9ca3af' : '#fff',
-              cursor: btnDisabled ? 'not-allowed' : 'pointer'
-            }}
-            onClick={onToggleAttendance}
-            disabled={btnDisabled}
+            style={{...styles.primaryBtn, backgroundColor: primaryBtnColor, cursor: isCheckedOut ? 'not-allowed' : 'pointer'}} 
+            onClick={isCheckedIn ? onCheckOut : onCheckIn}
+            disabled={isCheckedOut}
           >
-            {btnLabel}
+            {primaryBtnText}
           </button>
         </div>
 
@@ -206,17 +216,14 @@ const styles: Record<string, React.CSSProperties> = {
   divider: { width: 1, height: 14, backgroundColor: '#d1d5db', flexShrink: 0 },
   vehicleBadge: { fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap' as const },
   vehicleInfo: { fontSize: 14, color: '#444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
-  todayCard: { margin: '8px 16px', padding: '14px 16px', backgroundColor: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
+  todayCard: { margin: '16px 16px 8px', padding: '14px 16px', backgroundColor: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
   todayHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   todayTitle: { fontSize: 14, fontWeight: 700, color: '#111' },
-  timeAxis: { display: 'flex', justifyContent: 'space-between', marginBottom: 4 },
-  timeAxisLabel: { fontSize: 10, color: '#aaa' },
-  progressBg: { height: 8, backgroundColor: '#e5e7eb', borderRadius: 4, marginBottom: 6 },
-  progressFill: { height: '100%', backgroundColor: '#3b82f6', borderRadius: 4, transition: 'width 0.3s' },
-  timeRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  timeLabel: { fontSize: 11, color: '#555' },
-  timeMid: { fontSize: 12, fontWeight: 700, color: '#111' },
-  checkOutBtn: { width: '100%', padding: '10px 0', backgroundColor: '#3b82f6', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer' },
+  progressContainer: { marginBottom: 12 },
+  progressBarBg: { height: 8, backgroundColor: '#e5e7eb', borderRadius: 4, overflow: 'hidden' },
+  progressBarFill: { height: '100%', transition: 'width 0.3s ease-in-out' },
+  attendanceTimes: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  primaryBtn: { width: '100%', padding: '14px 0', borderRadius: 12, fontSize: 16, fontWeight: 'bold', color: '#fff', border: 'none' },
   monthSelector: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', width: '100%', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' as const },
   monthSelectorText: { fontSize: 14, fontWeight: 600, color: '#222' },
   monthArrow: { fontSize: 11, color: '#888', transition: 'transform 0.2s' },

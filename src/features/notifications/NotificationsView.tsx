@@ -73,7 +73,11 @@ export function NotificationsView({
   const hasNotifications = notifications.length > 0;
   
   // Pull-to-Refresh 훅 적용
-  const { pullDist, isPullRate } = usePullToRefresh(scrollAreaRef, onRefresh);
+  const { pullDist, isPullRate } = usePullToRefresh(
+    scrollAreaRef as unknown as React.RefObject<HTMLDivElement>, 
+    onRefresh, 
+    loading && notifications.length > 0
+  );
 
   const scrollToTop = () => {
     scrollAreaRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
@@ -101,7 +105,7 @@ export function NotificationsView({
             opacity: isPullRate,
           }}
         >
-          {pullDist > 50 ? '놓아서 새로고침...' : '아래로 당기세요'}
+          {loading && pullDist > 0 ? '알림 목록을 갱신 중...' : (pullDist > 50 ? '놓아서 새로고침...' : '아래로 당기세요')}
         </div>
 
         {!loaded ? (

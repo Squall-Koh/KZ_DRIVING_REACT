@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { usePullToRefresh } from '../notifications/usePullToRefresh';
 import { SelectDropdown } from '../../components/SelectDropdown';
 import type { ReceiptItem } from './useReceipts';
 import type { UseReceiptsListReturn } from './useReceiptsList';
@@ -17,8 +18,22 @@ export function ReceiptsListView({
   onSelectReceipt,
   onClosePopup,
   onBack,
+  loading,
+  hasMore,
+  isRefreshing,
+  scrollRef,
+  observerRef,
+  onRefresh,
+  isFabVisible,
+  scrollToTop,
 }: UseReceiptsListReturn) {
   const activeReceipts = tab === 'corporate' ? corporateReceipts : personalReceipts;
+
+  const { pullDist, isPullRate, isPulling } = usePullToRefresh(
+    scrollRef as React.RefObject<HTMLDivElement>,
+    onRefresh,
+    isRefreshing
+  );
 
   return (
     <div style={s.container}>
@@ -47,26 +62,42 @@ export function ReceiptsListView({
         </button>
       </div>
 
-      <div style={s.scrollArea}>
-        {/* 등록된 정보 배너 */}
-        {tab === 'corporate' ? (
-          <div style={s.cardInfoBanner}>
-            <span style={s.cardInfoLabel}>등록된 법인카드</span>
-            <span style={s.cardInfoName}>{corporateCardInfo.name}</span>
-            <span style={s.cardInfoNumber}>{corporateCardInfo.number}</span>
-          </div>
-        ) : (
-          <div style={s.cardInfoBanner}>
-            <span style={s.cardInfoLabel}>등록된 개인카드</span>
-            <span style={s.cardInfoName}>{personalCardInfo.name}</span>
-            <span style={s.cardInfoNumber}>{personalCardInfo.number}</span>
-          </div>
-        )}
+      {/* 등록된 정보 배너 (고정) */}
+      {tab === 'corporate' ? (
+        <div style={s.cardInfoBanner}>
+          <span style={s.cardInfoLabel}>등록된 법인카드</span>
+          <span style={s.cardInfoName}>{corporateCardInfo.name}</span>
+          <span style={s.cardInfoNumber}>{corporateCardInfo.number}</span>
+        </div>
+      ) : (
+        <div style={s.cardInfoBanner}>
+          <span style={s.cardInfoLabel}>등록된 개인카드</span>
+          <span style={s.cardInfoName}>{personalCardInfo.name}</span>
+          <span style={s.cardInfoNumber}>{personalCardInfo.number}</span>
+        </div>
+      )}
 
-        <div style={s.sectionHeader}>
-          <div style={s.sectionTitle}>처리할 영수증</div>
-          <div style={s.sectionDesc}>
-            하단의 {tab === 'corporate' ? '법인' : '개인'}카드 영수증을 선택하여 경비등록을 완료해주세요.
+      <div style={s.sectionHeader}>
+        <div style={s.sectionTitle}>처리할 영수증</div>
+        <div style={s.sectionDesc}>
+          하단의 {tab === 'corporate' ? '법인' : '개인'}카드 영수증을 선택하여 경비등록을 완료해주세요.
+        </div>
+      </div>
+
+      <div style={s.scrollArea} ref={scrollRef}>
+        <div style={{
+          height: `${pullDist}px`,
+          minHeight: `${pullDist}px`,
+          opacity: isPullRate,
+          transition: isPulling ? 'none' : 'height 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+          display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden',
+          flexShrink: 0
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#888', fontSize: 13 }}>
+            <RefreshCw size={16} color="#888" style={{ transform: `rotate(${isPullRate * 360}deg)` }} />
+            <span>
+              {isRefreshing ? '데이터를 가져오는 중...' : (pullDist > 50 ? '놓아서 새로고침...' : '아래로 당기세요')}
+            </span>
           </div>
         </div>
 
@@ -78,8 +109,8 @@ export function ReceiptsListView({
               style={s.receiptCard}
               onClick={() => onSelectReceipt(receipt)}
             >
-              <div style={s.receiptMid}>
-                <span style={s.receiptStore}>{receipt.store}</span>
+              <div style={s.receiptTop}>
+                <span style={s.receiptDate}>{receipt.date}</span>
                 <ChevronRight size={20} color="#ccc" style={s.receiptArrow} />
               </div>
               <div style={s.receiptStore}>{receipt.store}</div>
@@ -87,13 +118,31 @@ export function ReceiptsListView({
               <div style={s.receiptInfo}>가맹점주소 : {receipt.address}</div>
             </div>
           ))}
-          {activeReceipts.length === 0 && (
+          {activeReceipts.length === 0 && !loading && (
             <div style={{ textAlign: 'center', color: '#aaa', padding: 40, fontSize: 14 }}>
               내역이 없습니다.
             </div>
           )}
+          {hasMore && (
+            <div ref={observerRef as unknown as React.RefObject<HTMLDivElement>} style={{ height: '20px' }} />
+          )}
+          {loading && (
+            <div style={{ textAlign: 'center', padding: '20px', color: '#888', fontSize: 13 }}>
+              조회 중...
+            </div>
+          )}
+          {!loading && !hasMore && activeReceipts.length > 0 && (
+            <div style={{ textAlign: 'center', padding: '20px', color: '#bbb', fontSize: 13 }}>
+              모든 내역을 불러왔습니다.
+            </div>
+          )}
         </div>
       </div>
+
+      {/* 맨 위로 가기 FAB */}
+      {isFabVisible && (
+        <button style={s.fabBtn} onClick={scrollToTop}>↑</button>
+      )}
 
       {/* 영수증 등록 팝업 오버레이 */}
       {selectedReceipt && (
@@ -284,7 +333,7 @@ const s: Record<string, React.CSSProperties> = {
   tabActive: { backgroundColor: '#fff', color: '#111', boxShadow: '0 1px 4px rgba(0,0,0,0.10)' },
   tabInactive: { backgroundColor: 'transparent', color: '#8e8e93' },
 
-  scrollArea: { flex: 1, overflowY: 'auto' as const, display: 'flex', flexDirection: 'column' },
+  scrollArea: { flex: 1, overflowY: 'auto' as const, overscrollBehaviorY: 'none', display: 'flex', flexDirection: 'column' },
   
   cardInfoBanner: {
     margin: '8px 16px 24px', padding: '24px 16px',
@@ -296,6 +345,13 @@ const s: Record<string, React.CSSProperties> = {
   cardInfoLabel: { fontSize: 13, opacity: 0.9, marginBottom: 8 },
   cardInfoName: { fontSize: 18, fontWeight: 700, marginBottom: 8 },
   cardInfoNumber: { fontSize: 14, opacity: 0.9, letterSpacing: 0.5 },
+
+  fabBtn: {
+    position: 'absolute' as const, bottom: 24, right: 24, width: 46, height: 46,
+    backgroundColor: '#2b5cff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    boxShadow: '0 4px 10px rgba(43,92,255,0.4)', fontSize: 20, fontWeight: 'bold', color: '#ffffff', border: 'none', cursor: 'pointer',
+    zIndex: 100
+  },
 
   dateFilterContainer: {
     margin: '0 16px 20px', display: 'flex', alignItems: 'center', gap: 8 

@@ -151,7 +151,7 @@ export function AttendanceView({
             <span style={styles.monthSelectorText}>
               {selectedMonth ? `${selectedMonth}월 근무내역` : '근무내역'}
             </span>
-            <span style={{ ...styles.monthArrow, transform: showPopup ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+            <span style={{ ...styles.monthArrow, fontSize: 13, transform: showPopup ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
           </button>
 
           {!loaded ? (
@@ -184,7 +184,7 @@ export function AttendanceView({
           <div style={styles.popup} onClick={(e) => e.stopPropagation()}>
             <div style={styles.popupHeader}>
               <span style={styles.popupTitle}>조회연월 선택</span>
-              <span style={styles.popupClose} onClick={onClosePopup}>∧</span>
+              <span style={{ ...styles.popupClose, fontSize: 16 }} onClick={onClosePopup}>▲</span>
             </div>
             <div style={styles.popupList}>
               {monthOptions.map((m) => (

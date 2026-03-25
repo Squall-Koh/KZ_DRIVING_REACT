@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
 
 export interface SelectOption {
   label: string;
@@ -31,7 +30,7 @@ export function SelectDropdown({
         onClick={() => setIsOpen(!isOpen)}
       >
         <span>{selectedOpt ? selectedOpt.label : placeholder}</span>
-        <ChevronDown size={22} color="#64748b" style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+        <span style={{ fontSize: 14, color: '#64748b', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
       </button>
 
       {isOpen && (
@@ -40,8 +39,8 @@ export function SelectDropdown({
           <div style={s.dropdownMenu}>
             <div style={s.dropdownMenuHeader}>
               <span>{headerLabel || placeholder}</span>
-              <span style={s.dropdownMenuClose} onClick={() => setIsOpen(false)}>
-                <ChevronUp size={22} color="#888" />
+              <span style={{ fontSize: 16, cursor: 'pointer', padding: '0 4px', color: '#888' }} onClick={() => setIsOpen(false)}>
+                ▲
               </span>
             </div>
             <div style={s.dropdownList}>

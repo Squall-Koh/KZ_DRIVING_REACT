@@ -70,6 +70,11 @@ export function ReceiptsHistoryView({
         <div style={{ width: 32 }} />
       </div>
 
+      {/* 기간 표시 (상단 고정) */}
+      <div style={s.periodHeader}>
+        <span style={s.periodText}>{displayPeriod}</span>
+      </div>
+
       <div 
         style={s.scrollArea}
         ref={scrollRef}
@@ -87,12 +92,6 @@ export function ReceiptsHistoryView({
               {loading && pullDist > 0 ? '데이터를 가져오는 중...' : (pullDist > 50 ? '놓아서 새로고침...' : '아래로 당기세요')}
             </span>
           </div>
-        </div>
-
-        {/* 기간 표시 */}
-        <div style={s.periodHeader}>
-          <span style={s.periodText}>{displayPeriod}</span>
-          <span style={s.periodArrow}>∨</span>
         </div>
 
         {/* 리스트 */}
@@ -153,10 +152,9 @@ const s: Record<string, React.CSSProperties> = {
   scrollArea: { flex: 1, overflowY: 'auto' as const, display: 'flex', flexDirection: 'column', position: 'relative' },
   
   periodHeader: { 
-    padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+    padding: '16px 20px', display: 'flex', alignItems: 'center'
   },
   periodText: { fontSize: 16, fontWeight: 700, color: '#333' },
-  periodArrow: { fontSize: 16, color: '#888', fontWeight: 600 },
 
   listContainer: { padding: '0 16px 24px', display: 'flex', flexDirection: 'column', gap: 12 },
   receiptCard: {

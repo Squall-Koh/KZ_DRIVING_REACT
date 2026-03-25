@@ -53,7 +53,6 @@ export interface UseAttendanceAdjustmentReturn {
   isFabVisible: boolean;
   observerRef: React.RefObject<HTMLDivElement | null>;
   scrollAreaRef: React.RefObject<HTMLDivElement | null>;
-  snackbarMessage: string | null;
 
   isConfirmOpen: boolean;
 
@@ -192,23 +191,12 @@ export function useAttendanceAdjustment(): UseAttendanceAdjustmentReturn {
     setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
-
-  const showSnackbar = useCallback((msg: string) => {
-    setSnackbarMessage(msg);
-    setTimeout(() => {
-      setSnackbarMessage(null);
-    }, 3000);
-  }, []);
-
   // 모달 제어
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const onSubmitConfirm = () => {
     setIsConfirmOpen(false);
-    showSnackbar('근태조정 신청이 완료되었습니다.');
-    setTab('approval');
-    // 실제 API 연동은 이곳에 추가
+    // 실제 API 연동은 이곳에 추가 (현재는 다이얼로그 닫기만 수행)
   };
 
   return {
@@ -225,7 +213,6 @@ export function useAttendanceAdjustment(): UseAttendanceAdjustmentReturn {
     isFabVisible,
     observerRef,
     scrollAreaRef,
-    snackbarMessage,
     isConfirmOpen,
 
     onTabChange:        setTab,

@@ -128,7 +128,7 @@ function AdjustTab({
 // ─── 결재현황 탭 ─────────────────────────────────────────────
 function ApprovalTab({
   adjustments, loading, hasMore, observerRef, 
-  onRefresh, isRefreshing, snackbarMessage
+  onRefresh, isRefreshing
 }: {
   adjustments: AdjustmentRecord[];
   loading: boolean;
@@ -136,7 +136,6 @@ function ApprovalTab({
   observerRef: React.RefObject<HTMLDivElement | null>;
   onRefresh: () => void;
   isRefreshing: boolean;
-  snackbarMessage: string | null;
 }) {
   const [dialogConfig, setDialogConfig] = useState<{type: 'cancel' | 'edit'; id: number} | null>(null);
   const [isFabVisible, setIsFabVisible] = useState(false);
@@ -233,10 +232,6 @@ function ApprovalTab({
           </div>
         </div>
       )}
-
-      {snackbarMessage && (
-        <div style={ts.snackbar}>{snackbarMessage}</div>
-      )}
     </>
   );
 }
@@ -286,7 +281,6 @@ export function AttendanceAdjustmentView(props: UseAttendanceAdjustmentReturn) {
             observerRef={props.observerRef}
             onRefresh={props.onRefresh}
             isRefreshing={props.loading && props.adjustments.length > 0}
-            snackbarMessage={props.snackbarMessage}
           />
         )}
       </div>

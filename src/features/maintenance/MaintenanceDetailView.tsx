@@ -180,7 +180,7 @@ const s: Record<string, React.CSSProperties> = {
   itemBadgeText: { fontSize: 11, fontWeight: 700, color: '#4f7cff' },
   itemBadgeSub: { fontSize: 11, color: '#9ca3af' },
   tabRow: {
-    display: 'flex', backgroundColor: '#ebebf0',
+    display: 'flex', backgroundColor: '#f1f5f9',
     margin: '12px 16px', borderRadius: 12, padding: 4, flexShrink: 0,
   },
   tabBtn: {

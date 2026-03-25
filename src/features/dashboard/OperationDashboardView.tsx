@@ -211,7 +211,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '16px',
     padding: '20px',
     marginBottom: '16px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
   },
   cardHeader: {
     display: 'flex',

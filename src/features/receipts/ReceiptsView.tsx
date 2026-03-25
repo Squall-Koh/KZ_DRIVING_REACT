@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { DateRangePicker } from '../../components/DateRangePicker';
+import { SelectDropdown } from '../../components/SelectDropdown';
 import type { UseReceiptsReturn } from './useReceipts';
 
 export function ReceiptsView({
@@ -16,9 +17,12 @@ export function ReceiptsView({
   showDatePicker,
   startDate,
   endDate,
-  onOpenDatePicker,
   onCloseDatePicker,
   onConfirmDateRange,
+  isManualPopupOpen,
+  onOpenManualPopup,
+  onCloseManualPopup,
+  onOpenDatePicker,
 }: UseReceiptsReturn) {
   return (
     <div style={styles.container}>
@@ -82,7 +86,7 @@ export function ReceiptsView({
           </button>
 
           <div style={styles.buttonWrapper}>
-            <button style={styles.primaryButton}>
+            <button style={styles.primaryButton} onClick={onOpenManualPopup}>
               + 미등록카드 경비등록
             </button>
           </div>
@@ -122,6 +126,176 @@ export function ReceiptsView({
           onCancel={onCloseDatePicker}
         />
       )}
+
+      {/* 미등록카드 수기 등록 팝업 */}
+      {isManualPopupOpen && (
+        <ManualReceiptPopup onClose={onCloseManualPopup} />
+      )}
+    </div>
+  );
+}
+
+// ─── 미등록카드 경비등록 수기 팝업 컴포넌트 ─────────────────────
+function ManualReceiptPopup({ onClose }: { onClose: () => void }) {
+  const [purpose, setPurpose] = useState('');
+  const [slipType, setSlipType] = useState('purchase');
+  const [attachedFiles, setAttachedFiles] = useState<{name: string; base64: string}[]>([]);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  const purposeOptions = [
+    { label: '수행기사 식대 결제', value: 'meal' },
+    { label: '수행차량 주유비 결제', value: 'fuel' },
+    { label: '수행차량 비품 구매', value: 'supplies' },
+    { label: '수행차량 경·정비 결제', value: 'maintenance' },
+    { label: '수행차량 주차비 결제', value: 'parking' },
+    { label: '기타지출', value: 'other' },
+  ];
+
+  const slipOptions = [
+    { label: '매입전표', value: 'purchase' },
+    { label: '기타전표', value: 'other' },
+  ];
+
+  useEffect(() => {
+    (window as any).onImageAttached = (name: string, base64: string) => {
+      setAttachedFiles(prev => [...prev, { name, base64 }]);
+    };
+    return () => {
+      delete (window as any).onImageAttached;
+    };
+  }, []);
+
+  return (
+    <div style={ms.popupOverlay}>
+      <div style={ms.popupContainer}>
+        {/* 헤더 */}
+        <div style={ms.popupHeader}>
+          <div style={ms.popupHeaderEmpty} />
+          <span style={ms.popupTitle}>영수증 등록</span>
+          <button style={ms.popupCloseBtn} onClick={onClose}>✕</button>
+        </div>
+        
+        {/* 스크롤 콘텐츠 */}
+        <div style={ms.popupScroll}>
+          {/* 거래일자 */}
+          <div style={ms.formGroup}>
+            <label style={ms.formLabel}>거래일자 <span style={ms.required}>*</span></label>
+            <input style={ms.input} defaultValue="2026-03-01" />
+          </div>
+
+          {/* 가맹점명 */}
+          <div style={ms.formGroup}>
+            <label style={ms.formLabel}>가맹점명 <span style={ms.required}>*</span></label>
+            <input style={ms.input} defaultValue="그랑서울 카센터" />
+          </div>
+
+          {/* 거래금액 */}
+          <div style={ms.formGroup}>
+            <label style={ms.formLabel}>거래금액 <span style={ms.required}>*</span></label>
+            <input style={ms.input} defaultValue="130,000원" />
+          </div>
+
+          {/* 가맹점주소 */}
+          <div style={ms.formGroup}>
+            <label style={ms.formLabel}>가맹점주소 <span style={ms.required}>*</span></label>
+            <input style={ms.input} defaultValue="서울특별시 종로구 종로33" />
+          </div>
+
+          {/* 지출증빙 */}
+          <div style={ms.formGroup}>
+            <label style={ms.formLabel}>지출증빙 <span style={ms.required}>*</span></label>
+            <div style={ms.inputDisabled}>개인카드</div>
+          </div>
+
+          {/* 사용목적 */}
+          <div style={ms.formGroup}>
+            <label style={ms.formLabel}>사용목적 <span style={ms.required}>*</span></label>
+            <SelectDropdown
+              value={purpose}
+              onChange={setPurpose}
+              options={purposeOptions}
+              placeholder="사용목적을 선택하세요."
+              headerLabel="사용목적 선택"
+            />
+          </div>
+
+          {/* 전표구분 */}
+          <div style={ms.formGroup}>
+            <label style={ms.formLabel}>전표구분 <span style={ms.required}>*</span></label>
+            <SelectDropdown
+              value={slipType}
+              onChange={setSlipType}
+              options={slipOptions}
+              placeholder="전표구분을 선택하세요."
+              headerLabel="전표구분 선택"
+            />
+          </div>
+
+          {/* 첨부파일 */}
+          <div style={ms.formGroup}>
+            <label style={ms.formLabel}>첨부파일</label>
+            <button 
+              style={ms.attachBtn}
+              onClick={() => {
+                if ((window as any).FlutterBridge) {
+                  (window as any).FlutterBridge.postMessage(JSON.stringify({ action: 'requestImageAttachment' }));
+                } else {
+                  alert('모바일 앱 환경에서만 사진 첨부가 가능합니다.');
+                }
+              }}
+            >
+              첨부파일 추가 <span style={ms.attachPlus}>+</span>
+            </button>
+            {attachedFiles.length > 0 && (
+              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {attachedFiles.map((f, idx) => {
+                  const sizeBytes = Math.floor(f.base64.length * 0.75);
+                  let adjusted = sizeBytes;
+                  if (f.base64.endsWith('==')) adjusted -= 2;
+                  else if (f.base64.endsWith('=')) adjusted -= 1;
+                  const sizeKb = Math.floor(adjusted / 1024);
+
+                  return (
+                    <div key={idx} style={ms.attachedFileItem}>
+                      <img src={f.base64} alt="thumb" style={ms.attachedFileThumb} />
+                      <span style={ms.attachedFileName}>{f.name} <span style={{ color: '#888' }}>({sizeKb}KB)</span></span>
+                      <button 
+                        style={ms.attachedFileRemove}
+                        onClick={() => setAttachedFiles(prev => prev.filter((_, i) => i !== idx))}
+                      >✕</button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div style={ms.instructionText}>
+            실제 영수증 정보와 불일치하는 정보는 직접 수정해주세요.
+          </div>
+        </div>
+
+        {/* 하단 버튼 */}
+        <div style={ms.popupBottom}>
+          <button style={ms.submitBtn} onClick={() => setIsConfirmOpen(true)}>
+            경비내역 등록
+          </button>
+        </div>
+      </div>
+
+      {/* 등록 확인 커스텀 모달 다이얼로그 */}
+      {isConfirmOpen && (
+        <div style={ms.modalOverlay}>
+          <div style={ms.modalContent}>
+            <div style={ms.modalTitle}>경비내역 등록</div>
+            <div style={ms.modalMessage}>작성하신 내역으로 경비를 등록하시겠습니까?</div>
+            <div style={ms.modalActionsList}>
+              <button style={ms.modalCancelBtn} onClick={() => setIsConfirmOpen(false)}>취소</button>
+              <button style={ms.modalConfirmBtn} onClick={() => {}}>확인</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -132,7 +306,7 @@ const styles: Record<string, React.CSSProperties> = {
   fixedHeader: { flexShrink: 0, position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#f5f5f7' },
   userBar: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px 8px' },
   userLeft: { display: 'flex', alignItems: 'center', gap: 8 },
-  logoIcon: { width: 32, height: 32, objectFit: 'contain' as const },
+  logoIcon: { width: 'auto', height: 'auto', objectFit: 'contain' as const },
   userName: { fontSize: 18, fontWeight: 700, color: '#111' },
   vehicleBar: { display: 'flex', alignItems: 'center', gap: 8, margin: '0 16px 8px', padding: '8px 16px', backgroundColor: '#fff', borderRadius: 30, border: '1.5px solid #2b5cff' },
   megaphoneIcon: { width: 20, height: 20, objectFit: 'contain' as const },
@@ -141,7 +315,7 @@ const styles: Record<string, React.CSSProperties> = {
   vehicleInfo: { fontSize: 14, color: '#444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
   
   // Expense Status Card
-  expenseStatusCard: { margin: '8px 16px', padding: '20px 16px', backgroundColor: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
+  expenseStatusCard: { margin: '16px 16px 8px', padding: '20px 16px', backgroundColor: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
   cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
   cardTitle: { fontSize: 16, fontWeight: 700, color: '#111' },
   expenseRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' },
@@ -153,7 +327,7 @@ const styles: Record<string, React.CSSProperties> = {
   scrollArea: { flex: 1, overflowY: 'auto' as const, display: 'block', paddingBottom: 32 },
   
   // Section Group
-  sectionGroup: { backgroundColor: '#fff', borderRadius: 12, margin: '8px 16px', overflow: 'hidden' },
+  sectionGroup: { backgroundColor: '#fff', borderRadius: 12, margin: '8px 16px 16px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
   sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 16px 16px', fontSize: 15, fontWeight: 700, color: '#111' },
   
   // List Item for Receipts Process
@@ -176,4 +350,89 @@ const styles: Record<string, React.CSSProperties> = {
   historyRight: { display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 },
   historyAmount: { fontSize: 15, fontWeight: 700, color: '#111' },
   historyAmountUnit: { fontSize: 14, color: '#111' },
+};
+
+// ─── 팝업 스타일 ──────────────────────────────────────────────────
+const ms: Record<string, React.CSSProperties> = {
+  popupOverlay: {
+    position: 'fixed' as const, top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', flexDirection: 'column',
+    padding: '56px 0 0 0',
+  },
+  popupContainer: {
+    flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#fff',
+    margin: 0, borderRadius: 0, overflow: 'hidden',
+    boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',
+  },
+  popupHeader: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    padding: '16px', borderBottom: '1px dashed #e2e8f0', flexShrink: 0, backgroundColor: '#fff',
+  },
+  popupHeaderEmpty: { width: 24 },
+  popupTitle: { fontSize: 16, fontWeight: 700, color: '#111' },
+  popupCloseBtn: { 
+    width: 24, height: 24, fontSize: 20, color: '#64748b', 
+    background: 'none', border: 'none', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1
+  },
+  popupScroll: {
+    flex: 1, overflowY: 'auto' as const, padding: '24px 20px', display: 'flex', flexDirection: 'column',
+    backgroundColor: '#fff', gap: 20,
+  },
+  formGroup: { display: 'flex', flexDirection: 'column' },
+  formLabel: { fontSize: 13, color: '#64748b', marginBottom: 8 },
+  required: { color: '#ef4444' },
+  input: {
+    padding: '12px', borderRadius: 8, border: '1px solid #e2e8f0', color: '#111', fontSize: 15, width: '100%', boxSizing: 'border-box' as const
+  },
+  inputDisabled: {
+    backgroundColor: '#f8fafc', padding: '12px', borderRadius: 8, border: '1px solid #f1f5f9', color: '#64748b', fontSize: 15, width: '100%', boxSizing: 'border-box' as const
+  },
+  selectWrapper: { position: 'relative' as const },
+  select: {
+    padding: '12px', borderRadius: 8, border: '1px solid #e2e8f0', color: '#8e8e93', fontSize: 15, width: '100%', boxSizing: 'border-box' as const,
+  },
+  attachBtn: {
+    padding: '12px', backgroundColor: '#f8fafc', borderRadius: 8, border: 'none', color: '#333', fontSize: 15, fontWeight: 500, cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6, width: '100%'
+  },
+  attachPlus: { color: '#4f7cff', fontWeight: 'bold' },
+  attachedFileItem: {
+    display: 'flex', alignItems: 'center', padding: '8px 12px',
+    backgroundColor: '#eff6ff', borderRadius: 6, gap: 8
+  },
+  attachedFileThumb: {
+    width: 36, height: 36, borderRadius: 4, objectFit: 'cover' as const, flexShrink: 0, border: '1px solid #d1d5db'
+  },
+  attachedFileName: { flex: 1, fontSize: 13, color: '#4f7cff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  attachedFileRemove: { 
+    background: 'none', border: 'none', color: '#94a3b8', fontSize: 14, cursor: 'pointer', padding: '0 4px'
+  },
+  instructionText: { fontSize: 12, color: '#8e8e93', textAlign: 'center' as const, margin: '8px 0 20px' },
+  popupBottom: { padding: '16px 20px 24px', flexShrink: 0, backgroundColor: '#fff' },
+  submitBtn: {
+    width: '100%', padding: '16px', backgroundColor: '#4f7cff', color: '#fff', fontSize: 16, fontWeight: 700, borderRadius: 12, border: 'none', cursor: 'pointer'
+  },
+
+  // 팝업 모달
+  modalOverlay: {
+    position: 'fixed' as const, top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 10000,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
+  },
+  modalContent: {
+    backgroundColor: '#fff', borderRadius: 16, width: '100%', maxWidth: 320,
+    padding: '24px 20px 20px', boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+    display: 'flex', flexDirection: 'column',
+  },
+  modalTitle: { fontSize: 18, fontWeight: 700, color: '#111', marginBottom: 8 },
+  modalMessage: { fontSize: 14, color: '#555', lineHeight: 1.5, marginBottom: 24 },
+  modalActionsList: { display: 'flex', gap: 8 },
+  modalCancelBtn: {
+    flex: 1, padding: '12px 0', fontSize: 14, fontWeight: 600,
+    backgroundColor: '#f1f1f5', color: '#555', border: 'none', borderRadius: 10, cursor: 'pointer'
+  },
+  modalConfirmBtn: {
+    flex: 1, padding: '12px 0', fontSize: 14, fontWeight: 600,
+    backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer'
+  }
 };

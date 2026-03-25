@@ -196,7 +196,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '12px 16px 8px',
   },
   userLeft: { display: 'flex', alignItems: 'center', gap: '8px' },
-  logoIcon: { width: '32px', height: '32px', objectFit: 'contain' as const },
+  logoIcon: { width: 'auto', height: 'auto', objectFit: 'contain' as const },
   userName: { fontSize: '18px', fontWeight: '700', color: '#111111' },
   vehicleBar: {
     display: 'flex',

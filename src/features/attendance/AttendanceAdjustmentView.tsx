@@ -297,10 +297,10 @@ const styles: Record<string, React.CSSProperties> = {
   header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', backgroundColor: '#fff', borderBottom: '1px solid #eee', flexShrink: 0 },
   backBtn: { fontSize: 24, color: '#333', background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px', lineHeight: 1 },
   title: { fontSize: 16, fontWeight: 700, color: '#111' },
-  tabRow: { display: 'flex', backgroundColor: '#f3f4f6', margin: '20px 16px 16px', borderRadius: 50, padding: 4, flexShrink: 0 },
-  tabBtn: { flex: 1, padding: '12px 0', fontSize: 15, fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.2s', borderRadius: 50, background: 'none' },
-  tabActive: { backgroundColor: '#fff', color: '#111', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' },
-  tabInactive: { backgroundColor: 'transparent', color: '#9ca3af', fontWeight: 500 },
+  tabRow: { display: 'flex', backgroundColor: '#f1f5f9', margin: '12px 16px', borderRadius: 12, padding: 4, flexShrink: 0 },
+  tabBtn: { flex: 1, padding: '10px 0', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.2s', borderRadius: 10, background: 'none' },
+  tabActive: { backgroundColor: '#fff', color: '#111', boxShadow: '0 1px 4px rgba(0,0,0,0.10)' },
+  tabInactive: { backgroundColor: 'transparent', color: '#8e8e93' },
   content: { flex: 1, overflowY: 'auto', backgroundColor: '#fff', position: 'relative', overscrollBehaviorY: 'none', display: 'flex', flexDirection: 'column', minHeight: 0 },
 };
 

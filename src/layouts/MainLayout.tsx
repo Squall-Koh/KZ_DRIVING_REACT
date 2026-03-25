@@ -89,7 +89,7 @@ export function MainLayout() {
       {/* Top Header */}
       <div style={styles.header}>
         <div style={styles.headerLeft} onClick={handleLogoTap}>
-          <img src={IconKz} alt="KZ" style={{ width: 32, height: 32, borderRadius: 8 }} />
+          <img src={IconKz} alt="KZ" style={{ width: 'auto', height: 'auto', objectFit: 'contain', borderRadius: 8 }} />
           <span style={styles.userName}>SeungJoo Koh 님</span>
         </div>
         <div style={styles.headerRight}>

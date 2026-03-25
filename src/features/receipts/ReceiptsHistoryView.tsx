@@ -1,15 +1,53 @@
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import { RefreshCw } from 'lucide-react';
+import { usePullToRefresh } from '../notifications/usePullToRefresh';
 import type { UseReceiptsHistoryReturn } from './useReceiptsHistory';
 
 export function ReceiptsHistoryView({
-  recentExpenses,
   startDate,
   endDate,
   onBack,
+  items,
+  loading,
+  hasMore,
+  observerRef,
+  onRefresh,
+  onLoadMore,
 }: UseReceiptsHistoryReturn) {
   const displayPeriod = `${startDate.replace(/-/g, '.')} ~ ${endDate.replace(/-/g, '.')}`;
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isFabVisible, setIsFabVisible] = useState(false);
+
+  const { pullDist, isPulling, isPullRate } = usePullToRefresh(scrollRef, onRefresh, loading);
+
+  useEffect(() => {
+    if (!hasMore || loading) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          onLoadMore();
+        }
+      },
+      { threshold: 1.0 }
+    );
+    if (observerRef.current) observer.observe(observerRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, loading, onLoadMore, observerRef]);
+
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    setIsFabVisible(scrollRef.current.scrollTop > 200);
+  };
+
+  const scrollToTop = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   const renderBadge = (type?: string) => {
+
     switch(type) {
       case 'simple':
         return <span style={{ ...s.badge, color: '#f97316', backgroundColor: '#ffedd5' }}>간이영수증</span>;
@@ -30,7 +68,25 @@ export function ReceiptsHistoryView({
         <div style={{ width: 32 }} />
       </div>
 
-      <div style={s.scrollArea}>
+      <div 
+        style={s.scrollArea}
+        ref={scrollRef}
+        onScroll={handleScroll}
+      >
+        <div style={{
+          ...s.pullIndicator,
+          height: `${pullDist}px`,
+          opacity: isPullRate,
+          transition: isPulling ? 'none' : 'height 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <RefreshCw size={16} color="#888" style={{ transform: `rotate(${isPullRate * 360}deg)` }} />
+            <span>
+              {loading && pullDist > 0 ? '데이터를 가져오는 중...' : (pullDist > 50 ? '놓아서 새로고침...' : '아래로 당기세요')}
+            </span>
+          </div>
+        </div>
+
         {/* 기간 표시 */}
         <div style={s.periodHeader}>
           <span style={s.periodText}>{displayPeriod}</span>
@@ -39,8 +95,8 @@ export function ReceiptsHistoryView({
 
         {/* 리스트 */}
         <div style={s.listContainer}>
-          {recentExpenses.map((expense) => (
-            <div key={expense.id} style={s.receiptCard}>
+          {items.map((expense) => (
+             <div key={expense.id} style={s.receiptCard}>
               <div style={s.receiptTop}>
                 <span style={s.receiptDate}>{expense.date}</span>
                 {renderBadge(expense.receiptType)}
@@ -50,13 +106,31 @@ export function ReceiptsHistoryView({
               <div style={s.receiptInfo}>가맹점주소 : {expense.address}</div>
             </div>
           ))}
-          {recentExpenses.length === 0 && (
+          
+          {loading && (
+            <div style={{ textAlign: 'center', padding: '20px', color: '#888', fontSize: 13 }}>
+              목록 불러오는 중...
+            </div>
+          )}
+          {!loading && !hasMore && items.length > 0 && (
+            <div style={{ textAlign: 'center', padding: '20px', color: '#bbb', fontSize: 13 }}>
+              더 이상 내역이 없습니다.
+            </div>
+          )}
+
+          {!loading && items.length === 0 && (
             <div style={{ textAlign: 'center', color: '#aaa', padding: 40, fontSize: 14 }}>
               내역이 없습니다.
             </div>
           )}
+
+          <div ref={observerRef} style={{ height: 20 }} />
         </div>
       </div>
+
+      {isFabVisible && (
+        <button style={s.fabBtn} onClick={scrollToTop}>↑</button>
+      )}
     </div>
   );
 }
@@ -69,12 +143,12 @@ const s: Record<string, React.CSSProperties> = {
   },
   header: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '14px 16px', backgroundColor: '#fff', flexShrink: 0,
+    padding: '14px 16px', backgroundColor: '#fff', borderBottom: '1px solid #eee', flexShrink: 0,
   },
   backBtn: { fontSize: 24, color: '#333', background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px', lineHeight: 1 },
   title: { fontSize: 16, fontWeight: 700, color: '#111' },
   
-  scrollArea: { flex: 1, overflowY: 'auto' as const, display: 'flex', flexDirection: 'column' },
+  scrollArea: { flex: 1, overflowY: 'auto' as const, display: 'flex', flexDirection: 'column', position: 'relative' },
   
   periodHeader: { 
     padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
@@ -84,14 +158,24 @@ const s: Record<string, React.CSSProperties> = {
 
   listContainer: { padding: '0 16px 24px', display: 'flex', flexDirection: 'column', gap: 12 },
   receiptCard: {
-    padding: '16px', backgroundColor: '#fff', border: '1px solid #e2e8f0',
-    borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 6,
-    boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+    padding: '16px', backgroundColor: '#fff', border: '1px solid #f1f3f5',
+    borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 6,
+    boxShadow: '0 4px 16px rgba(0,0,0,0.18)'
   },
   receiptTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   receiptDate: { fontSize: 14, color: '#4f7cff', fontWeight: 500 },
   badge: { fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 4 },
   
   receiptStore: { fontSize: 16, fontWeight: 700, color: '#111', marginTop: 2 },
-  receiptInfo: { fontSize: 13, color: '#64748b' }
+  receiptInfo: { fontSize: 13, color: '#64748b' },
+
+  pullIndicator: { display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888888', fontSize: '13px', transition: 'height 0.1s ease-out, opacity 0.1s ease-out', overflow: 'hidden', flexShrink: 0, width: '100%' },
+  
+  fabBtn: {
+    position: 'fixed' as const, bottom: 24, right: 16, width: 48, height: 48, 
+    borderRadius: '50%', backgroundColor: '#2563eb', color: '#fff', fontSize: 24, 
+    fontWeight: 'bold', border: 'none', boxShadow: '0 4px 12px rgba(37,99,235,0.4)', 
+    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+    zIndex: 50, transition: 'all 0.2s',
+  }
 };

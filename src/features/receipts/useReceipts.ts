@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export interface ReceiptItem {
   id: string;
@@ -45,14 +46,19 @@ export interface UseReceiptsReturn {
   onOpenDatePicker: () => void;
   onCloseDatePicker: () => void;
   onConfirmDateRange: (start: string, end: string) => void;
+  isManualPopupOpen: boolean;
+  onOpenManualPopup: () => void;
+  onCloseManualPopup: () => void;
 }
 
 export function useReceipts(): UseReceiptsReturn {
+  const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [startDate, setStartDate] = useState<string>('2026-03-01');
   const [endDate, setEndDate] = useState<string>('2026-03-31');
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
+  const [isManualPopupOpen, setIsManualPopupOpen] = useState<boolean>(false);
 
   // 초깃값 없음 - Flutter에서 window.updateReceiptsInfo()로 주입받음
   const [bridge, setBridge] = useState({
@@ -130,8 +136,7 @@ export function useReceipts(): UseReceiptsReturn {
   ]);
 
   const onNavigate = (path: string, state?: any) => {
-    // Navigation logic here, handled by parent typically
-    console.log('Navigate to:', path, state);
+    navigate(path, { state });
   };
 
   const onOpenDatePicker = () => setShowDatePicker(true);
@@ -140,6 +145,7 @@ export function useReceipts(): UseReceiptsReturn {
     setStartDate(start);
     setEndDate(end);
     setShowDatePicker(false);
+    navigate('/receipts/history', { state: { startDate: start, endDate: end } });
   };
 
   return {
@@ -159,5 +165,8 @@ export function useReceipts(): UseReceiptsReturn {
     onOpenDatePicker,
     onCloseDatePicker,
     onConfirmDateRange,
+    isManualPopupOpen,
+    onOpenManualPopup: () => setIsManualPopupOpen(true),
+    onCloseManualPopup: () => setIsManualPopupOpen(false),
   };
 }

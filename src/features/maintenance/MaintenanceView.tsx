@@ -95,7 +95,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '12px 16px 8px',
   },
   userLeft:  { display: 'flex', alignItems: 'center', gap: 8 },
-  logoIcon:  { width: 32, height: 32, objectFit: 'contain' as const },
+  logoIcon: { width: 'auto', height: 'auto', objectFit: 'contain' as const },
   userName:  { fontSize: 18, fontWeight: 700, color: '#111' },
   vehicleBar: {
     display: 'flex', alignItems: 'center', gap: 8,

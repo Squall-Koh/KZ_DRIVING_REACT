@@ -285,8 +285,10 @@ const s: Record<string, React.CSSProperties> = {
   
   cardInfoBanner: {
     margin: '8px 16px 24px', padding: '24px 16px',
-    backgroundColor: '#4f7cff', borderRadius: 12, display: 'flex', flexDirection: 'column',
-    alignItems: 'center', color: '#fff'
+    background: 'linear-gradient(135deg, #749cff 0%, #4f7cff 100%)', 
+    borderRadius: 12, display: 'flex', flexDirection: 'column',
+    alignItems: 'center', color: '#fff',
+    boxShadow: '0 4px 12px rgba(79, 124, 255, 0.3)'
   },
   cardInfoLabel: { fontSize: 13, opacity: 0.9, marginBottom: 8 },
   cardInfoName: { fontSize: 18, fontWeight: 700, marginBottom: 8 },
@@ -309,9 +311,9 @@ const s: Record<string, React.CSSProperties> = {
 
   listContainer: { padding: '0 16px 24px', display: 'flex', flexDirection: 'column', gap: 12 },
   receiptCard: {
-    padding: '16px', backgroundColor: '#fff', border: '1px solid #e2e8f0',
-    borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 6,
-    boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+    padding: '16px', backgroundColor: '#fff', border: '1px solid #f1f3f5',
+    borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 6,
+    boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
   },
   receiptTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   receiptDate: { fontSize: 13, color: '#4f7cff', fontWeight: 500 },
@@ -319,20 +321,20 @@ const s: Record<string, React.CSSProperties> = {
   receiptStore: { fontSize: 16, fontWeight: 700, color: '#111', marginTop: 2 },
   receiptInfo: { fontSize: 13, color: '#64748b' },
 
-  // --- 추가된 팝업 관련 스타일 ---
+  // --- 영수증 등록 바텀시트(팝업) 스타일 ---
   popupOverlay: {
-    position: 'absolute', top: 56, left: 0, right: 0, bottom: 0,
+    position: 'fixed' as const, top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    zIndex: 100, display: 'flex', flexDirection: 'column',
-    padding: '12px 0 20px 0', // 상/하 여백 (네비게이션 바 침범 방지)
+    zIndex: 9999, display: 'flex', flexDirection: 'column',
+    padding: '56px 0 0 0', // 헤더 높이만큼 상단 여백 
   },
   popupContainer: {
     flex: 1, display: 'flex', flexDirection: 'column',
     backgroundColor: '#fff',
-    margin: '0 16px', // 좌우 여백 (필요 시 0으도로 변경 가능하나, 플로팅 느낌 선호 시 유지)
-    borderRadius: 16,
+    margin: 0, // 좌, 우, 하단 꽉 채움
+    borderRadius: 0, // 상단 라운드 처리 제거
     overflow: 'hidden',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+    boxShadow: '0 -4px 20px rgba(0,0,0,0.15)', // 위로 살짝 뜨는 그림자 모양
   },
   popupHeader: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',

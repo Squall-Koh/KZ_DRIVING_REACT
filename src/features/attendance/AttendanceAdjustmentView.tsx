@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import iconCalendar from '../../assets/icon_calendar.png';
-import { Clock, RefreshCw } from 'lucide-react';
+import { Clock, RefreshCw, ChevronLeft } from 'lucide-react';
 import { ClockTimePicker } from '../../components/ClockTimePicker';
 import { DatePicker } from '../../components/DatePicker';
 import { usePullToRefresh } from '../notifications/usePullToRefresh';
@@ -140,7 +140,7 @@ function ApprovalTab({
 }) {
   const [dialogConfig, setDialogConfig] = useState<{type: 'cancel' | 'edit'; id: number} | null>(null);
   const [isFabVisible, setIsFabVisible] = useState(false);
-  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const { pullDist, isPullRate, isPulling } = usePullToRefresh(
     scrollRef as React.RefObject<HTMLDivElement>,
@@ -248,7 +248,9 @@ export function AttendanceAdjustmentView(props: UseAttendanceAdjustmentReturn) {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <button style={styles.backBtn} onClick={onBack}>‹</button>
+        <button style={styles.backBtn} onClick={onBack}>
+          <ChevronLeft size={28} color="#111" />
+        </button>
         <span style={styles.title}>근태조정 신청서 등록</span>
         <div style={{ width: 32 }} />
       </div>
@@ -295,7 +297,7 @@ export function AttendanceAdjustmentView(props: UseAttendanceAdjustmentReturn) {
 const styles: Record<string, React.CSSProperties> = {
   container: { display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#ffffff', fontFamily: "'Pretendard','Noto Sans KR',sans-serif", overflow: 'hidden', position: 'relative' },
   header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', backgroundColor: '#fff', borderBottom: '1px solid #eee', flexShrink: 0 },
-  backBtn: { fontSize: 24, color: '#333', background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px', lineHeight: 1 },
+  backBtn: { background: 'none', border: 'none', cursor: 'pointer', padding: '12px', display: 'flex', alignItems: 'center' },
   title: { fontSize: 16, fontWeight: 700, color: '#111' },
   tabRow: { display: 'flex', backgroundColor: '#f1f5f9', margin: '12px 16px', borderRadius: 12, padding: 4, flexShrink: 0 },
   tabBtn: { flex: 1, padding: '10px 0', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.2s', borderRadius: 10, background: 'none' },

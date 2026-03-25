@@ -20,7 +20,7 @@ export function DailyTripHistoryView({
       {/* ── 헤더 ── */}
       <div style={styles.header}>
         <button style={styles.backBtn} onClick={() => navigate(-1)}>
-          <ArrowLeft size={24} color="#111" />
+          <ChevronLeft size={28} color="#111" />
         </button>
         <span style={styles.headerTitle}>일일근태 · 운행기록</span>
         <div style={{ width: 40 }} />
@@ -155,7 +155,7 @@ export function DailyTripHistoryView({
 const styles: Record<string, React.CSSProperties> = {
   page: { display: 'flex', flexDirection: 'column', height: '100dvh', backgroundColor: '#fff', fontFamily: "'Pretendard', sans-serif" },
   header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', backgroundColor: '#fff', borderBottom: '1px solid #f0f0f0' },
-  backBtn: { background: 'none', border: 'none', cursor: 'pointer', padding: 8, display: 'flex', alignItems: 'center' },
+  backBtn: { background: 'none', border: 'none', cursor: 'pointer', padding: '12px', display: 'flex', alignItems: 'center' },
   headerTitle: { fontSize: '17px', fontWeight: 'bold', color: '#111' },
   dateBarOuter: { padding: '16px 16px 0 16px', backgroundColor: '#fff' },
   dateBar: { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 16px', backgroundColor: '#fff', borderRadius: '14px', gap: '16px', border: '1px solid #f1f3f5', boxShadow: '0 4px 16px rgba(0,0,0,0.18)' },

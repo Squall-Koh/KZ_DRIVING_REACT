@@ -1,4 +1,5 @@
 import React from 'react';
+import { ChevronLeft } from 'lucide-react';
 import { type DayRecord } from './useAttendance';
 import type { UseAttendanceDetailReturn } from './useAttendanceDetail';
 
@@ -34,7 +35,9 @@ export function AttendanceDetailView({ days, weekLabel, headerParts, month, onBa
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <button style={styles.backBtn} onClick={onBack}>‹</button>
+        <button style={styles.backBtn} onClick={onBack}>
+          <ChevronLeft size={28} color="#111" />
+        </button>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <span style={styles.title}>근무내역 상세보기</span>
           {headerParts.length > 0 && (
@@ -62,8 +65,8 @@ export function AttendanceDetailView({ days, weekLabel, headerParts, month, onBa
 
 const styles: Record<string, React.CSSProperties> = {
   container: { display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#f5f5f7', fontFamily: "'Pretendard','Noto Sans KR',sans-serif", overflow: 'hidden' },
-  header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', backgroundColor: '#fff', borderBottom: '1px solid #eee', flexShrink: 0 },
-  backBtn: { fontSize: 24, color: '#333', background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px', lineHeight: 1 },
+  header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', backgroundColor: '#fff', borderBottom: '1px solid #eee', flexShrink: 0 },
+  backBtn: { background: 'none', border: 'none', cursor: 'pointer', padding: '12px', display: 'flex', alignItems: 'center' },
   title: { fontSize: 15, fontWeight: 700, color: '#111' },
   subTitle: { fontSize: 11, fontWeight: 600, color: '#4D7EFF', marginTop: 2 },
   subTitleSub: { fontSize: 10, color: '#999' },

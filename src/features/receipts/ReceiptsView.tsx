@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { DateRangePicker } from '../../components/DateRangePicker';
 import { SelectDropdown } from '../../components/SelectDropdown';
 import type { UseReceiptsReturn } from './useReceipts';
@@ -66,7 +67,7 @@ export function ReceiptsView({
             <span style={styles.listLabel}>법인카드</span>
             <div style={styles.listRight}>
               <span style={styles.countBadge}>{receiptsToProcess.corporateCount} 건</span>
-              <span style={styles.listArrow}>›</span>
+              <ChevronRight size={20} color="#999" style={styles.listArrow} />
             </div>
           </button>
           
@@ -80,7 +81,7 @@ export function ReceiptsView({
             <span style={styles.listLabel}>개인카드</span>
             <div style={styles.listRight}>
               <span style={{...styles.countBadge, color: '#ef4444', backgroundColor: '#fee2e2'}}>{receiptsToProcess.personalCount} 건</span>
-              <span style={styles.listArrow}>›</span>
+              <ChevronRight size={20} color="#999" style={styles.listArrow} />
             </div>
           </button>
 

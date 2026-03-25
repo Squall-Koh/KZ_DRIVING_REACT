@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ChevronLeft } from 'lucide-react';
 import { DatePicker } from '../../components/DatePicker';
 import iconCalendar from '../../assets/icon_calendar.png';
 import type {
@@ -122,7 +123,9 @@ export function MaintenanceDetailView({
 
       {/* 헤더 */}
       <div style={s.header}>
-        <button style={s.backBtn} onClick={onBack}>‹</button>
+        <button style={s.backBtn} onClick={onBack}>
+          <ChevronLeft size={28} color="#111" />
+        </button>
         <span style={s.title}>정비항목 상세보기</span>
         <div style={{ width: 32 }} />
       </div>
@@ -174,7 +177,7 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '14px 16px', backgroundColor: '#fff', borderBottom: '1px solid #eee', flexShrink: 0,
   },
-  backBtn: { fontSize: 24, color: '#333', background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px', lineHeight: 1 },
+  backBtn: { background: 'none', border: 'none', cursor: 'pointer', padding: '12px', display: 'flex', alignItems: 'center' },
   title: { fontSize: 16, fontWeight: 700, color: '#111' },
   itemBadge: {
     display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6,

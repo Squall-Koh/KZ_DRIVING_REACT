@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface DatePickerProps {
   initialDate?: string; // "YYYY-MM-DD"
@@ -76,9 +77,9 @@ export function DatePicker({ initialDate, onConfirm, onCancel }: DatePickerProps
         </div>
         
         <div style={s.monthNav}>
-          <button style={s.navBtn} onClick={prevMonth}>‹</button>
+          <button style={s.navBtn} onClick={prevMonth}><ChevronLeft size={24} color="#666" /></button>
           <span style={s.monthTitle}>{year}년 {month + 1}월</span>
-          <button style={s.navBtn} onClick={nextMonth}>›</button>
+          <button style={s.navBtn} onClick={nextMonth}><ChevronRight size={24} color="#666" /></button>
         </div>
 
         <div style={s.weekCol}>

@@ -88,7 +88,7 @@ export function NotificationsView({
       {/* ── 상단 헤더 ───────────────────────────────────────── */}
       <div style={styles.header}>
         <button style={styles.backBtn} onClick={() => navigate(-1)}>
-          <ChevronLeft size={28} color="#000" strokeWidth={1.5} />
+          <ChevronLeft size={28} color="#111" />
         </button>
         <h1 style={styles.title}>알림 수신함</h1>
         <div style={styles.spacer} />
@@ -176,7 +176,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'none',
     border: 'none',
     cursor: 'pointer',
-    padding: '4px',
+    padding: '12px',
     display: 'flex',
     alignItems: 'center',
   },

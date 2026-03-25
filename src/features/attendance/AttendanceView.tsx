@@ -1,4 +1,5 @@
 import type { UseAttendanceReturn, WeekRecord } from './useAttendance';
+import { ChevronRight } from 'lucide-react';
 
 // ─── 반원 게이지 ──────────────────────────────────────────────
 function SemiCircleGauge({ regular, overtime, night }: { regular: number; overtime: number; night: number }) {
@@ -172,7 +173,7 @@ export function AttendanceView({
           <div style={styles.sectionHeader}>근태 결재요청</div>
           <button style={styles.adjustRow} onClick={() => onNavigate('/attendance/adjustment')}>
             <span style={styles.adjustLabel}>근태조정 신청서 등록</span>
-            <span style={styles.adjustArrow}>›</span>
+            <ChevronRight size={20} color="#999" style={styles.adjustArrow} />
           </button>
         </div>
       </div>

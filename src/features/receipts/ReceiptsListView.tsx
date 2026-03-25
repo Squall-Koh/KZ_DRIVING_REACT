@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { SelectDropdown } from '../../components/SelectDropdown';
 import type { ReceiptItem } from './useReceipts';
 import type { UseReceiptsListReturn } from './useReceiptsList';
@@ -23,7 +24,9 @@ export function ReceiptsListView({
     <div style={s.container}>
       {/* 헤더 */}
       <div style={s.header}>
-        <button style={s.backBtn} onClick={onBack}>‹</button>
+        <button style={s.backBtn} onClick={onBack}>
+          <ChevronLeft size={28} color="#111" />
+        </button>
         <span style={s.title}>경비 영수증 목록</span>
         <div style={{ width: 32 }} />
       </div>
@@ -75,9 +78,9 @@ export function ReceiptsListView({
               style={s.receiptCard}
               onClick={() => onSelectReceipt(receipt)}
             >
-              <div style={s.receiptTop}>
-                <span style={s.receiptDate}>{receipt.date}</span>
-                <span style={s.receiptArrow}>›</span>
+              <div style={s.receiptMid}>
+                <span style={s.receiptStore}>{receipt.store}</span>
+                <ChevronRight size={20} color="#ccc" style={s.receiptArrow} />
               </div>
               <div style={s.receiptStore}>{receipt.store}</div>
               <div style={s.receiptInfo}>거래금액 : {receipt.amount.toLocaleString()}원</div>
@@ -266,7 +269,7 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '14px 16px', backgroundColor: '#fff', borderBottom: '1px solid #eee', flexShrink: 0,
   },
-  backBtn: { fontSize: 24, color: '#333', background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px', lineHeight: 1 },
+  backBtn: { background: 'none', border: 'none', cursor: 'pointer', padding: '12px', display: 'flex', alignItems: 'center' },
   title: { fontSize: 16, fontWeight: 700, color: '#111' },
   
   tabRow: {

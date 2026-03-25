@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 export interface SelectOption {
   label: string;
@@ -30,7 +31,7 @@ export function SelectDropdown({
         onClick={() => setIsOpen(!isOpen)}
       >
         <span>{selectedOpt ? selectedOpt.label : placeholder}</span>
-        <span style={s.dropdownArrow}>∨</span>
+        <ChevronDown size={22} color="#64748b" style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
       </button>
 
       {isOpen && (
@@ -39,7 +40,9 @@ export function SelectDropdown({
           <div style={s.dropdownMenu}>
             <div style={s.dropdownMenuHeader}>
               <span>{headerLabel || placeholder}</span>
-              <span style={s.dropdownMenuClose} onClick={() => setIsOpen(false)}>∧</span>
+              <span style={s.dropdownMenuClose} onClick={() => setIsOpen(false)}>
+                <ChevronUp size={22} color="#888" />
+              </span>
             </div>
             <div style={s.dropdownList}>
               {options.map(opt => (
@@ -74,7 +77,6 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer',
     boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
   },
-  dropdownArrow: { color: '#9ca3af', fontSize: 12 },
   dropdownMenu: {
     position: 'absolute' as const, top: 0, left: 0, width: '100%', 
     backgroundColor: '#fff', borderRadius: 12, zIndex: 201,

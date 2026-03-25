@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 // ─── 타입 정의 ───────────────────────────────────────────────
@@ -57,8 +57,13 @@ export interface UseMaintenanceDetailReturn {
   mainDate: string;
   receipts: ReceiptRecord[];
   historyRecords: HistoryRecord[];
+  isReceiptPopupOpen: boolean;
+  isProcessingImage: boolean;
   onTabChange: (tab: TabType) => void;
   onDateChange: (date: string) => void;
+  onAddReceiptClick: () => void;
+  onCloseReceiptPopup: () => void;
+  onConfirmReceipt: (data: any) => void;
   onBack: () => void;
 }
 
@@ -74,12 +79,60 @@ export function useMaintenanceDetail(): UseMaintenanceDetailReturn {
   const [tab, setTab] = useState<TabType>('register');
   const [mainDate, setMainDate] = useState('');
 
-  const receipts      = DUMMY_RECEIPTS[item.id]  ?? DUMMY_RECEIPTS['engine_oil'];
-  const historyRecords = DUMMY_HISTORY[item.id]   ?? DUMMY_HISTORY['engine_oil'];
+  const [receipts, setReceipts] = useState<ReceiptRecord[]>(
+    DUMMY_RECEIPTS[item.id] ?? DUMMY_RECEIPTS['engine_oil']
+  );
+  const historyRecords = DUMMY_HISTORY[item.id] ?? DUMMY_HISTORY['engine_oil'];
+
+  const [isReceiptPopupOpen, setIsReceiptPopupOpen] = useState(false);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
 
   const onTabChange  = (t: TabType) => setTab(t);
   const onDateChange = (d: string)  => setMainDate(d);
   const onBack       = ()           => navigate(-1);
+
+  // 네이티브 이미지 첨부 콜백 리스너
+  useEffect(() => {
+    (window as any).onImageAttached = (name: string, base64: string) => {
+      // 네이티브에서 카메라/갤러리 완료 후 이미지 정보가 넘어왔을 때 호출됨
+      setIsProcessingImage(false); // 혹시 로딩중이었다면 해제
+      setIsReceiptPopupOpen(true);
+      // 향후 base64 이미지를 폼에 프리필(pre-fill) 하거나 서버로 전송하는 로직 연결
+    };
+    return () => {
+      delete (window as any).onImageAttached;
+    };
+  }, []);
+
+  // ─── 이미지 첨부 제어 ─────────────────────────────────
+  const onAddReceiptClick = () => {
+    if ((window as any).FlutterBridge) {
+      // 네이티브 바텀시트 호출 (경비 영수증과 동일한 로직)
+      (window as any).FlutterBridge.postMessage(JSON.stringify({ action: 'requestImageAttachment' }));
+    } else {
+      // 웹 테스트 환경용 Fallback
+      alert('모바일 앱 환경에서만 사진 첨부가 가능합니다.');
+      setIsProcessingImage(true);
+      setTimeout(() => {
+        setIsProcessingImage(false);
+        setIsReceiptPopupOpen(true);
+      }, 1000);
+    }
+  };
+
+  const onCloseReceiptPopup = () => setIsReceiptPopupOpen(false);
+
+  const onConfirmReceipt = (data: any) => {
+    const newReceipt: ReceiptRecord = {
+      id: Date.now(),
+      date: data.date,
+      shopName: data.shopName,
+      amount: parseInt(data.amount.replace(/[^0-9]/g, ''), 10) || 0,
+      address: data.address,
+    };
+    setReceipts([...receipts, newReceipt]);
+    setIsReceiptPopupOpen(false);
+  };
 
   return {
     item,
@@ -87,8 +140,13 @@ export function useMaintenanceDetail(): UseMaintenanceDetailReturn {
     mainDate,
     receipts,
     historyRecords,
+    isReceiptPopupOpen,
+    isProcessingImage,
     onTabChange,
     onDateChange,
+    onAddReceiptClick,
+    onCloseReceiptPopup,
+    onConfirmReceipt,
     onBack,
   };
 }

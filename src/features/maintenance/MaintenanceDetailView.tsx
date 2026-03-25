@@ -7,16 +7,18 @@ import type {
   HistoryRecord,
   UseMaintenanceDetailReturn,
 } from './useMaintenanceDetail';
+import { ReceiptRegisterPopup } from './ReceiptRegisterPopup';
 
-// ─── 등록 탭 ─────────────────────────────────────────────────
 function RegisterTab({
   mainDate,
   receipts,
   onDateChange,
+  onAddReceiptClick,
 }: {
   mainDate: string;
   receipts: ReceiptRecord[];
   onDateChange: (date: string) => void;
+  onAddReceiptClick: () => void;
 }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const displayDate = mainDate ? mainDate : '';
@@ -44,7 +46,7 @@ function RegisterTab({
 
         <div style={ts.fieldGroup}>
           <label style={ts.label}>경비내역</label>
-          <button style={ts.addBtn}>정비 영수증 추가 +</button>
+          <button style={ts.addBtn} onClick={onAddReceiptClick}>정비 영수증 추가 +</button>
           <p style={ts.hint}>* 차량 정비를 위한 경비가 발생한 경우 경비를 등록해주세요.</p>
         </div>
       </div>
@@ -114,8 +116,13 @@ export function MaintenanceDetailView({
   mainDate,
   receipts,
   historyRecords,
+  isReceiptPopupOpen,
+  isProcessingImage,
   onTabChange,
   onDateChange,
+  onAddReceiptClick,
+  onCloseReceiptPopup,
+  onConfirmReceipt,
   onBack,
 }: UseMaintenanceDetailReturn) {
   return (
@@ -157,11 +164,29 @@ export function MaintenanceDetailView({
             mainDate={mainDate}
             receipts={receipts}
             onDateChange={onDateChange}
+            onAddReceiptClick={onAddReceiptClick}
           />
         ) : (
           <HistoryTab records={historyRecords} />
         )}
       </div>
+
+      {/* 팝업 영역 */}
+      {isReceiptPopupOpen && (
+        <ReceiptRegisterPopup
+          initialData={{ date: mainDate }} // 기본 거래일자 세팅 가능
+          onClose={onCloseReceiptPopup}
+          onSubmit={onConfirmReceipt}
+        />
+      )}
+
+      {/* 이미지 처리 로딩 오버레이 */}
+      {isProcessingImage && (
+        <div style={ts.loadingOverlay}>
+          <div style={ts.loadingSpinner} />
+          <span style={ts.loadingText}>영수증 이미지를 분석 중입니다...</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -246,4 +271,18 @@ const ts: Record<string, React.CSSProperties> = {
   historyKm: { fontSize: 12, color: '#555', backgroundColor: '#f3f4f6', padding: '3px 10px', borderRadius: 20, fontWeight: 600 },
   historyDesc: { fontSize: 15, fontWeight: 700, color: '#111', marginBottom: 4 },
   historyManager: { fontSize: 13, color: '#666' },
+
+  loadingOverlay: {
+    position: 'fixed', inset: 0, zIndex: 2000,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+    gap: 16,
+  },
+  loadingSpinner: {
+    width: 40, height: 40,
+    border: '4px solid rgba(255,255,255,0.3)',
+    borderTopColor: '#fff', borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
+  },
+  loadingText: { fontSize: 15, fontWeight: 600, color: '#fff' },
 };

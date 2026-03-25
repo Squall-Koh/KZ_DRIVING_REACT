@@ -174,10 +174,8 @@ const styles: Record<string, React.CSSProperties> = {
   container: {
     display: 'flex',
     flexDirection: 'column',
-    height: '100vh',
     backgroundColor: '#fff',
     fontFamily: "'Pretendard', 'Noto Sans KR', sans-serif",
-    overflow: 'hidden',
   },
   fixedHeader: {
     flexShrink: 0,
@@ -210,7 +208,7 @@ const styles: Record<string, React.CSSProperties> = {
   divider: { width: '1px', height: '14px', backgroundColor: '#d1d5db', flexShrink: 0 },
   vehicleBadge: { fontSize: '14px', fontWeight: '700', whiteSpace: 'nowrap' as const },
   vehicleInfo: { fontSize: '14px', color: '#444444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
-  scrollArea: { flex: 1, overflowY: 'auto' as const, display: 'flex', flexDirection: 'column' },
+  scrollArea: { display: 'flex', flexDirection: 'column' },
   statsBox: {
     display: 'flex',
     backgroundColor: '#ffffff',

@@ -103,11 +103,10 @@ export function AttendanceView({
   return (
     <div style={styles.container}>
 
-      {/* ── 스크롤 영역 ──────────────────────────────────────── */}
-      <div style={styles.scrollArea} ref={scrollRef}>
-
+      {/* ── 상단 고정 영역 ─────────────────────────────────────── */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#fff', paddingTop: 16, paddingBottom: 8 }}>
         {/* 일일 근태 현황 카드 (대시보드와 동일한 UI) */}
-        <div style={styles.todayCard}>
+        <div style={{ ...styles.todayCard, margin: '0 16px' }}>
           <div style={styles.todayHeader}><span style={styles.todayTitle}>일일근태현황</span></div>
           <div style={styles.progressContainer}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#999', marginBottom: 4 }}>
@@ -144,6 +143,10 @@ export function AttendanceView({
             {primaryBtnText}
           </button>
         </div>
+      </div>
+
+      {/* ── 스크롤 영역 ──────────────────────────────────────── */}
+      <div style={styles.scrollArea} ref={scrollRef}>
 
         {/* ── 근무내역 섹션 ─────────────────────────────────── */}
         <div style={styles.sectionGroup}>
@@ -206,7 +209,7 @@ export function AttendanceView({
 
 // ─── 스타일 ──────────────────────────────────────────────────
 const styles: Record<string, React.CSSProperties> = {
-  container: { display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#fff', fontFamily: "'Pretendard','Noto Sans KR',sans-serif", overflow: 'hidden' },
+  container: { display: 'flex', flexDirection: 'column', backgroundColor: '#fff', fontFamily: "'Pretendard','Noto Sans KR',sans-serif" },
   fixedHeader: { flexShrink: 0, position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#fff', borderBottom: '1px solid #eee' },
   userBar: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px 8px' },
   userLeft: { display: 'flex', alignItems: 'center', gap: 8 },
@@ -228,7 +231,7 @@ const styles: Record<string, React.CSSProperties> = {
   monthSelector: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', width: '100%', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' as const },
   monthSelectorText: { fontSize: 14, fontWeight: 600, color: '#222' },
   monthArrow: { fontSize: 11, color: '#888', transition: 'transform 0.2s' },
-  scrollArea: { flex: 1, overflowY: 'auto' as const, display: 'block', paddingBottom: 32 },
+  scrollArea: { display: 'block', paddingBottom: 32 },
   sectionGroup: { backgroundColor: '#fff', borderRadius: 12, margin: '8px 16px', overflow: 'hidden', border: '1px solid #f1f3f5', boxShadow: '0 4px 16px rgba(0,0,0,0.18)' },
   emptyWrapper: { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 },
   emptyText: { fontSize: 14, color: '#aaa', margin: 0 },

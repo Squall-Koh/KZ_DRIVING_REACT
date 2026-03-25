@@ -60,8 +60,8 @@ export function MaintenanceView({
     <div style={styles.container}>
 
       {/* ── 고정 헤더 (차량 선택기) ─────────────────────────── */}
-      <div style={styles.fixedHeader}>
-        <div style={{ margin: '16px 16px 8px' }}>
+      <div style={{ ...styles.fixedHeader, position: 'sticky', top: 0, zIndex: 10 }}>
+        <div style={{ padding: '16px 16px 8px' }}>
           <SelectDropdown
             value={selectedVehicleId}
             onChange={onSelectVehicle}
@@ -92,9 +92,8 @@ export function MaintenanceView({
 // ─── 스타일 ──────────────────────────────────────────────────
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    display: 'flex', flexDirection: 'column', height: '100vh',
+    display: 'flex', flexDirection: 'column',
     backgroundColor: '#fff', fontFamily: "'Pretendard','Noto Sans KR',sans-serif",
-    overflow: 'hidden',
   },
   fixedHeader: { flexShrink: 0, backgroundColor: '#fff' },
   userBar: {
@@ -112,7 +111,7 @@ const styles: Record<string, React.CSSProperties> = {
   megaphoneIcon: { width: 20, height: 20, objectFit: 'contain' as const },
   divider:       { width: 1, height: 14, backgroundColor: '#d1d5db', flexShrink: 0 },
   vehicleInfo:   { fontSize: 14, color: '#444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
-  scrollArea: { flex: 1, overflowY: 'auto' as const },
+  scrollArea: { display: 'flex', flexDirection: 'column' },
   listWrapper: { display: 'flex', flexDirection: 'column', gap: 0, padding: '8px 0' },
   card: {
     margin: '6px 16px', padding: '14px 16px',

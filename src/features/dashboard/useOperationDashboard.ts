@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 
 // ─── 더미 데이터 ────────────────────────────────────────────
 export const RECENT_DRIVING_DATA = [
@@ -15,7 +15,14 @@ export const RECENT_EXPENSE_DATA = [
 ];
 
 // ─── 로직 훅 ────────────────────────────────────────────────
+export interface DrivingStateContext {
+  drivingState: 0 | 1 | 2;
+  cycleState: () => void;
+}
+
 export interface UseOperationDashboardReturn {
+  drivingState: 0 | 1 | 2;
+  cycleState: () => void;
   recentDrivingData: typeof RECENT_DRIVING_DATA;
   recentExpenseData: typeof RECENT_EXPENSE_DATA;
   onMoreAttendance: () => void;
@@ -26,8 +33,13 @@ export interface UseOperationDashboardReturn {
 
 export function useOperationDashboard(): UseOperationDashboardReturn {
   const navigate = useNavigate();
+  
+  // React Router Outlet을 통해 MainLayout 쪽에서 주입해줄 상태를 받음
+  const context = (useOutletContext<DrivingStateContext>() || { drivingState: 1, cycleState: () => {} });
 
   return {
+    drivingState: context.drivingState,
+    cycleState: context.cycleState,
     recentDrivingData: RECENT_DRIVING_DATA,
     recentExpenseData: RECENT_EXPENSE_DATA,
     onMoreAttendance: () => navigate('/daily-trip-history'),

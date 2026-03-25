@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { openDevMenu } from '../bridge/nativeInterface';
 import { ScanLine, Bell, Menu, Megaphone, ArrowLeft, Home, Map, Clock, DollarSign, Wrench } from 'lucide-react';
+import type { DrivingStateContext } from '../features/dashboard/useOperationDashboard';
 
 // Assets
 import IconKz from '../assets/images/icon_kz.png';
@@ -34,6 +35,20 @@ export function MainLayout() {
     }
   }, [tapCount]);
 
+  // 2. Mock Global State for Driving (Demo)
+  const [drivingState, setDrivingState] = useState<0 | 1 | 2>(1);
+  const cycleState = () => setDrivingState((prev) => ((prev + 1) % 3) as 0 | 1 | 2);
+
+  const getStateConfig = () => {
+    switch (drivingState) {
+      case 0: return { color: '#9BA3AF', title: '연결 대기중', desc: '차량에 탑승해 주세요.' };
+      case 1: return { color: '#2B5CFF', title: '운행 대기중', desc: '[339마 7788]에 연결되었습니다.' };
+      case 2: return { color: '#22C55E', title: '운행중', desc: '[339마 7788] 운행이 시작되었습니다.' };
+      default: return { color: '#9BA3AF', title: '연결 대기중', desc: '' };
+    }
+  };
+  const config = getStateConfig();
+
   // 탭 활성화 상태 확인 헬퍼
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
@@ -62,16 +77,16 @@ export function MainLayout() {
       </div>
 
       {/* Connection Status Bar */}
-      <div style={styles.statusBar}>
-        <Megaphone size={18} fill="#2B5CFF" color="#2B5CFF" style={{ marginRight: 6 }} />
-        <span style={styles.statusTitle}>운행 대기중</span>
+      <div style={{ ...styles.statusBar, borderColor: config.color }} onClick={cycleState}>
+        <Megaphone size={18} fill={config.color} color={config.color} style={{ marginRight: 6 }} />
+        <span style={{ ...styles.statusTitle, color: config.color }}>{config.title}</span>
         <div style={styles.divider} />
-        <span style={styles.statusDesc}>차량 이동이 감지되면 자동으로 운행기록을...</span>
+        <span style={styles.statusDesc}>{config.desc}</span>
       </div>
 
       {/* Scrollable Content Area for Sub Tabs */}
       <div style={styles.contentArea}>
-        <Outlet />
+        <Outlet context={{ drivingState, cycleState } satisfies DrivingStateContext} />
         {/* Dummy Bottom Padding for Nav */}
         <div style={{ height: 100 }} />
       </div>

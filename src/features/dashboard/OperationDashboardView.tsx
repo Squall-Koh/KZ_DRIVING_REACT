@@ -1,9 +1,13 @@
 import React from 'react';
+import DrivingIdle from '../../assets/images/driving_idle.png';
 import DrivingStop from '../../assets/images/driving_stop.png';
+import DrivingOn from '../../assets/images/driving_on.png';
 import type { UseOperationDashboardReturn } from './useOperationDashboard';
 
 // ─── View (순수 UI) ──────────────────────────────────────────
 export function OperationDashboardView({
+  drivingState,
+  cycleState,
   recentDrivingData,
   recentExpenseData,
   onMoreAttendance,
@@ -11,15 +15,26 @@ export function OperationDashboardView({
   onMoreExpense,
   onCheckIn,
 }: UseOperationDashboardReturn) {
+  
+  const getHeroConfig = () => {
+    switch (drivingState) {
+      case 0: return { color: '#9BA3AF', img: DrivingIdle, title: '현재 연결 대기중 입니다', sub: '차량에 탑승해 주세요.' };
+      case 1: return { color: '#5A8BFF', img: DrivingStop, title: '현재 운행 대기중 입니다', sub: '차량 이동이 감지되면 자동으로 운행기록을 시작합니다.' };
+      case 2: return { color: '#22C55E', img: DrivingOn, title: '현재 운행중 입니다', sub: '안전운전 하세요!' };
+      default: return { color: '#5A8BFF', img: DrivingStop, title: '', sub: '' };
+    }
+  };
+  const hero = getHeroConfig();
+
   return (
     <div style={styles.pageContent}>
       {/* Main Status Hero (Dashboard Only) */}
-      <div style={styles.heroCard}>
+      <div style={{ ...styles.heroCard, backgroundColor: hero.color }} onClick={cycleState}>
         <div style={styles.heroCircle}>
-          <img src={DrivingStop} alt="Driving Status" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          <img src={hero.img} alt="Driving Status" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
-        <h2 style={styles.heroTitle}>현재 운행 대기중 입니다</h2>
-        <p style={styles.heroSub}>차량 이동이 감지되면 자동으로 운행기록을 시작합니다.</p>
+        <h2 style={styles.heroTitle}>{hero.title}</h2>
+        <p style={styles.heroSub}>{hero.sub}</p>
       </div>
 
       {/* Attendance Card Mock */}

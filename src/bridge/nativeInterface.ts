@@ -36,3 +36,8 @@ export const requestBleScan = () => {
 export const startDrivingTracking = () => sendNativeMessage('START_DRIVING_TRACKING');
 export const stopDrivingTracking = () => sendNativeMessage('STOP_DRIVING_TRACKING');
 export const openNativeCamera = () => sendNativeMessage('OPEN_NATIVE_CAMERA');
+
+export const triggerCheckIn = () => sendNativeMessage('CHECK_IN');
+export const triggerCheckOut = () => sendNativeMessage('CHECK_OUT');
+
+export const requestSync = () => sendNativeMessage('REQUEST_SYNC');

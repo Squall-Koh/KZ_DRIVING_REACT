@@ -4,16 +4,27 @@ import DrivingStop from '../../assets/images/driving_stop.png';
 import DrivingOn from '../../assets/images/driving_on.png';
 import type { UseOperationDashboardReturn } from './useOperationDashboard';
 
-// ─── View (순수 UI) ──────────────────────────────────────────
+// 시간 포맷 헬퍼 (ISO 문자열 -> HH:MM)
+const formatTime = (isoString: string) => {
+  if (!isoString) return '--:--';
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return isoString;
+  const h = String(d.getHours()).padStart(2, '0');
+  const m = String(d.getMinutes()).padStart(2, '0');
+  return `${h}:${m}`;
+};
+
 export function OperationDashboardView({
   drivingState,
   cycleState,
+  syncPayload,
   recentDrivingData,
   recentExpenseData,
   onMoreAttendance,
   onMoreDriving,
   onMoreExpense,
   onCheckIn,
+  onCheckOut,
 }: UseOperationDashboardReturn) {
   
   const getHeroConfig = () => {
@@ -26,18 +37,52 @@ export function OperationDashboardView({
   };
   const hero = getHeroConfig();
 
+  // 실제 데이터 맵핑
+  const workDay = syncPayload?.workDay;
+  const isCheckedIn = !!workDay;
+  const isCheckedOut = !!workDay?.checkOutTime;
+  
+  const checkInTimeStr = workDay?.checkInTime ? formatTime(workDay.checkInTime) : '--:--';
+  const checkOutTimeStr = workDay?.checkOutTime ? formatTime(workDay.checkOutTime) : '--:--';
+  
+  // 총 운행(근무) 시간 및 프로그레스 바 계산
+  let workTimeStr = '';
+  let progressPercent = 0;
+  const EIGHT_HOURS_MS = 8 * 60 * 60 * 1000; // 8시간
+
+  if (isCheckedIn && workDay?.checkInTime) {
+    const dIn = new Date(workDay.checkInTime);
+    const dOut = isCheckedOut && workDay?.checkOutTime ? new Date(workDay.checkOutTime) : new Date();
+    const diffMs = dOut.getTime() - dIn.getTime();
+    
+    if (!isNaN(diffMs) && diffMs >= 0) {
+      const diffMins = Math.floor(diffMs / 60000);
+      const h = Math.floor(diffMins / 60);
+      const m = diffMins % 60;
+      workTimeStr = `${h}시간 ${m}분`;
+      
+      progressPercent = Math.min(100, (diffMs / EIGHT_HOURS_MS) * 100);
+    }
+  }
+  
+  const primaryBtnText = isCheckedIn ? (isCheckedOut ? `퇴근완료 (${checkInTimeStr} - ${checkOutTimeStr})` : '퇴근 등록') : '출근 등록';
+  const primaryBtnColor = isCheckedIn ? (isCheckedOut ? '#ced4da' : '#22c55e') : '#2B5CFF';
+  const handlePrimaryBtn = isCheckedIn ? (isCheckedOut ? () => {} : onCheckOut) : onCheckIn;
+
   return (
     <div style={styles.pageContent}>
-      {/* Main Status Hero (Dashboard Only) */}
-      <div style={{ ...styles.heroCard, backgroundColor: hero.color }} onClick={cycleState}>
-        <div style={styles.heroCircle}>
-          <img src={hero.img} alt="Driving Status" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+      {/* Main Status Hero (Dashboard Only) - Sticky Top */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 10, padding: '16px 0', backgroundColor: '#F5F6FA', margin: '0 -16px', paddingLeft: 16, paddingRight: 16 }}>
+        <div style={{ ...styles.heroCard, margin: 0, backgroundColor: hero.color }} onClick={cycleState}>
+          <div style={styles.heroCircle}>
+            <img src={hero.img} alt="Driving Status" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
+          <h2 style={styles.heroTitle}>{hero.title}</h2>
+          <p style={styles.heroSub}>{hero.sub}</p>
         </div>
-        <h2 style={styles.heroTitle}>{hero.title}</h2>
-        <p style={styles.heroSub}>{hero.sub}</p>
       </div>
 
-      {/* Attendance Card Mock */}
+      {/* Attendance Card */}
       <div style={styles.card}>
         <div style={styles.cardHeader}>
           <h3 style={styles.cardTitle}>일일근태현황</h3>
@@ -48,16 +93,34 @@ export function OperationDashboardView({
             <span>0h</span><span>8h</span>
           </div>
           <div style={styles.progressBarBg}>
-            <div style={{...styles.progressBarFill, width: '0%'}} />
+            <div style={{
+              ...styles.progressBarFill, 
+              width: `${progressPercent}%`, 
+              backgroundColor: isCheckedOut ? '#22c55e' : '#2B5CFF'
+            }} />
           </div>
         </div>
         <div style={styles.attendanceTimes}>
-          <div>출발 : --:--</div>
-          <div style={{ fontSize: 16, fontWeight: 'bold' }}>-</div>
-          <div>도착 : --:--</div>
+          <div style={{color: isCheckedIn ? '#333' : '#999', fontSize: 14, fontWeight: 'bold' }}>출발 {checkInTimeStr}</div>
+          
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 10px' }}>
+            <div style={{ flex: 1, height: 1, backgroundColor: '#eee' }} />
+            {workTimeStr && (
+              <span style={{ fontSize: 12, color: '#2B5CFF', backgroundColor: '#eef2ff', padding: '4px 10px', borderRadius: 12, fontWeight: 'bold', margin: '0 8px' }}>
+                {workTimeStr}
+              </span>
+            )}
+            <div style={{ flex: 1, height: 1, backgroundColor: '#eee' }} />
+          </div>
+
+          <div style={{color: isCheckedOut ? '#333' : '#999', fontSize: 14, fontWeight: 'bold' }}>도착 {checkOutTimeStr}</div>
         </div>
-        <button style={styles.primaryBtn} onClick={onCheckIn}>
-          출근 등록
+        <button 
+          style={{...styles.primaryBtn, backgroundColor: primaryBtnColor, cursor: isCheckedOut ? 'not-allowed' : 'pointer'}} 
+          onClick={handlePrimaryBtn}
+          disabled={isCheckedOut}
+        >
+          {primaryBtnText}
         </button>
       </div>
 

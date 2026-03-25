@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { openDevMenu } from '../bridge/nativeInterface';
-import { ScanLine, Bell, Menu, Megaphone, ArrowLeft, Home, Map, Clock, DollarSign, Wrench } from 'lucide-react';
+import { ScanLine, Bell, Menu, Megaphone, ArrowLeft, Home, Map, Clock, DollarSign, Wrench, Bluetooth } from 'lucide-react';
 import type { DrivingStateContext } from '../features/dashboard/useOperationDashboard';
 
 // Assets
@@ -35,9 +35,38 @@ export function MainLayout() {
     }
   }, [tapCount]);
 
-  // 2. Mock Global State for Driving (Demo)
+  // 2. Real Global State Sync from Native
   const [drivingState, setDrivingState] = useState<0 | 1 | 2>(1);
-  const cycleState = () => setDrivingState((prev) => ((prev + 1) % 3) as 0 | 1 | 2);
+  const [syncPayload, setSyncPayload] = useState<any>(null);
+
+  React.useEffect(() => {
+    const handleNativeMessage = (event: MessageEvent) => {
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (data.type === 'SYNC_DRIVING_STATE' && data.payload) {
+          console.log('[React WebView] Sync State Received:', data.payload);
+          setSyncPayload(data.payload);
+          if (typeof data.payload.drivingState === 'number') {
+            setDrivingState(data.payload.drivingState as 0 | 1 | 2);
+          }
+        }
+      } catch (e) {
+        // Ignored
+      }
+    };
+    window.addEventListener('message', handleNativeMessage);
+    
+    // 컴포넌트 마운트 시, 혹은 뒤로가기로 다시 그려질 때 Native에 현재 상태 재요청
+    import('../bridge/nativeInterface').then(m => m.requestSync());
+    
+    return () => window.removeEventListener('message', handleNativeMessage);
+  }, []);
+
+  const cycleState = () => {
+    if (!window.FlutterBridge) {
+      setDrivingState((prev) => ((prev + 1) % 3) as 0 | 1 | 2); // 브라우저 테스트용
+    }
+  };
 
   const getStateConfig = () => {
     switch (drivingState) {
@@ -81,12 +110,21 @@ export function MainLayout() {
         <Megaphone size={18} fill={config.color} color={config.color} style={{ marginRight: 6 }} />
         <span style={{ ...styles.statusTitle, color: config.color }}>{config.title}</span>
         <div style={styles.divider} />
-        <span style={styles.statusDesc}>{config.desc}</span>
+        <span style={{ ...styles.statusDesc, flex: 1 }}>{config.desc}</span>
+        
+        {syncPayload?.bleConnectedMac && (
+          <div style={{ display: 'flex', alignItems: 'center', marginLeft: 8, gap: 4 }}>
+            <Bluetooth size={14} color="#2B5CFF" strokeWidth={2} />
+            <span style={{ fontSize: 12, color: '#333', fontWeight: 'bold' }}>
+              {syncPayload.bleConnectedMac.slice(-5).replace(':', '')}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Scrollable Content Area for Sub Tabs */}
       <div style={styles.contentArea}>
-        <Outlet context={{ drivingState, cycleState } satisfies DrivingStateContext} />
+        <Outlet context={{ drivingState, cycleState, syncPayload } satisfies DrivingStateContext} />
         {/* Dummy Bottom Padding for Nav */}
         <div style={{ height: 100 }} />
       </div>

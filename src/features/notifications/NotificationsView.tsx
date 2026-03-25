@@ -1,4 +1,6 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronLeft } from 'lucide-react';
 import blankIcon from '../../assets/icon_blank_notification.png';
 import type { Notification } from './useNotifications';
 
@@ -67,6 +69,7 @@ export function NotificationsView({
   scrollAreaRef,
   onSelectItem,
 }: NotificationsViewProps) {
+  const navigate = useNavigate();
   const hasNotifications = notifications.length > 0;
   
   // Pull-to-Refresh 훅 적용
@@ -78,6 +81,14 @@ export function NotificationsView({
 
   return (
     <div style={styles.container}>
+      {/* ── 상단 헤더 ───────────────────────────────────────── */}
+      <div style={styles.header}>
+        <button style={styles.backBtn} onClick={() => navigate(-1)}>
+          <ChevronLeft size={28} color="#000" strokeWidth={1.5} />
+        </button>
+        <h1 style={styles.title}>알림 수신함</h1>
+        <div style={styles.spacer} />
+      </div>
 
       {/* ── 스크롤 콘텐츠 영역 ────────────────────────────────── */}
       <div style={styles.scrollArea} ref={scrollAreaRef as unknown as React.RefObject<HTMLDivElement>}>
@@ -136,6 +147,35 @@ const styles: Record<string, React.CSSProperties> = {
     height: '100vh',
     backgroundColor: '#ffffff',
     fontFamily: "'Pretendard', 'Noto Sans KR', sans-serif",
+  },
+
+  /* 헤더 스타일 */
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '16px',
+    backgroundColor: '#ffffff',
+    borderBottom: '1px solid #f0f0f0',
+  },
+  backBtn: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    padding: '4px',
+    display: 'flex',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: '18px',
+    fontWeight: '600',
+    color: '#000',
+    margin: 0,
+    flex: 1,
+    textAlign: 'center',
+  },
+  spacer: {
+    width: '36px', // backBtn 크기만큼 맞춤
   },
 
   /* 스크롤 가능한 콘텐츠 영역 */

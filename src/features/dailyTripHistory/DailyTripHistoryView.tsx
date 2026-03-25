@@ -6,10 +6,12 @@ import type { UseDailyTripHistoryReturn } from './useDailyTripHistory';
 // ─── View (순수 UI) ──────────────────────────────────────────
 export function DailyTripHistoryView({
   formattedDate,
+  currentDate,
   attendance,
   trips,
   handlePrevDay,
   handleNextDay,
+  handleDateSelect,
 }: UseDailyTripHistoryReturn) {
   const navigate = useNavigate();
 
@@ -25,17 +27,31 @@ export function DailyTripHistoryView({
       </div>
 
       {/* ── 날짜 선택 바 ── */}
-      <div style={styles.dateBar}>
-        <button style={styles.dateBtn} onClick={handlePrevDay}>
-          <ChevronLeft size={24} color="#2B5CFF" />
-        </button>
-        <div style={styles.dateCenter}>
-          <span style={styles.dateText}>{formattedDate}</span>
-          <Calendar size={18} color="#2B5CFF" style={{ marginLeft: 6 }} />
+      <div style={styles.dateBarOuter}>
+        <div style={styles.dateBar}>
+          <button style={styles.dateBtn} onClick={handlePrevDay}>
+            <ChevronLeft size={24} color="#2B5CFF" />
+          </button>
+          
+          <div style={styles.dateCenter}>
+            <span style={styles.dateText}>{formattedDate}</span>
+            <Calendar size={18} color="#2B5CFF" style={{ marginLeft: 6 }} />
+            <input 
+              type="date"
+              value={`${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}-${String(currentDate.getDate()).padStart(2,'0')}`}
+              onChange={(e) => {
+                if (e.target.value) {
+                  handleDateSelect(new Date(e.target.value));
+                }
+              }}
+              style={styles.dateInputOverlay}
+            />
+          </div>
+
+          <button style={styles.dateBtn} onClick={handleNextDay}>
+            <ChevronRight size={24} color="#2B5CFF" />
+          </button>
         </div>
-        <button style={styles.dateBtn} onClick={handleNextDay}>
-          <ChevronRight size={24} color="#2B5CFF" />
-        </button>
       </div>
 
       {/* ── 스크롤 콘텐츠 ── */}
@@ -141,9 +157,11 @@ const styles: Record<string, React.CSSProperties> = {
   header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', backgroundColor: '#fff', borderBottom: '1px solid #f0f0f0' },
   backBtn: { background: 'none', border: 'none', cursor: 'pointer', padding: 8, display: 'flex', alignItems: 'center' },
   headerTitle: { fontSize: '17px', fontWeight: 'bold', color: '#111' },
-  dateBar: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px', backgroundColor: '#fff' },
+  dateBarOuter: { padding: '16px 16px 0 16px', backgroundColor: '#F5F6FA' },
+  dateBar: { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 16px', backgroundColor: '#fff', borderRadius: '14px', gap: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' },
   dateBtn: { background: 'none', border: 'none', cursor: 'pointer', padding: 8, display: 'flex', alignItems: 'center' },
-  dateCenter: { display: 'flex', alignItems: 'center', cursor: 'pointer' },
+  dateCenter: { display: 'flex', alignItems: 'center', cursor: 'pointer', position: 'relative' },
+  dateInputOverlay: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' },
   dateText: { fontSize: '17px', fontWeight: 'bold', color: '#111' },
   content: { flex: 1, overflowY: 'auto', padding: '16px' },
   card: { backgroundColor: '#fff', borderRadius: '16px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', marginBottom: '24px' },

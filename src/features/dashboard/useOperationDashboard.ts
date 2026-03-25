@@ -18,33 +18,42 @@ export const RECENT_EXPENSE_DATA = [
 export interface DrivingStateContext {
   drivingState: 0 | 1 | 2;
   cycleState: () => void;
+  syncPayload: any;
 }
 
 export interface UseOperationDashboardReturn {
   drivingState: 0 | 1 | 2;
   cycleState: () => void;
+  syncPayload: any;
   recentDrivingData: typeof RECENT_DRIVING_DATA;
   recentExpenseData: typeof RECENT_EXPENSE_DATA;
   onMoreAttendance: () => void;
   onMoreDriving: () => void;
   onMoreExpense: () => void;
   onCheckIn: () => void;
+  onCheckOut: () => void;
 }
 
 export function useOperationDashboard(): UseOperationDashboardReturn {
   const navigate = useNavigate();
   
   // React Router Outlet을 통해 MainLayout 쪽에서 주입해줄 상태를 받음
-  const context = (useOutletContext<DrivingStateContext>() || { drivingState: 1, cycleState: () => {} });
+  const context = (useOutletContext<DrivingStateContext>() || { drivingState: 1, cycleState: () => {}, syncPayload: null });
 
   return {
     drivingState: context.drivingState,
     cycleState: context.cycleState,
+    syncPayload: context.syncPayload,
     recentDrivingData: RECENT_DRIVING_DATA,
     recentExpenseData: RECENT_EXPENSE_DATA,
     onMoreAttendance: () => navigate('/daily-trip-history'),
     onMoreDriving: () => navigate('/driving-history'),
     onMoreExpense: () => navigate('/receipts'),
-    onCheckIn: () => console.log('출근 등록 클릭됨'),
+    onCheckIn: () => {
+      import('../../bridge/nativeInterface').then(m => m.triggerCheckIn());
+    },
+    onCheckOut: () => {
+      import('../../bridge/nativeInterface').then(m => m.triggerCheckOut());
+    },
   };
 }

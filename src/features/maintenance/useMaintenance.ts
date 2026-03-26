@@ -95,22 +95,15 @@ export function useMaintenance(): UseMaintenanceReturn {
     navigate('/maintenance/detail', { state: { item } });
   };
 
-  // 선택된 차량에 해당하는 정비 항목 목록 계산 로직 (Join)
+  // 선택된 차량에 해당하는 정비 항목 목록 계산 로직 (Native 연동 전 0으로 초기화)
   const items: MaintenanceItem[] = selectedVehicleId 
-    ? MAINTENANCE_MASTER.map((master, mi) => {
-        // Native DB 정비 이력이 연동되기 전 임시 UI
-        const hash = selectedVehicleId.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
-        let elapsed = 2000 + (mi * 5000) + (hash * 1000 % 10000);
-        if (master.id === 'air_filter') elapsed = 12000;
-        if (master.id === 'battery' || master.id === 'trans_oil') elapsed = 32000;
-        return {
-          id: master.id,
-          name: master.name,
-          intervalKm: master.intervalKm,
-          elapsedKm: elapsed,
-        };
-      })
-    : []; // 선택 안 된 경우 빈 목록 반환
+    ? MAINTENANCE_MASTER.map((master) => ({
+        id: master.id,
+        name: master.name,
+        intervalKm: master.intervalKm,
+        elapsedKm: 0,
+      }))
+    : [];
 
   return {
     vehicles,

@@ -13,18 +13,7 @@ export interface AdjustmentRecord {
 
 export type AdjustTabType = 'adjust' | 'approval';
 
-const DUMMY_ADJUSTMENTS: AdjustmentRecord[] = Array.from({ length: 15 }).map((_, i) => {
-  const isPending = i % 3 === 0;
-  const isRejected = i % 3 === 2 && i !== 0; // 일부러 결재반려도 섞음
-  return {
-    id: i + 1,
-    submitDate: `2026.03.${(30 - i).toString().padStart(2, '0')}`,
-    workDate: `2026.03.${(29 - i).toString().padStart(2, '0')}`,
-    timeFrom: '08:30',
-    timeTo: '17:30',
-    status: isPending ? '결재대기' : (isRejected ? '결재반려' : '결재완료'),
-  };
-});
+
 
 export const STATUS_STYLE: Record<string, React.CSSProperties> = {
   '결재대기': { color: '#2563eb', backgroundColor: '#eff6ff' },
@@ -116,7 +105,7 @@ export function useAttendanceAdjustment(): UseAttendanceAdjustmentReturn {
 
     const limit = 5;
     const offset = (pageNum - 1) * limit;
-    const nextData = DUMMY_ADJUSTMENTS.slice(offset, offset + limit);
+    const nextData: AdjustmentRecord[] = [];
 
     if (isRefresh) {
       setAdjustments(nextData);
@@ -124,7 +113,7 @@ export function useAttendanceAdjustment(): UseAttendanceAdjustmentReturn {
       setAdjustments(prev => [...prev, ...nextData]);
     }
 
-    setHasMore(offset + limit < DUMMY_ADJUSTMENTS.length);
+    setHasMore(false);
     setLoading(false);
   }, []);
 

@@ -52,6 +52,13 @@ export function MainLayout() {
           if (typeof data.payload.drivingState === 'number') {
             setDrivingState(data.payload.drivingState as 0 | 1 | 2);
           }
+          if (data.payload.heartbeat) {
+            setHeartbeat({
+              timestamp: Date.now(),
+              tick: data.payload.heartbeat.tick,
+              isScanning: data.payload.heartbeat.isScanning,
+            });
+          }
         }
         if (data.type === 'SYNC_HEARTBEAT' && data.payload) {
           setHeartbeat({

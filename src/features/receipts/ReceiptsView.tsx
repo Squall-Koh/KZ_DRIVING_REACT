@@ -104,7 +104,12 @@ export function ReceiptsView({
             {recentExpenses.map((item, index) => (
               <div key={item.id} style={{ ...styles.historyItem, borderBottom: index < recentExpenses.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
                 <div style={styles.historyLeft}>
-                  <span style={styles.historyDate}>{item.date}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={styles.historyDate}>{item.date}</span>
+                    {item.cardType === 'simple' && <span style={{ ...styles.badge, color: '#f97316', backgroundColor: '#ffedd5' }}>간이</span>}
+                    {item.cardType === 'corporate' && <span style={{ ...styles.badge, color: '#10b981', backgroundColor: '#d1fae5' }}>법인</span>}
+                    {item.cardType === 'personal' && <span style={{ ...styles.badge, color: '#4f7cff', backgroundColor: '#eff6ff' }}>개인</span>}
+                  </div>
                   <span style={styles.historyStore}>{item.store}</span>
                 </div>
                 <div style={styles.historyRight}>
@@ -350,6 +355,7 @@ const styles: Record<string, React.CSSProperties> = {
   historyRight: { display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 },
   historyAmount: { fontSize: 15, fontWeight: 700, color: '#111' },
   historyAmountUnit: { fontSize: 14, color: '#111' },
+  badge: { fontSize: 11, fontWeight: 600, padding: '2px 6px', borderRadius: 4, flexShrink: 0 },
 };
 
 // ─── 팝업 스타일 ──────────────────────────────────────────────────

@@ -100,7 +100,7 @@ export function ReceiptsHistoryView({
              <div key={expense.id} style={s.receiptCard}>
               <div style={s.receiptTop}>
                 <span style={s.receiptDate}>{expense.date}</span>
-                {renderBadge(expense.receiptType)}
+                {renderBadge(expense.cardType)}
               </div>
               <div style={s.receiptStore}>{expense.store}</div>
               <div style={s.receiptInfo}>거래금액 : {expense.amount.toLocaleString()}원</div>

@@ -26,8 +26,10 @@ export function ReceiptsListView({
   onRefresh,
   isFabVisible,
   scrollToTop,
+  activeCardIndex,
+  setActiveCardIndex,
+  filteredReceipts,
 }: UseReceiptsListReturn) {
-  const activeReceipts = tab === 'corporate' ? corporateReceipts : personalReceipts;
   const carouselRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -71,7 +73,10 @@ export function ReceiptsListView({
 
       {/* 등록된 정보 배너 (가로 스크롤 캐러셀) */}
       <div style={s.cardCarouselWrapper}>
-        <div style={s.cardCarousel} ref={carouselRef}>
+        <div style={s.cardCarousel} ref={carouselRef} onScroll={(e) => {
+          const idx = Math.round(e.currentTarget.scrollLeft / e.currentTarget.offsetWidth);
+          setActiveCardIndex(idx);
+        }}>
           {(tab === 'corporate' ? corporateCards : personalCards).map((card, idx) => (
              <div key={idx} style={s.cardInfoBanner}>
                <span style={s.cardInfoLabel}>등록된 {tab === 'corporate' ? '법인카드' : '개인카드'}</span>
@@ -113,7 +118,7 @@ export function ReceiptsListView({
 
         {/* 영수증 리스트 */}
         <div style={s.listContainer}>
-          {activeReceipts.map((receipt) => (
+          {filteredReceipts.map((receipt) => (
             <div 
               key={receipt.id} 
               style={s.receiptCard}
@@ -128,7 +133,7 @@ export function ReceiptsListView({
               <div style={s.receiptInfo}>가맹점주소 : {receipt.address}</div>
             </div>
           ))}
-          {activeReceipts.length === 0 && !loading && (
+          {filteredReceipts.length === 0 && !loading && (
             <div style={{ textAlign: 'center', color: '#aaa', padding: 40, fontSize: 14 }}>
               내역이 없습니다.
             </div>
@@ -141,7 +146,7 @@ export function ReceiptsListView({
               조회 중...
             </div>
           )}
-          {!loading && !hasMore && activeReceipts.length > 0 && (
+          {!loading && !hasMore && filteredReceipts.length > 0 && (
             <div style={{ textAlign: 'center', padding: '20px', color: '#bbb', fontSize: 13 }}>
               모든 내역을 불러왔습니다.
             </div>

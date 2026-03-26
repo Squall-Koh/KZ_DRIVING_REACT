@@ -27,6 +27,9 @@ export interface UseReceiptsListReturn {
   observerRef: React.RefObject<HTMLDivElement | null>;
   onRefresh: () => void;
   scrollToTop: () => void;
+  activeCardIndex: number;
+  setActiveCardIndex: (v: number) => void;
+  filteredReceipts: ReceiptItem[];
 }
 
 export function useReceiptsList(): UseReceiptsListReturn {
@@ -43,75 +46,58 @@ export function useReceiptsList(): UseReceiptsListReturn {
 
   const [tab, setTab] = useState<TabType>(initialTab);
   const [selectedReceipt, setSelectedReceipt] = useState<ReceiptItem | null>(null);
+  const [activeCardIndex, setActiveCardIndex] = useState(0);
 
-  // 더미 데이터 배열 확장 (30개씩)
-  const [allCorp] = useState<ReceiptItem[]>(() => {
-    if (corporateReceipts.length === 0) return [];
-    return Array.from({ length: 30 }).map((_, i) => {
-      const base = corporateReceipts[i % corporateReceipts.length];
-      return { ...base, id: `corp-${i}`, amount: base.amount + i * 1000 };
-    });
-  });
-  
-  const [allPers] = useState<ReceiptItem[]>(() => {
-    if (personalReceipts.length === 0) return [];
-    return Array.from({ length: 30 }).map((_, i) => {
-      const base = personalReceipts[i % personalReceipts.length];
-      return { ...base, id: `pers-${i}`, amount: base.amount + i * 1000 };
-    });
-  });
+  useEffect(() => {
+    setActiveCardIndex(0);
+    setPage(1);
+  }, [tab]);
+
+  const activeCards = tab === 'corporate' ? corporateCards : personalCards;
+  const rawReceipts = tab === 'corporate' ? corporateReceipts : personalReceipts;
+  const activeCard = activeCards.length > activeCardIndex ? activeCards[activeCardIndex] : null;
+
+  const allFilteredReceipts = activeCard 
+    ? rawReceipts.filter((r: any) => r.cardName === activeCard.name)
+    : [];
 
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isFabVisible, setIsFabVisible] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<HTMLDivElement>(null);
 
-  const [displayCorp, setDisplayCorp] = useState<ReceiptItem[]>([]);
-  const [displayPers, setDisplayPers] = useState<ReceiptItem[]>([]);
+  const limit = 15;
+  const filteredReceipts = allFilteredReceipts.slice(0, page * limit);
+  const hasMore = page * limit < allFilteredReceipts.length;
 
-  const loadData = useCallback(async (pageNum: number, isRefresh = false, currentTab = tab) => {
+  const loadData = useCallback(async (pageNum: number, isRefresh = false) => {
     setLoading(true);
-    await new Promise(r => setTimeout(r, 600)); // fake delay
-    
-    const limit = 5;
-    const offset = (pageNum - 1) * limit;
-    const sourceArr = currentTab === 'corporate' ? allCorp : allPers;
-    const nextData = sourceArr.slice(offset, offset + limit);
-
-    if (currentTab === 'corporate') {
-      setDisplayCorp(prev => isRefresh ? nextData : [...prev, ...nextData]);
-    } else {
-      setDisplayPers(prev => isRefresh ? nextData : [...prev, ...nextData]);
-    }
-
-    setHasMore(offset + limit < sourceArr.length);
+    await new Promise(r => setTimeout(r, 400)); // fake delay
     setLoading(false);
     if (isRefresh) setIsRefreshing(false);
-  }, [allCorp, allPers, tab]);
+  }, []);
 
   // Initial load
   useEffect(() => {
-    setPage(1);
-    loadData(1, true, tab);
-  }, [tab, loadData]);
+    loadData(1, true);
+  }, [tab, activeCardIndex, loadData]);
 
   const onRefresh = useCallback(() => {
     if (loading) return;
     setIsRefreshing(true);
     setPage(1);
-    loadData(1, true, tab);
-  }, [loading, loadData, tab]);
+    loadData(1, true);
+  }, [loading, loadData]);
 
   const onLoadMore = useCallback(() => {
     if (!hasMore || loading) return;
     const nextPage = page + 1;
     setPage(nextPage);
-    loadData(nextPage, false, tab);
-  }, [hasMore, loading, page, loadData, tab]);
+    loadData(nextPage, false);
+  }, [hasMore, loading, page, loadData]);
 
   // IntersectionObserver for infinite scroll
   useEffect(() => {
@@ -185,8 +171,8 @@ export function useReceiptsList(): UseReceiptsListReturn {
   return {
     tab,
     onTabChange,
-    corporateReceipts: displayCorp,
-    personalReceipts: displayPers,
+    corporateReceipts,
+    personalReceipts,
     corporateCards,
     personalCards,
     selectedReceipt,
@@ -204,5 +190,8 @@ export function useReceiptsList(): UseReceiptsListReturn {
     observerRef,
     onRefresh,
     scrollToTop,
+    activeCardIndex,
+    setActiveCardIndex,
+    filteredReceipts,
   };
 }

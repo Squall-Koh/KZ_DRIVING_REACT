@@ -7,8 +7,10 @@ export interface ReceiptItem {
   store: string;
   amount: number;
   address: string;
-  cardType: 'corporate' | 'personal';
+  cardType: 'corporate' | 'personal' | 'simple';
   receiptType?: 'simple' | 'corporate' | 'personal';
+  cardName?: string;
+  cardNumber?: string;
 }
 
 export interface CardInfo {
@@ -69,37 +71,51 @@ export function useReceipts(): UseReceiptsReturn {
     connectionStatus: '연결 대기중',
   });
 
-  useEffect(() => {
-    (window as any).updateReceiptsInfo = (data: Partial<typeof bridge>) =>
-      setBridge((p) => ({ ...p, ...data }));
-    if ((window as any).FlutterBridge) {
-      (window as any).FlutterBridge.postMessage('requestDriverInfo');
-    }
-  }, []);
-
-  const expenseStatus = {
-    period: `${startDate.replace(/-/g, '.')} ~ ${endDate.replace(/-/g, '.')}`,
-    totalAmount: 0,
-  };
-
-  const receiptsToProcess = {
-    corporateCount: 0,
-    personalCount: 0,
-  };
-
-  const corporateCards: CardInfo[] = [
-    { name: '현대카드 (법인)', number: '4056-9100-****-4606' },
-    { name: '삼성카드 (법인)', number: '1234-5678-****-9012' }
-  ];
-
-  const personalCards: CardInfo[] = [
-    { name: '신한카드 (개인)', number: '9876-5432-****-1234' },
-    { name: '국민카드 (개인)', number: '1111-2222-****-3333' }
-  ];
-
   const [corporateReceipts, setCorporateReceipts] = useState<ReceiptItem[]>([]);
   const [personalReceipts, setPersonalReceipts] = useState<ReceiptItem[]>([]);
   const [recentExpenses, setRecentExpenses] = useState<ReceiptItem[]>([]);
+  const [corporateCards, setCorporateCards] = useState<CardInfo[]>([]);
+  const [personalCards, setPersonalCards] = useState<CardInfo[]>([]);
+
+  useEffect(() => {
+    (window as any).updateReceiptsInfo = (data: Partial<typeof bridge>) =>
+      setBridge((p) => ({ ...p, ...data }));
+      
+    (window as any).syncExpenses = (data: any) => {
+      if (data.corporateReceipts) setCorporateReceipts(data.corporateReceipts);
+      if (data.personalReceipts) setPersonalReceipts(data.personalReceipts);
+      if (data.recentExpenses) setRecentExpenses(data.recentExpenses);
+      if (data.corporateCards) setCorporateCards(data.corporateCards);
+      if (data.personalCards) setPersonalCards(data.personalCards);
+    };
+
+    if ((window as any).FlutterBridge) {
+      (window as any).FlutterBridge.postMessage(JSON.stringify({ action: 'requestDriverInfo' }));
+    }
+  }, []);
+
+  useEffect(() => {
+    if ((window as any).FlutterBridge) {
+      const payload = JSON.stringify({
+        action: 'requestReceipts',
+        dateFrom: startDate,
+        dateTo: endDate
+      });
+      (window as any).FlutterBridge.postMessage(payload);
+    }
+  }, [startDate, endDate]);
+
+  const totalAmount = [...corporateReceipts, ...personalReceipts].reduce((sum, r) => sum + r.amount, 0);
+
+  const expenseStatus = {
+    period: `${startDate.replace(/-/g, '.')} ~ ${endDate.replace(/-/g, '.')}`,
+    totalAmount,
+  };
+
+  const receiptsToProcess = {
+    corporateCount: corporateReceipts.length,
+    personalCount: personalReceipts.length,
+  };
 
   const onNavigate = (path: string, state?: any) => {
     navigate(path, { state });

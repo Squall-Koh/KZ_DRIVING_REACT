@@ -40,6 +40,7 @@ export function MainLayout() {
   // 2. Real Global State Sync from Native
   const [drivingState, setDrivingState] = useState<0 | 1 | 2>(1);
   const [syncPayload, setSyncPayload] = useState<any>(null);
+  const [heartbeat, setHeartbeat] = useState<any>(null);
 
   React.useEffect(() => {
     const handleNativeMessage = (event: MessageEvent) => {
@@ -52,6 +53,13 @@ export function MainLayout() {
             setDrivingState(data.payload.drivingState as 0 | 1 | 2);
           }
         }
+        if (data.type === 'SYNC_HEARTBEAT' && data.payload) {
+          setHeartbeat({
+            timestamp: Date.now(),
+            tick: data.payload.tick,
+            isScanning: data.payload.isScanning,
+          });
+        }
       } catch (e) {
         // Ignored
       }
@@ -63,6 +71,22 @@ export function MainLayout() {
     
     return () => window.removeEventListener('message', handleNativeMessage);
   }, []);
+
+  const [isAlive, setIsAlive] = useState(false);
+  const [blink, setBlink] = useState(false);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      if (heartbeat) {
+        const timeDiff = Date.now() - heartbeat.timestamp;
+        setIsAlive(timeDiff < 6000 && heartbeat.isScanning);
+      } else {
+        setIsAlive(false);
+      }
+      setBlink(b => !b);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [heartbeat]);
 
   const cycleState = () => {
     if (!window.FlutterBridge) {
@@ -111,6 +135,16 @@ export function MainLayout() {
       <div style={{ ...styles.statusBar, borderColor: config.color }} onClick={cycleState}>
         <Megaphone size={18} fill={config.color} color={config.color} style={{ marginRight: 6 }} />
         <span style={{ ...styles.statusTitle, color: config.color }}>{config.title}</span>
+        
+        {/* Tiny Health Indicator */}
+        <div style={{
+          width: 6, height: 6, borderRadius: '50%', marginLeft: 6,
+          backgroundColor: isAlive ? '#10B981' : '#EF4444',
+          boxShadow: isAlive ? '0 0 4px #10B981' : '0 0 4px #EF4444',
+          opacity: blink ? 1 : 0.4,
+          transition: 'all 0.4s ease-in-out',
+        }} />
+
         <div style={styles.divider} />
         <span style={{ ...styles.statusDesc, flex: 1 }}>{config.desc}</span>
         

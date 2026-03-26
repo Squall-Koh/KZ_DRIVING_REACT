@@ -41,3 +41,4 @@ export const triggerCheckIn = () => sendNativeMessage('CHECK_IN');
 export const triggerCheckOut = () => sendNativeMessage('CHECK_OUT');
 
 export const requestSync = () => sendNativeMessage('REQUEST_SYNC');
+export const requestVehicles = () => sendNativeMessage('REQUEST_VEHICLES');

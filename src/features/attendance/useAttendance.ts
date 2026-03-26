@@ -121,8 +121,14 @@ export interface UseAttendanceReturn {
   onTogglePopup: () => void;
   onClosePopup: () => void;
   onNavigate: (path: string, state?: any) => void;
-  onCheckIn: () => void;
-  onCheckOut: () => void;
+  onCheckInClick: () => void;
+  onConfirmCheckIn: () => void;
+  isCheckInConfirmOpen: boolean;
+  setIsCheckInConfirmOpen: (b: boolean) => void;
+  onCheckOutClick: () => void;
+  onConfirmCheckOut: () => void;
+  isCheckOutConfirmOpen: boolean;
+  setIsCheckOutConfirmOpen: (b: boolean) => void;
 }
 
 // ─── Custom Hook ─────────────────────────────────────────────
@@ -152,6 +158,8 @@ export function useAttendance(): UseAttendanceReturn {
   const [showPopup, setShowPopup]         = useState(false);
   const [dayRecords, setDayRecords]       = useState<DayRecord[]>([]);
   const [loaded, setLoaded]               = useState(false);
+  const [isCheckInConfirmOpen, setIsCheckInConfirmOpen]   = useState(false);
+  const [isCheckOutConfirmOpen, setIsCheckOutConfirmOpen] = useState(false);
 
   // 선택한 월에 해당하는 주간 데이터 자동 연산
   const weeks = useMemo<WeekRecord[]>(() => buildWeeks(selectedMonth, dayRecords), [selectedMonth, dayRecords]);
@@ -203,19 +211,25 @@ export function useAttendance(): UseAttendanceReturn {
   const primaryBtnText = isCheckedIn ? (isCheckedOut ? `퇴근완료 (${checkInTimeStr} - ${checkOutTimeStr})` : '퇴근 등록') : '출근 등록';
   const primaryBtnColor = isCheckedIn ? (isCheckedOut ? '#ced4da' : '#22c55e') : '#2B5CFF';
 
-  const onCheckIn = () => {
-    if (window.confirm('지금 출근을 등록하시겠습니까?')) {
-      if ((window as any).FlutterBridge) {
-        (window as any).FlutterBridge.postMessage(JSON.stringify({ action: 'CHECK_IN' }));
-      }
+  const onCheckInClick = () => {
+    setIsCheckInConfirmOpen(true);
+  };
+
+  const onConfirmCheckIn = () => {
+    setIsCheckInConfirmOpen(false);
+    if ((window as any).FlutterBridge) {
+      (window as any).FlutterBridge.postMessage(JSON.stringify({ action: 'CHECK_IN' }));
     }
   };
 
-  const onCheckOut = () => {
-    if (window.confirm(`지금 퇴근을 등록하시겠습니까?\\n\\n출근: ${checkInTimeStr}`)) {
-      if ((window as any).FlutterBridge) {
-        (window as any).FlutterBridge.postMessage(JSON.stringify({ action: 'CHECK_OUT' }));
-      }
+  const onCheckOutClick = () => {
+    setIsCheckOutConfirmOpen(true);
+  };
+
+  const onConfirmCheckOut = () => {
+    setIsCheckOutConfirmOpen(false);
+    if ((window as any).FlutterBridge) {
+      (window as any).FlutterBridge.postMessage(JSON.stringify({ action: 'CHECK_OUT' }));
     }
   };
 
@@ -269,7 +283,13 @@ export function useAttendance(): UseAttendanceReturn {
     onTogglePopup: () => setShowPopup((v) => !v),
     onClosePopup:  () => setShowPopup(false),
     onNavigate,
-    onCheckIn,
-    onCheckOut,
+    onCheckInClick,
+    onConfirmCheckIn,
+    isCheckInConfirmOpen,
+    setIsCheckInConfirmOpen,
+    onCheckOutClick,
+    onConfirmCheckOut,
+    isCheckOutConfirmOpen,
+    setIsCheckOutConfirmOpen,
   };
 }

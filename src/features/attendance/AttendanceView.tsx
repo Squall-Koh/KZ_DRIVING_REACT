@@ -94,8 +94,14 @@ export function AttendanceView({
   onTogglePopup,
   onClosePopup,
   onNavigate,
-  onCheckIn,
-  onCheckOut,
+  onCheckInClick,
+  onConfirmCheckIn,
+  isCheckInConfirmOpen,
+  setIsCheckInConfirmOpen,
+  onCheckOutClick,
+  onConfirmCheckOut,
+  isCheckOutConfirmOpen,
+  setIsCheckOutConfirmOpen,
 }: UseAttendanceReturn) {
   const isCheckedIn = !!syncPayload?.workDay;
   const isCheckedOut = !!syncPayload?.workDay?.checkOutTime;
@@ -137,7 +143,7 @@ export function AttendanceView({
           </div>
           <button
             style={{ ...styles.primaryBtn, backgroundColor: primaryBtnColor, cursor: isCheckedOut ? 'not-allowed' : 'pointer' }}
-            onClick={isCheckedIn ? onCheckOut : onCheckIn}
+            onClick={isCheckedIn ? onCheckOutClick : onCheckInClick}
             disabled={isCheckedOut}
           >
             {primaryBtnText}
@@ -203,6 +209,39 @@ export function AttendanceView({
           </div>
         </div>
       )}
+
+      {/* ── 출근 확인 커스텀 모달 ──────────────────────────────────── */}
+      {isCheckInConfirmOpen && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent}>
+            <div style={styles.modalTitle}>출근 등록</div>
+            <div style={styles.modalMessage}>
+              지금 출근을 등록하시겠습니까?
+            </div>
+            <div style={styles.modalActionsList}>
+              <button style={styles.modalCancelBtn} onClick={() => setIsCheckInConfirmOpen(false)}>취소</button>
+              <button style={styles.modalConfirmBtn} onClick={onConfirmCheckIn}>확인</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 퇴근 확인 커스텀 모달 ──────────────────────────────────── */}
+      {isCheckOutConfirmOpen && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent}>
+            <div style={styles.modalTitle}>퇴근 등록</div>
+            <div style={styles.modalMessage}>
+              지금 퇴근을 등록하시겠습니까?
+              <div style={{ marginTop: 8, fontSize: 13, color: '#888' }}>출근기록: {checkInTimeStr}</div>
+            </div>
+            <div style={styles.modalActionsList}>
+              <button style={styles.modalCancelBtn} onClick={() => setIsCheckOutConfirmOpen(false)}>취소</button>
+              <button style={styles.modalConfirmBtn} onClick={onConfirmCheckOut}>확인</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -254,4 +293,26 @@ const styles: Record<string, React.CSSProperties> = {
   popupList: { maxHeight: 240, overflowY: 'auto' as const },
   popupItem: { padding: '12px 16px', fontSize: 14, color: '#333', cursor: 'pointer', borderBottom: '1px solid #f5f5f5' },
   popupItemSelected: { backgroundColor: '#eff6ff', color: '#2563eb', fontWeight: 600 },
+  
+  modalOverlay: {
+    position: 'fixed' as const, top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 10000,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
+  },
+  modalContent: {
+    backgroundColor: '#fff', borderRadius: 16, width: '100%', maxWidth: 320,
+    padding: '24px 20px 20px', boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+    display: 'flex', flexDirection: 'column', textAlign: 'center' as const
+  },
+  modalTitle: { fontSize: 18, fontWeight: 700, color: '#111', marginBottom: 12 },
+  modalMessage: { fontSize: 15, color: '#555', lineHeight: 1.5, marginBottom: 24 },
+  modalActionsList: { display: 'flex', gap: 8 },
+  modalCancelBtn: {
+    flex: 1, padding: '12px 0', fontSize: 14, fontWeight: 600,
+    backgroundColor: '#f1f1f5', color: '#555', border: 'none', borderRadius: 10, cursor: 'pointer'
+  },
+  modalConfirmBtn: {
+    flex: 1, padding: '12px 0', fontSize: 14, fontWeight: 600,
+    backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer'
+  }
 };

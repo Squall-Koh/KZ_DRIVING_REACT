@@ -84,13 +84,18 @@ export function MainLayout() {
 
   React.useEffect(() => {
     const interval = setInterval(() => {
+      let currentAlive = false;
       if (heartbeat) {
         const timeDiff = Date.now() - heartbeat.timestamp;
-        setIsAlive(timeDiff < 6000 && heartbeat.isScanning);
-      } else {
-        setIsAlive(false);
+        currentAlive = (timeDiff < 6000 && heartbeat.isScanning);
       }
-      setBlink(b => !b);
+      setIsAlive(currentAlive);
+      
+      if (currentAlive) {
+        setBlink(b => !b);
+      } else {
+        setBlink(false);
+      }
     }, 1000);
     return () => clearInterval(interval);
   }, [heartbeat]);

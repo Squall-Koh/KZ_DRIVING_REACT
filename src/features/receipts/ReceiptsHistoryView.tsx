@@ -46,16 +46,15 @@ export function ReceiptsHistoryView({
     }
   };
 
-  const renderBadge = (type?: string) => {
-
+  const renderBadge = (type?: string, label?: string) => {
     switch(type) {
       case 'simple':
-        return <span style={{ ...s.badge, color: '#f97316', backgroundColor: '#ffedd5' }}>간이영수증</span>;
+        return <span style={{ ...s.badge, color: '#f97316', backgroundColor: '#ffedd5' }}>{label || '간이영수증'}</span>;
       case 'corporate':
-        return <span style={{ ...s.badge, color: '#10b981', backgroundColor: '#d1fae5' }}>법인카드</span>;
+        return <span style={{ ...s.badge, color: '#10b981', backgroundColor: '#d1fae5' }}>{label || '법인카드'}</span>;
       case 'personal':
       default:
-        return <span style={{ ...s.badge, color: '#4f7cff', backgroundColor: '#eff6ff' }}>개인카드</span>;
+        return <span style={{ ...s.badge, color: '#4f7cff', backgroundColor: '#eff6ff' }}>{label || '개인카드'}</span>;
     }
   };
 
@@ -104,8 +103,8 @@ export function ReceiptsHistoryView({
                   {expense.date.split(' ')[1] && <span style={{ fontSize: 12, color: '#888' }}>{expense.date.split(' ')[1].substring(0, 5)}</span>}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                  {renderBadge(expense.cardType)}
-                  {expense.isSync && <span style={{ width: 46, textAlign: 'center', padding: '3px 0', borderRadius: 4, fontSize: 10, color: '#ef4444', backgroundColor: '#fee2e2', boxSizing: 'border-box' }}>전송완료</span>}
+                  {renderBadge(expense.cardType, expense.cardTypeLabel)}
+                  {expense.isSync && <span style={{ width: 62, textAlign: 'center', padding: '3px 0', borderRadius: 4, fontSize: 10, color: '#ef4444', backgroundColor: '#fee2e2', boxSizing: 'border-box' }}>전송완료</span>}
                 </div>
               </div>
               <div style={s.receiptStore}>{expense.store}</div>
@@ -170,7 +169,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   receiptTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   receiptDate: { fontSize: 14, color: '#4f7cff', fontWeight: 500 },
-  badge: { width: 46, fontSize: 12, fontWeight: 600, padding: '4px 0', textAlign: 'center', borderRadius: 4, boxSizing: 'border-box' },
+  badge: { width: 62, fontSize: 12, fontWeight: 600, padding: '4px 0', textAlign: 'center', borderRadius: 4, boxSizing: 'border-box' },
   
   receiptStore: { fontSize: 16, fontWeight: 700, color: '#111', marginTop: 2 },
   receiptInfo: { fontSize: 13, color: '#64748b' },

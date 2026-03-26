@@ -8,6 +8,7 @@ export interface ReceiptItem {
   amount: number;
   address: string;
   cardType: 'corporate' | 'personal' | 'simple';
+  cardTypeLabel?: string;
   receiptType?: 'simple' | 'corporate' | 'personal';
   cardName?: string;
   cardNumber?: string;

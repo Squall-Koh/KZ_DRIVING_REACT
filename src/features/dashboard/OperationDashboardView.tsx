@@ -170,10 +170,10 @@ export function OperationDashboardView({
                       {tPart && <span style={{ fontSize: 11, color: '#94a3b8' }}>{tPart}</span>}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                      {item.cardType === 'simple' && <span style={{ ...styles.badge, color: '#f97316', backgroundColor: '#ffedd5' }}>간이</span>}
-                      {item.cardType === 'corporate' && <span style={{ ...styles.badge, color: '#10b981', backgroundColor: '#d1fae5' }}>법인</span>}
-                      {item.cardType === 'personal' && <span style={{ ...styles.badge, color: '#4f7cff', backgroundColor: '#eff6ff' }}>개인</span>}
-                      {item.isSync && <span style={{ width: 46, textAlign: 'center', padding: '3px 0', borderRadius: 4, fontSize: 10, color: '#ef4444', backgroundColor: '#fee2e2', boxSizing: 'border-box' }}>전송완료</span>}
+                      {item.cardType === 'simple' && <span style={{ ...styles.badge, color: '#f97316', backgroundColor: '#ffedd5' }}>{item.cardTypeLabel}</span>}
+                      {item.cardType === 'corporate' && <span style={{ ...styles.badge, color: '#10b981', backgroundColor: '#d1fae5' }}>{item.cardTypeLabel}</span>}
+                      {item.cardType === 'personal' && <span style={{ ...styles.badge, color: '#4f7cff', backgroundColor: '#eff6ff' }}>{item.cardTypeLabel}</span>}
+                      {item.isSync && <span style={{ width: 62, textAlign: 'center', padding: '3px 0', borderRadius: 4, fontSize: 10, color: '#ef4444', backgroundColor: '#fee2e2', boxSizing: 'border-box' }}>전송완료</span>}
                     </div>
                   </div>
                   <span style={styles.expenseMerchant}>{item.merchant}</span>
@@ -304,7 +304,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#2B5CFF',
     textAlign: 'right',
   },
-  badge: { width: 46, fontSize: 11, fontWeight: 600, padding: '2px 0', textAlign: 'center', borderRadius: 4, flexShrink: 0, boxSizing: 'border-box' },
+  badge: { width: 62, fontSize: 11, fontWeight: 600, padding: '2px 0', textAlign: 'center', borderRadius: 4, flexShrink: 0, boxSizing: 'border-box' },
   drivingItemBg: {
     backgroundColor: '#F5F6FA',
     borderRadius: '12px',

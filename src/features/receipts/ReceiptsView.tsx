@@ -110,10 +110,10 @@ export function ReceiptsView({
                       {item.date.split(' ')[1] && <span style={{ fontSize: 11, color: '#94a3b8' }}>{item.date.split(' ')[1].substring(0, 5)}</span>}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                      {item.cardType === 'simple' && <span style={{ ...styles.badge, color: '#f97316', backgroundColor: '#ffedd5' }}>간이</span>}
-                      {item.cardType === 'corporate' && <span style={{ ...styles.badge, color: '#10b981', backgroundColor: '#d1fae5' }}>법인</span>}
-                      {item.cardType === 'personal' && <span style={{ ...styles.badge, color: '#4f7cff', backgroundColor: '#eff6ff' }}>개인</span>}
-                      {item.isSync && <span style={{ width: 46, textAlign: 'center', padding: '3px 0', borderRadius: 4, fontSize: 10, color: '#ef4444', backgroundColor: '#fee2e2', boxSizing: 'border-box' }}>전송완료</span>}
+                      {item.cardType === 'simple' && <span style={{ ...styles.badge, color: '#f97316', backgroundColor: '#ffedd5' }}>{item.cardTypeLabel}</span>}
+                      {item.cardType === 'corporate' && <span style={{ ...styles.badge, color: '#10b981', backgroundColor: '#d1fae5' }}>{item.cardTypeLabel}</span>}
+                      {item.cardType === 'personal' && <span style={{ ...styles.badge, color: '#4f7cff', backgroundColor: '#eff6ff' }}>{item.cardTypeLabel}</span>}
+                      {item.isSync && <span style={{ width: 62, textAlign: 'center', padding: '3px 0', borderRadius: 4, fontSize: 10, color: '#ef4444', backgroundColor: '#fee2e2', boxSizing: 'border-box' }}>전송완료</span>}
                     </div>
                   </div>
                   <span style={styles.historyStore}>{item.store}</span>
@@ -148,10 +148,15 @@ export function ReceiptsView({
 
 // ─── 미등록카드 경비등록 수기 팝업 컴포넌트 ─────────────────────
 function ManualReceiptPopup({ onClose }: { onClose: () => void }) {
+  const [date, setDate] = useState('2026-03-01 12:30:00');
+  const [store, setStore] = useState('그랑서울 카센터');
+  const [amount, setAmount] = useState('130000');
+  const [address, setAddress] = useState('서울특별시 종로구 종로33');
   const [purpose, setPurpose] = useState('');
-  const [slipType, setSlipType] = useState('purchase');
+  const [slipType, setSlipType] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<{name: string; base64: string}[]>([]);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [alertDialog, setAlertDialog] = useState<{isOpen: boolean; message: string; onCloseCallback?: () => void}>({ isOpen: false, message: '' });
 
   const purposeOptions = [
     { label: '수행기사 식대 결제', value: 'meal' },
@@ -182,7 +187,7 @@ function ManualReceiptPopup({ onClose }: { onClose: () => void }) {
         {/* 헤더 */}
         <div style={ms.popupHeader}>
           <div style={ms.popupHeaderEmpty} />
-          <span style={ms.popupTitle}>영수증 등록</span>
+          <span style={ms.popupTitle}>미등록카드 영수증 등록</span>
           <button style={ms.popupCloseBtn} onClick={onClose}>✕</button>
         </div>
         
@@ -191,31 +196,31 @@ function ManualReceiptPopup({ onClose }: { onClose: () => void }) {
           {/* 거래일자 */}
           <div style={ms.formGroup}>
             <label style={ms.formLabel}>거래일자 <span style={ms.required}>*</span></label>
-            <input style={ms.input} defaultValue="2026-03-01" />
+            <input style={ms.input} value={date} onChange={e => setDate(e.target.value)} />
           </div>
 
           {/* 가맹점명 */}
           <div style={ms.formGroup}>
             <label style={ms.formLabel}>가맹점명 <span style={ms.required}>*</span></label>
-            <input style={ms.input} defaultValue="그랑서울 카센터" />
+            <input style={ms.input} value={store} onChange={e => setStore(e.target.value)} />
           </div>
 
           {/* 거래금액 */}
           <div style={ms.formGroup}>
             <label style={ms.formLabel}>거래금액 <span style={ms.required}>*</span></label>
-            <input style={ms.input} defaultValue="130,000원" />
+            <input style={ms.input} value={amount} onChange={e => setAmount(e.target.value)} />
           </div>
 
           {/* 가맹점주소 */}
           <div style={ms.formGroup}>
             <label style={ms.formLabel}>가맹점주소 <span style={ms.required}>*</span></label>
-            <input style={ms.input} defaultValue="서울특별시 종로구 종로33" />
+            <input style={ms.input} value={address} onChange={e => setAddress(e.target.value)} />
           </div>
 
           {/* 지출증빙 */}
           <div style={ms.formGroup}>
             <label style={ms.formLabel}>지출증빙 <span style={ms.required}>*</span></label>
-            <div style={ms.inputDisabled}>개인카드</div>
+            <div style={ms.inputDisabled}>간이영수증</div>
           </div>
 
           {/* 사용목적 */}
@@ -302,8 +307,53 @@ function ManualReceiptPopup({ onClose }: { onClose: () => void }) {
             <div style={ms.modalMessage}>작성하신 내역으로 경비를 등록하시겠습니까?</div>
             <div style={ms.modalActionsList}>
               <button style={ms.modalCancelBtn} onClick={() => setIsConfirmOpen(false)}>취소</button>
-              <button style={ms.modalConfirmBtn} onClick={() => {}}>확인</button>
+              <button style={ms.modalConfirmBtn} onClick={() => {
+                setIsConfirmOpen(false);
+                const hasMandatory = purpose !== '' && slipType !== '';
+                const hasAttachment = attachedFiles.length > 0;
+                
+                if (!hasMandatory || !hasAttachment) {
+                  setAlertDialog({ isOpen: true, message: '사용목적, 전표구분, 첨부파일은 필수입력입니다.' });
+                  return;
+                }
+                
+                if ((window as any).FlutterBridge) {
+                  (window as any).FlutterBridge.postMessage(JSON.stringify({ 
+                    action: 'createSimpleReceipt', 
+                    date,
+                    store,
+                    amount: parseInt(amount.replace(/[^0-9]/g, ''), 10) || 0,
+                    address,
+                    purpose,
+                    slipType,
+                    isSync: true 
+                  }));
+                }
+                
+                setAlertDialog({ isOpen: true, message: '성공적으로 전송(Sync) 완료되었습니다.', onCloseCallback: () => onClose() });
+              }}>확인</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Validation / Alert Modal */}
+      {alertDialog.isOpen && (
+        <div style={ms.modalOverlay}>
+          <div style={{ ...ms.modalContent, paddingBottom: 24 }}>
+            <div style={ms.modalTitle}>알림</div>
+            <div style={ms.modalMessage}>{alertDialog.message}</div>
+            <button 
+              style={ms.modalConfirmBtn} 
+              onClick={() => {
+                setAlertDialog({ isOpen: false, message: '' });
+                if (alertDialog.onCloseCallback) {
+                  alertDialog.onCloseCallback();
+                }
+              }}
+            >
+              확인
+            </button>
           </div>
         </div>
       )}
@@ -361,7 +411,7 @@ const styles: Record<string, React.CSSProperties> = {
   historyRight: { display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 },
   historyAmount: { fontSize: 15, fontWeight: 700, color: '#111' },
   historyAmountUnit: { fontSize: 14, color: '#111' },
-  badge: { width: 46, fontSize: 11, fontWeight: 600, padding: '2px 0', textAlign: 'center', borderRadius: 4, flexShrink: 0, boxSizing: 'border-box' },
+  badge: { width: 62, fontSize: 11, fontWeight: 600, padding: '2px 0', textAlign: 'center', borderRadius: 4, flexShrink: 0, boxSizing: 'border-box' },
 };
 
 // ─── 팝업 스타일 ──────────────────────────────────────────────────

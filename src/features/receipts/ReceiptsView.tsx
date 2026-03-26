@@ -7,8 +7,8 @@ import type { UseReceiptsReturn } from './useReceipts';
 export function ReceiptsView({
   expenseStatus,
   receiptsToProcess,
-  corporateCardInfo,
-  personalCardInfo,
+  corporateCards,
+  personalCards,
   corporateReceipts,
   personalReceipts,
   recentExpenses,
@@ -61,8 +61,8 @@ export function ReceiptsView({
             tab: 'corporate', 
             corporateReceipts, 
             personalReceipts, 
-            corporateCardInfo, 
-            personalCardInfo 
+            corporateCards, 
+            personalCards 
           })}>
             <span style={styles.listLabel}>법인카드</span>
             <div style={styles.listRight}>
@@ -75,8 +75,8 @@ export function ReceiptsView({
             tab: 'personal', 
             corporateReceipts, 
             personalReceipts, 
-            corporateCardInfo, 
-            personalCardInfo 
+            corporateCards, 
+            personalCards 
           })}>
             <span style={styles.listLabel}>개인카드</span>
             <div style={styles.listRight}>

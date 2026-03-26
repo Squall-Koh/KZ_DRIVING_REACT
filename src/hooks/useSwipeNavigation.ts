@@ -10,8 +10,8 @@ export function useSwipeNavigation() {
   const touchEndX = useRef<number>(0);
   const touchEndY = useRef<number>(0);
 
-  const minSwipeDistance = 60; // 최소 좌우 스와이프 픽셀
-  const maxVerticalDrift = 40; // 상하 드래그는 이 값 미만일 때만 수평 스와이프로 인정
+  const minSwipeDistance = 150; // 최소 좌우 스와이프 픽셀 (길게 늘림)
+  const maxVerticalDrift = 60; // 상하 드래그 허용치
 
   useEffect(() => {
     // 메인화면(/)에서는 좌우 스와이핑으로 인한 뒤로가기를 방지할 수 있습니다.

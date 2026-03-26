@@ -32,8 +32,8 @@ export interface UseReceiptsReturn {
     corporateCount: number;
     personalCount: number;
   };
-  corporateCardInfo: CardInfo;
-  personalCardInfo: CardInfo;
+  corporateCards: CardInfo[];
+  personalCards: CardInfo[];
   corporateReceipts: ReceiptItem[];
   personalReceipts: ReceiptItem[];
   recentExpenses: ReceiptItem[];
@@ -87,15 +87,15 @@ export function useReceipts(): UseReceiptsReturn {
     personalCount: 0,
   };
 
-  const corporateCardInfo: CardInfo = {
-    name: '카드 정보가 없습니다',
-    number: '****-****-****-****',
-  };
+  const corporateCards: CardInfo[] = [
+    { name: '현대카드 (법인)', number: '4056-9100-****-4606' },
+    { name: '삼성카드 (법인)', number: '1234-5678-****-9012' }
+  ];
 
-  const personalCardInfo: CardInfo = {
-    name: '카드 정보가 없습니다',
-    number: '****-****-****-****',
-  };
+  const personalCards: CardInfo[] = [
+    { name: '신한카드 (개인)', number: '9876-5432-****-1234' },
+    { name: '국민카드 (개인)', number: '1111-2222-****-3333' }
+  ];
 
   const [corporateReceipts, setCorporateReceipts] = useState<ReceiptItem[]>([]);
   const [personalReceipts, setPersonalReceipts] = useState<ReceiptItem[]>([]);
@@ -118,8 +118,8 @@ export function useReceipts(): UseReceiptsReturn {
     bridge,
     expenseStatus,
     receiptsToProcess,
-    corporateCardInfo,
-    personalCardInfo,
+    corporateCards,
+    personalCards,
     corporateReceipts,
     personalReceipts,
     recentExpenses,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { usePullToRefresh } from '../notifications/usePullToRefresh';
 import { SelectDropdown } from '../../components/SelectDropdown';
@@ -10,8 +10,8 @@ export function ReceiptsListView({
   onTabChange,
   corporateReceipts,
   personalReceipts,
-  corporateCardInfo,
-  personalCardInfo,
+  corporateCards,
+  personalCards,
   selectedReceipt,
   purposeOptions,
   slipOptions,
@@ -28,6 +28,13 @@ export function ReceiptsListView({
   scrollToTop,
 }: UseReceiptsListReturn) {
   const activeReceipts = tab === 'corporate' ? corporateReceipts : personalReceipts;
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (carouselRef.current) {
+      carouselRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+  }, [tab]);
 
   const { pullDist, isPullRate, isPulling } = usePullToRefresh(
     scrollRef as React.RefObject<HTMLDivElement>,
@@ -62,20 +69,23 @@ export function ReceiptsListView({
         </button>
       </div>
 
-      {/* 등록된 정보 배너 (고정) */}
-      {tab === 'corporate' ? (
-        <div style={s.cardInfoBanner}>
-          <span style={s.cardInfoLabel}>등록된 법인카드</span>
-          <span style={s.cardInfoName}>{corporateCardInfo.name}</span>
-          <span style={s.cardInfoNumber}>{corporateCardInfo.number}</span>
+      {/* 등록된 정보 배너 (가로 스크롤 캐러셀) */}
+      <div style={s.cardCarouselWrapper}>
+        <div style={s.cardCarousel} ref={carouselRef}>
+          {(tab === 'corporate' ? corporateCards : personalCards).map((card, idx) => (
+             <div key={idx} style={s.cardInfoBanner}>
+               <span style={s.cardInfoLabel}>등록된 {tab === 'corporate' ? '법인카드' : '개인카드'}</span>
+               <span style={s.cardInfoName}>{card.name}</span>
+               <span style={s.cardInfoNumber}>{card.number}</span>
+             </div>
+          ))}
+          {(tab === 'corporate' ? corporateCards : personalCards).length === 0 && (
+            <div style={{...s.cardInfoBanner, justifyContent: 'center'}}>
+               <span style={s.cardInfoName}>등록된 카드가 없습니다</span>
+            </div>
+          )}
         </div>
-      ) : (
-        <div style={s.cardInfoBanner}>
-          <span style={s.cardInfoLabel}>등록된 개인카드</span>
-          <span style={s.cardInfoName}>{personalCardInfo.name}</span>
-          <span style={s.cardInfoNumber}>{personalCardInfo.number}</span>
-        </div>
-      )}
+      </div>
 
       <div style={s.sectionHeader}>
         <div style={s.sectionTitle}>처리할 영수증</div>
@@ -335,12 +345,33 @@ const s: Record<string, React.CSSProperties> = {
 
   scrollArea: { flex: 1, overflowY: 'auto' as const, overscrollBehaviorY: 'none', display: 'flex', flexDirection: 'column' },
   
+  cardCarouselWrapper: {
+    width: '100%',
+    overflow: 'hidden',
+    marginBottom: 24,
+    marginTop: 8,
+  },
+  cardCarousel: {
+    display: 'flex',
+    overflowX: 'auto',
+    scrollSnapType: 'x mandatory',
+    WebkitOverflowScrolling: 'touch',
+    padding: '0 16px',
+    gap: 12,
+    scrollbarWidth: 'none',
+    msOverflowStyle: 'none',
+  },
   cardInfoBanner: {
-    margin: '8px 16px 24px', padding: '24px 16px',
+    flexShrink: 0,
+    width: 'calc(100vw - 32px)', // To make it peek -> or exactly full container viewport width
+    maxWidth: '380px',
+    scrollSnapAlign: 'center',
+    padding: '24px 16px',
     background: 'linear-gradient(135deg, #749cff 0%, #4f7cff 100%)', 
     borderRadius: 12, display: 'flex', flexDirection: 'column',
     alignItems: 'center', color: '#fff',
-    boxShadow: '0 4px 12px rgba(79, 124, 255, 0.3)'
+    boxShadow: '0 4px 12px rgba(79, 124, 255, 0.3)',
+    boxSizing: 'border-box' as const,
   },
   cardInfoLabel: { fontSize: 13, opacity: 0.9, marginBottom: 8 },
   cardInfoName: { fontSize: 18, fontWeight: 700, marginBottom: 8 },

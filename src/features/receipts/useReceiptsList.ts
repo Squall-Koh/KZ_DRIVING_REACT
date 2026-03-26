@@ -9,8 +9,8 @@ export interface UseReceiptsListReturn {
   onTabChange: (tab: TabType) => void;
   corporateReceipts: ReceiptItem[];
   personalReceipts: ReceiptItem[];
-  corporateCardInfo: CardInfo;
-  personalCardInfo: CardInfo;
+  corporateCards: CardInfo[];
+  personalCards: CardInfo[];
   selectedReceipt: ReceiptItem | null;
   purposeOptions: { label: string; value: string }[];
   slipOptions: { label: string; value: string }[];
@@ -38,8 +38,8 @@ export function useReceiptsList(): UseReceiptsListReturn {
   const initialTab = state?.tab || 'corporate';
   const corporateReceipts = state?.corporateReceipts || [];
   const personalReceipts = state?.personalReceipts || [];
-  const corporateCardInfo = state?.corporateCardInfo || { name: '등록된 법인카드 정보 없음', number: '' };
-  const personalCardInfo = state?.personalCardInfo || { name: '등록된 개인카드 정보 없음', number: '' };
+  const corporateCards = state?.corporateCards || [];
+  const personalCards = state?.personalCards || [];
 
   const [tab, setTab] = useState<TabType>(initialTab);
   const [selectedReceipt, setSelectedReceipt] = useState<ReceiptItem | null>(null);
@@ -187,8 +187,8 @@ export function useReceiptsList(): UseReceiptsListReturn {
     onTabChange,
     corporateReceipts: displayCorp,
     personalReceipts: displayPers,
-    corporateCardInfo,
-    personalCardInfo,
+    corporateCards,
+    personalCards,
     selectedReceipt,
     purposeOptions,
     slipOptions,

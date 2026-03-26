@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Calendar } from 'lucide-react';
 import { DateRangePicker } from '../../components/DateRangePicker';
+import { DatePicker } from '../../components/DatePicker';
 import { SelectDropdown } from '../../components/SelectDropdown';
 import type { UseReceiptsReturn } from './useReceipts';
 
@@ -148,15 +149,32 @@ export function ReceiptsView({
 
 // ─── 미등록카드 경비등록 수기 팝업 컴포넌트 ─────────────────────
 function ManualReceiptPopup({ onClose }: { onClose: () => void }) {
-  const [date, setDate] = useState('2026-03-01 12:30:00');
+  const [date, setDate] = useState('2026-03-01');
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [store, setStore] = useState('그랑서울 카센터');
-  const [amount, setAmount] = useState('130000');
+  const [amount, setAmount] = useState('130,000');
   const [address, setAddress] = useState('서울특별시 종로구 종로33');
   const [purpose, setPurpose] = useState('');
   const [slipType, setSlipType] = useState('');
+  const [cardType, setCardType] = useState('simple');
   const [attachedFiles, setAttachedFiles] = useState<{name: string; base64: string}[]>([]);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [alertDialog, setAlertDialog] = useState<{isOpen: boolean; message: string; onCloseCallback?: () => void}>({ isOpen: false, message: '' });
+
+  const cardTypeOptions = [
+    { label: '법인카드', value: 'corporate' },
+    { label: '개인카드', value: 'personal' },
+    { label: '간이영수증', value: 'simple' },
+  ];
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const numericVal = e.target.value.replace(/[^0-9]/g, '');
+    if (!numericVal) {
+      setAmount('');
+      return;
+    }
+    setAmount(Number(numericVal).toLocaleString());
+  };
 
   const purposeOptions = [
     { label: '수행기사 식대 결제', value: 'meal' },
@@ -196,7 +214,13 @@ function ManualReceiptPopup({ onClose }: { onClose: () => void }) {
           {/* 거래일자 */}
           <div style={ms.formGroup}>
             <label style={ms.formLabel}>거래일자 <span style={ms.required}>*</span></label>
-            <input style={ms.input} value={date} onChange={e => setDate(e.target.value)} />
+            <div 
+              style={{ ...ms.input, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+              onClick={() => setIsDatePickerOpen(true)}
+            >
+              <span>{date}</span>
+              <Calendar size={18} color="#666" />
+            </div>
           </div>
 
           {/* 가맹점명 */}
@@ -208,7 +232,15 @@ function ManualReceiptPopup({ onClose }: { onClose: () => void }) {
           {/* 거래금액 */}
           <div style={ms.formGroup}>
             <label style={ms.formLabel}>거래금액 <span style={ms.required}>*</span></label>
-            <input style={ms.input} value={amount} onChange={e => setAmount(e.target.value)} />
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input 
+                style={{ ...ms.input, paddingRight: 30, textAlign: 'right' }} 
+                value={amount} 
+                onChange={handleAmountChange} 
+                placeholder="0"
+              />
+              <span style={{ position: 'absolute', right: 12, color: '#111', fontSize: 15, fontWeight: 500 }}>원</span>
+            </div>
           </div>
 
           {/* 가맹점주소 */}
@@ -220,7 +252,13 @@ function ManualReceiptPopup({ onClose }: { onClose: () => void }) {
           {/* 지출증빙 */}
           <div style={ms.formGroup}>
             <label style={ms.formLabel}>지출증빙 <span style={ms.required}>*</span></label>
-            <div style={ms.inputDisabled}>간이영수증</div>
+            <SelectDropdown
+              value={cardType}
+              onChange={setCardType}
+              options={cardTypeOptions}
+              placeholder="카드 구분을 선택하세요."
+              headerLabel="지출증빙(카드) 선택"
+            />
           </div>
 
           {/* 사용목적 */}
@@ -320,12 +358,13 @@ function ManualReceiptPopup({ onClose }: { onClose: () => void }) {
                 if ((window as any).FlutterBridge) {
                   (window as any).FlutterBridge.postMessage(JSON.stringify({ 
                     action: 'createSimpleReceipt', 
-                    date,
+                    date: `${date} 12:30:00`,
                     store,
                     amount: parseInt(amount.replace(/[^0-9]/g, ''), 10) || 0,
                     address,
                     purpose,
                     slipType,
+                    cardType,
                     isSync: true 
                   }));
                 }
@@ -356,6 +395,18 @@ function ManualReceiptPopup({ onClose }: { onClose: () => void }) {
             </button>
           </div>
         </div>
+      )}
+
+      {/* 날짜 선택 달력 Popup */}
+      {isDatePickerOpen && (
+        <DatePicker
+          initialDate={date}
+          onConfirm={(selectedDate) => {
+            setDate(selectedDate);
+            setIsDatePickerOpen(false);
+          }}
+          onCancel={() => setIsDatePickerOpen(false)}
+        />
       )}
     </div>
   );

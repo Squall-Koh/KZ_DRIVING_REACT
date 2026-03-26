@@ -28,10 +28,12 @@ export function MainLayout() {
   };
 
   React.useEffect(() => {
-    if (tapCount >= 5) {
-      console.log('Secret 5 taps detected. Opening Native Dev Menu...');
+    // 정확히 7번 도달했을 때 딱 한 번만 엽니다.
+    // 8번, 9번 막 눌러도 추가 트리거되지 않도록 === 7 로 설정하고,
+    // tapCount 초기화는 1.5초 뒤 자동 타임아웃에 맡깁니다.
+    if (tapCount === 7) {
+      console.log('Secret 7 taps detected. Opening Native Dev Menu...');
       openDevMenu();
-      setTapCount(0);
     }
   }, [tapCount]);
 

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export interface ReceiptItem {
   id: string;
@@ -11,6 +11,7 @@ export interface ReceiptItem {
   receiptType?: 'simple' | 'corporate' | 'personal';
   cardName?: string;
   cardNumber?: string;
+  isSync?: boolean;
 }
 
 export interface CardInfo {
@@ -55,6 +56,7 @@ export interface UseReceiptsReturn {
 
 export function useReceipts(): UseReceiptsReturn {
   const navigate = useNavigate();
+  const location = useLocation();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [startDate, setStartDate] = useState<string>('2026-03-01');
@@ -103,7 +105,7 @@ export function useReceipts(): UseReceiptsReturn {
       });
       (window as any).FlutterBridge.postMessage(payload);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, (location as any).key]);
 
   const totalAmount = [...corporateReceipts, ...personalReceipts].reduce((sum, r) => sum + r.amount, 0);
 

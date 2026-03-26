@@ -53,7 +53,7 @@ export function useReceiptsHistory(): UseReceiptsHistoryReturn {
       });
       (window as any).FlutterBridge.postMessage(payload);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, (location as any).key]);
 
   const fetchItems = useCallback((pageNum: number, isRefresh = false) => {
     setLoading(true);

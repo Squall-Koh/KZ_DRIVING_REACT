@@ -17,6 +17,7 @@ export function ReceiptsListView({
   slipOptions,
   onSelectReceipt,
   onClosePopup,
+  onReceiptSynced,
   onBack,
   loading,
   hasMore,
@@ -167,6 +168,7 @@ export function ReceiptsListView({
           purposeOptions={purposeOptions}
           slipOptions={slipOptions}
           onClose={onClosePopup}
+          onSynced={() => onReceiptSynced(selectedReceipt.id)}
         />
       )}
     </div>
@@ -179,17 +181,21 @@ function ReceiptPopup({
   tab,
   purposeOptions,
   slipOptions,
-  onClose
+  onClose,
+  onSynced
 }: {
   receipt: ReceiptItem;
   tab: string;
   purposeOptions: { label: string; value: string }[];
   slipOptions: { label: string; value: string }[];
   onClose: () => void;
+  onSynced?: () => void;
 }) {
   const [purpose, setPurpose] = useState('');
   const [slipType, setSlipType] = useState('purchase');
   const [attachedFiles, setAttachedFiles] = useState<{name: string; base64: string}[]>([]);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [alertDialog, setAlertDialog] = useState<{ isOpen: boolean; message: string; onCloseCallback?: () => void }>({ isOpen: false, message: '' });
 
   useEffect(() => {
     (window as any).onImageAttached = (name: string, base64: string) => {
@@ -310,15 +316,78 @@ function ReceiptPopup({
         <div style={s.popupBottom}>
           <button 
             style={s.submitBtn}
-            onClick={() => {
-              alert('경비내역 등록을 완료했습니다. (기능 미구현)');
-              onClose();
-            }}
+            onClick={() => setIsConfirmOpen(true)}
           >
             경비내역 등록
           </button>
         </div>
       </div>
+
+      {/* 등록 취소/확인 모달 */}
+      {isConfirmOpen && (
+        <div style={s.modalOverlay}>
+          <div style={s.modalContent}>
+            <div style={s.modalTitle}>경비내역 등록</div>
+            <div style={s.modalMessage}>해당 내역으로 경비를 등록하시겠습니까?</div>
+            <div style={s.modalActionsList}>
+              <button style={s.modalCancelBtn} onClick={() => setIsConfirmOpen(false)}>취소</button>
+              <button style={s.modalConfirmBtn} onClick={() => {
+                setIsConfirmOpen(false);
+                const hasMandatory = purpose !== '' && slipType !== '';
+                const hasAttachment = attachedFiles.length > 0;
+                
+                if (!hasMandatory) {
+                  setAlertDialog({ isOpen: true, message: '사용목적과 전표구분을 모두 입력해주세요.' });
+                  return;
+                }
+                const newIsSync = hasAttachment;
+                
+                if ((window as any).FlutterBridge) {
+                  (window as any).FlutterBridge.postMessage(JSON.stringify({ 
+                    action: 'updateReceiptSync', 
+                    expenseId: receipt.id, 
+                    isSync: newIsSync 
+                  }));
+                }
+                
+                if (newIsSync && onSynced) {
+                  onSynced();
+                }
+                
+                const msg = newIsSync ? '성공적으로 전송(Sync) 완료되었습니다.' : '첨부파일이 없어 임시저장 상태로 보관됩니다. (추후 등록 필요)';
+                setAlertDialog({
+                  isOpen: true,
+                  message: msg,
+                  onCloseCallback: () => {
+                    onClose();
+                  }
+                });
+              }}>확인</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Alert 모달 */}
+      {alertDialog.isOpen && (
+        <div style={{ ...s.modalOverlay, zIndex: 999999 }}>
+          <div style={s.modalContent}>
+            <div style={s.modalTitle}>알림</div>
+            <div style={s.modalMessage}>{alertDialog.message}</div>
+            <div style={s.modalActionsList}>
+              <button 
+                style={s.modalConfirmBtn} 
+                onClick={() => {
+                  setAlertDialog({ isOpen: false, message: '' });
+                  if (alertDialog.onCloseCallback) alertDialog.onCloseCallback();
+                }}
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -499,8 +568,29 @@ const s: Record<string, React.CSSProperties> = {
     padding: '16px 20px 24px', flexShrink: 0, backgroundColor: '#fff',
   },
   submitBtn: {
-    width: '100%', padding: '16px', backgroundColor: '#4f7cff',
-    color: '#fff', fontSize: 16, fontWeight: 700, borderRadius: 12,
-    border: 'none', cursor: 'pointer'
+    width: '100%', padding: '16px 0', backgroundColor: '#2b5cff', color: '#fff', fontSize: 16, fontWeight: 700,
+    border: 'none', borderRadius: 12, cursor: 'pointer'
+  },
+  
+  // Custom Registration Confirm Modal Styles
+  modalOverlay: {
+    position: 'fixed' as const, top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 99999,
+    display: 'flex', alignItems: 'center', justifyContent: 'center'
+  },
+  modalContent: {
+    width: '320px', backgroundColor: '#fff', borderRadius: 16, padding: '24px',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column'
+  },
+  modalTitle: { fontSize: 18, fontWeight: 700, color: '#111', marginBottom: 12 },
+  modalMessage: { fontSize: 15, color: '#555', lineHeight: 1.5, marginBottom: 24 },
+  modalActionsList: { display: 'flex', gap: 8 },
+  modalCancelBtn: {
+    flex: 1, padding: '12px 0', backgroundColor: '#f1f5f9', color: '#475569', fontSize: 15, fontWeight: 600,
+    border: 'none', borderRadius: 8, cursor: 'pointer'
+  },
+  modalConfirmBtn: {
+    flex: 1, padding: '12px 0', backgroundColor: '#2b5cff', color: '#fff', fontSize: 15, fontWeight: 600,
+    border: 'none', borderRadius: 8, cursor: 'pointer'
   }
 };

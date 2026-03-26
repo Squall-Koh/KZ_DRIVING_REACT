@@ -16,6 +16,7 @@ export interface UseReceiptsListReturn {
   slipOptions: { label: string; value: string }[];
   onSelectReceipt: (receipt: ReceiptItem) => void;
   onClosePopup: () => void;
+  onReceiptSynced: (id: string) => void;
   onBack: () => void;
   
   // 무한 스크롤 & PTR 추가
@@ -47,6 +48,7 @@ export function useReceiptsList(): UseReceiptsListReturn {
   const [tab, setTab] = useState<TabType>(initialTab);
   const [selectedReceipt, setSelectedReceipt] = useState<ReceiptItem | null>(null);
   const [activeCardIndex, setActiveCardIndex] = useState(0);
+  const [syncedIds, setSyncedIds] = useState<string[]>([]);
 
   useEffect(() => {
     setActiveCardIndex(0);
@@ -58,7 +60,7 @@ export function useReceiptsList(): UseReceiptsListReturn {
   const activeCard = activeCards.length > activeCardIndex ? activeCards[activeCardIndex] : null;
 
   const allFilteredReceipts = activeCard 
-    ? rawReceipts.filter((r: any) => r.cardName === activeCard.name)
+    ? rawReceipts.filter((r: any) => r.cardName === activeCard.name && !syncedIds.includes(r.id))
     : [];
 
   const [page, setPage] = useState(1);
@@ -180,6 +182,7 @@ export function useReceiptsList(): UseReceiptsListReturn {
     slipOptions,
     onSelectReceipt,
     onClosePopup,
+    onReceiptSynced: (id: string) => setSyncedIds(prev => [...prev, id]),
     onBack,
 
     loading,

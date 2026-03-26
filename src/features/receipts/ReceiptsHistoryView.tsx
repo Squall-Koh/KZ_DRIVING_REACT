@@ -99,8 +99,14 @@ export function ReceiptsHistoryView({
           {items.map((expense) => (
              <div key={expense.id} style={s.receiptCard}>
               <div style={s.receiptTop}>
-                <span style={s.receiptDate}>{expense.date}</span>
-                {renderBadge(expense.cardType)}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
+                  <span style={{ fontSize: 13, color: '#4f7cff', fontWeight: 600 }}>{expense.date.split(' ')[0]}</span>
+                  {expense.date.split(' ')[1] && <span style={{ fontSize: 12, color: '#888' }}>{expense.date.split(' ')[1].substring(0, 5)}</span>}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                  {renderBadge(expense.cardType)}
+                  {expense.isSync && <span style={{ width: 46, textAlign: 'center', padding: '3px 0', borderRadius: 4, fontSize: 10, color: '#ef4444', backgroundColor: '#fee2e2', boxSizing: 'border-box' }}>전송완료</span>}
+                </div>
               </div>
               <div style={s.receiptStore}>{expense.store}</div>
               <div style={s.receiptInfo}>거래금액 : {expense.amount.toLocaleString()}원</div>
@@ -164,7 +170,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   receiptTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   receiptDate: { fontSize: 14, color: '#4f7cff', fontWeight: 500 },
-  badge: { fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 4 },
+  badge: { width: 46, fontSize: 12, fontWeight: 600, padding: '4px 0', textAlign: 'center', borderRadius: 4, boxSizing: 'border-box' },
   
   receiptStore: { fontSize: 16, fontWeight: 700, color: '#111', marginTop: 2 },
   receiptInfo: { fontSize: 13, color: '#64748b' },

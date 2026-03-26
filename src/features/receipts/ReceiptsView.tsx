@@ -104,11 +104,17 @@ export function ReceiptsView({
             {recentExpenses.map((item, index) => (
               <div key={item.id} style={{ ...styles.historyItem, borderBottom: index < recentExpenses.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
                 <div style={styles.historyLeft}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={styles.historyDate}>{item.date}</span>
-                    {item.cardType === 'simple' && <span style={{ ...styles.badge, color: '#f97316', backgroundColor: '#ffedd5' }}>간이</span>}
-                    {item.cardType === 'corporate' && <span style={{ ...styles.badge, color: '#10b981', backgroundColor: '#d1fae5' }}>법인</span>}
-                    {item.cardType === 'personal' && <span style={{ ...styles.badge, color: '#4f7cff', backgroundColor: '#eff6ff' }}>개인</span>}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, minWidth: 70 }}>
+                      <span style={{ fontSize: 12, color: '#64748b' }}>{item.date.split(' ')[0]}</span>
+                      {item.date.split(' ')[1] && <span style={{ fontSize: 11, color: '#94a3b8' }}>{item.date.split(' ')[1].substring(0, 5)}</span>}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                      {item.cardType === 'simple' && <span style={{ ...styles.badge, color: '#f97316', backgroundColor: '#ffedd5' }}>간이</span>}
+                      {item.cardType === 'corporate' && <span style={{ ...styles.badge, color: '#10b981', backgroundColor: '#d1fae5' }}>법인</span>}
+                      {item.cardType === 'personal' && <span style={{ ...styles.badge, color: '#4f7cff', backgroundColor: '#eff6ff' }}>개인</span>}
+                      {item.isSync && <span style={{ width: 46, textAlign: 'center', padding: '3px 0', borderRadius: 4, fontSize: 10, color: '#ef4444', backgroundColor: '#fee2e2', boxSizing: 'border-box' }}>전송완료</span>}
+                    </div>
                   </div>
                   <span style={styles.historyStore}>{item.store}</span>
                 </div>
@@ -355,7 +361,7 @@ const styles: Record<string, React.CSSProperties> = {
   historyRight: { display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 },
   historyAmount: { fontSize: 15, fontWeight: 700, color: '#111' },
   historyAmountUnit: { fontSize: 14, color: '#111' },
-  badge: { fontSize: 11, fontWeight: 600, padding: '2px 6px', borderRadius: 4, flexShrink: 0 },
+  badge: { width: 46, fontSize: 11, fontWeight: 600, padding: '2px 0', textAlign: 'center', borderRadius: 4, flexShrink: 0, boxSizing: 'border-box' },
 };
 
 // ─── 팝업 스타일 ──────────────────────────────────────────────────

@@ -153,16 +153,35 @@ export function OperationDashboardView({
           <span style={styles.cardMore} onClick={onMoreExpense}>더보기</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {recentExpenseData.map((item, index) => (
-            <div key={item.id} style={{
-              ...styles.expenseItemRow,
-              borderBottom: index !== recentExpenseData.length - 1 ? '1px solid #EDF0F4' : 'none'
-            }}>
-              <span style={styles.dateText}>{item.date}</span>
-              <span style={styles.expenseMerchant}>{item.merchant}</span>
-              <span style={styles.priceText}>{item.amount} <span style={{ fontSize: 13, color: '#333', fontWeight: 'normal' }}>원</span></span>
-            </div>
-          ))}
+          {recentExpenseData.map((item, index) => {
+            const dateStr = item.date || '';
+            const dPart = dateStr.includes(' ') ? dateStr.split(' ')[0] : dateStr;
+            const tPart = dateStr.includes(' ') && dateStr.split(' ')[1] ? dateStr.split(' ')[1].substring(0, 5) : '';
+
+            return (
+              <div key={item.id} style={{
+                ...styles.expenseItemRow,
+                borderBottom: index !== recentExpenseData.length - 1 ? '1px solid #EDF0F4' : 'none'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, minWidth: 70 }}>
+                      <span style={{ fontSize: 12, color: '#64748b' }}>{dPart}</span>
+                      {tPart && <span style={{ fontSize: 11, color: '#94a3b8' }}>{tPart}</span>}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                      {item.cardType === 'simple' && <span style={{ ...styles.badge, color: '#f97316', backgroundColor: '#ffedd5' }}>간이</span>}
+                      {item.cardType === 'corporate' && <span style={{ ...styles.badge, color: '#10b981', backgroundColor: '#d1fae5' }}>법인</span>}
+                      {item.cardType === 'personal' && <span style={{ ...styles.badge, color: '#4f7cff', backgroundColor: '#eff6ff' }}>개인</span>}
+                      {item.isSync && <span style={{ width: 46, textAlign: 'center', padding: '3px 0', borderRadius: 4, fontSize: 10, color: '#ef4444', backgroundColor: '#fee2e2', boxSizing: 'border-box' }}>전송완료</span>}
+                    </div>
+                  </div>
+                  <span style={styles.expenseMerchant}>{item.merchant}</span>
+                </div>
+                <span style={styles.priceText}>{item.amount} <span style={{ fontSize: 13, color: '#333', fontWeight: 'normal' }}>원</span></span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -280,10 +299,12 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#2B5CFF',
   },
   priceText: {
-    fontSize: '16px',
+    fontSize: '15px',
     fontWeight: 'bold',
-    color: '#000',
+    color: '#2B5CFF',
+    textAlign: 'right',
   },
+  badge: { width: 46, fontSize: 11, fontWeight: 600, padding: '2px 0', textAlign: 'center', borderRadius: 4, flexShrink: 0, boxSizing: 'border-box' },
   drivingItemBg: {
     backgroundColor: '#F5F6FA',
     borderRadius: '12px',

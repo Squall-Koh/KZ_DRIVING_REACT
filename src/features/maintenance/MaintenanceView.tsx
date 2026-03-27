@@ -52,7 +52,12 @@ export function MaintenanceView({
 }: UseMaintenanceReturn) {
   
   const vehicleOptions = vehicles.map(v => ({
-    label: `${v.plateNumber} ${v.name}`,
+    label: (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ color: '#2b5cff', fontWeight: 600 }}>[{v.plateNumber}]</span>
+        <span>{v.name}</span>
+      </div>
+    ),
     value: v.id,
   }));
 

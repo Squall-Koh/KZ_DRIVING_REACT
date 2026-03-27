@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 export interface SelectOption {
-  label: string;
+  label: React.ReactNode;
   value: string;
 }
 
@@ -29,7 +29,9 @@ export function SelectDropdown({
         style={{ ...s.selectInput, color: selectedOpt ? '#111' : '#64748b' }}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span>{selectedOpt ? selectedOpt.label : placeholder}</span>
+        <div style={{ flex: 1, textAlign: 'left', display: 'flex', alignItems: 'center' }}>
+          {selectedOpt ? selectedOpt.label : placeholder}
+        </div>
         <span style={{ fontSize: 14, color: '#64748b', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
       </button>
 

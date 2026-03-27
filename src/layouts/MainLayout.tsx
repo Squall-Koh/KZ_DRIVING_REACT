@@ -107,10 +107,11 @@ export function MainLayout() {
   };
 
   const getStateConfig = () => {
+    const plate = syncPayload?.plateNumber || '차량 미배정';
     switch (drivingState) {
       case 0: return { color: '#9BA3AF', title: '연결 대기중', desc: '차량에 탑승해 주세요.' };
-      case 1: return { color: '#2B5CFF', title: '운행 대기중', desc: '[339마 7788]에 연결되었습니다.' };
-      case 2: return { color: '#22C55E', title: '운행중', desc: '[339마 7788] 운행이 시작되었습니다.' };
+      case 1: return { color: '#2B5CFF', title: '운행 대기중', desc: `[${plate}]에 연결되었습니다.` };
+      case 2: return { color: '#22C55E', title: '운행중', desc: `[${plate}] 운행이 시작되었습니다.` };
       default: return { color: '#9BA3AF', title: '연결 대기중', desc: '' };
     }
   };
@@ -128,7 +129,7 @@ export function MainLayout() {
       <div style={styles.header}>
         <div style={styles.headerLeft} onClick={handleLogoTap}>
           <img src={IconKz} alt="KZ" style={{ width: 'auto', height: 'auto', objectFit: 'contain', borderRadius: 8 }} />
-          <span style={styles.userName}>SeungJoo Koh 님</span>
+          <span style={styles.userName}>{syncPayload?.userName || '사용자 정보 확인 중...'}</span>
         </div>
         <div style={styles.headerRight}>
           <button style={styles.iconBtn} onClick={() => console.log('Barcode/Scan clicked')}>

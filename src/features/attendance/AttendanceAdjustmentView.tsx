@@ -10,15 +10,20 @@ import { STATUS_STYLE } from './useAttendanceAdjustment';
 // ─── 근태조정 신청 탭 ────────────────────────────────────────
 function AdjustTab({
   workDate, timeFrom, timeTo, attachedFiles, clockTarget, isConfirmOpen,
+  hasCommuteRecord, validationError,
   onWorkDateChange, onTimeFromChange, onTimeToChange, onRemoveFile, onRequestAttachment, 
   onClockTargetChange, setIsConfirmOpen, onSubmitConfirm,
+  setValidationError, handleSubmitClick,
 }: Pick<UseAttendanceAdjustmentReturn,
   'workDate' | 'timeFrom' | 'timeTo' | 'attachedFiles' | 'clockTarget' | 'isConfirmOpen' |
+  'hasCommuteRecord' | 'validationError' |
   'onWorkDateChange' | 'onTimeFromChange' | 'onTimeToChange' | 'onRemoveFile' | 
-  'onRequestAttachment' | 'onClockTargetChange' | 'setIsConfirmOpen' | 'onSubmitConfirm'
+  'onRequestAttachment' | 'onClockTargetChange' | 'setIsConfirmOpen' | 'onSubmitConfirm' |
+  'setValidationError' | 'handleSubmitClick'
 >) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const displayDate = workDate ? workDate.replace(/-/g, '.') : '';
+  const canEditTime = hasCommuteRecord === true;
 
   return (
     <div style={ts.form}>
@@ -45,14 +50,14 @@ function AdjustTab({
       <div style={ts.fieldGroup}>
         <label style={ts.label}>조정 근무시간 <span style={{ color: '#ef4444' }}>*</span></label>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ ...ts.inputRow, flex: 1, paddingRight: 12 }}>
-            <input style={{ ...ts.input, flex: 1, width: '100%' }} type="text" readOnly value={timeFrom} onClick={() => onClockTargetChange('from')} />
-            <Clock size={18} color="#999" style={{ cursor: 'pointer', flexShrink: 0 }} onClick={() => onClockTargetChange('from')} />
+          <div style={{ ...ts.inputRow, flex: 1, paddingRight: 12, opacity: canEditTime ? 1 : 0.5, backgroundColor: canEditTime ? '#fff' : '#f8fafc' }}>
+            <input style={{ ...ts.input, flex: 1, width: '100%', cursor: canEditTime ? 'pointer' : 'default' }} type="text" readOnly value={timeFrom} onClick={() => canEditTime && onClockTargetChange('from')} />
+            <Clock size={18} color="#999" style={{ cursor: 'pointer', flexShrink: 0 }} onClick={() => canEditTime && onClockTargetChange('from')} />
           </div>
           <span style={{ color: '#888', flexShrink: 0 }}>~</span>
-          <div style={{ ...ts.inputRow, flex: 1, paddingRight: 12 }}>
-            <input style={{ ...ts.input, flex: 1, width: '100%' }} type="text" readOnly value={timeTo} onClick={() => onClockTargetChange('to')} />
-            <Clock size={18} color="#999" style={{ cursor: 'pointer', flexShrink: 0 }} onClick={() => onClockTargetChange('to')} />
+          <div style={{ ...ts.inputRow, flex: 1, paddingRight: 12, opacity: canEditTime ? 1 : 0.5, backgroundColor: canEditTime ? '#fff' : '#f8fafc' }}>
+            <input style={{ ...ts.input, flex: 1, width: '100%', cursor: canEditTime ? 'pointer' : 'default' }} type="text" readOnly value={timeTo} onClick={() => canEditTime && onClockTargetChange('to')} />
+            <Clock size={18} color="#999" style={{ cursor: 'pointer', flexShrink: 0 }} onClick={() => canEditTime && onClockTargetChange('to')} />
           </div>
         </div>
         <p style={ts.hint}>* 변경을 희망하는 출/퇴근 시간을 입력해주세요.</p>
@@ -81,7 +86,10 @@ function AdjustTab({
       </div>
 
       <div style={{ flex: 1 }} />
-      <button style={ts.submitBtn} onClick={() => setIsConfirmOpen(true)}>
+      <button 
+        style={{ ...ts.submitBtn, backgroundColor: (workDate && hasCommuteRecord === true) ? '#3b82f6' : '#9ca3af' }} 
+        onClick={handleSubmitClick}
+      >
         근태조정 신청
       </button>
 
@@ -106,6 +114,19 @@ function AdjustTab({
           }}
           onCancel={() => onClockTargetChange(null)}
         />
+      )}
+      
+      {/* 1. Validation 실패 다이얼로그 */}
+      {validationError && (
+        <div style={ts.modalOverlay}>
+          <div style={ts.modalContent}>
+            <div style={ts.modalTitle}>확인</div>
+            <div style={ts.modalMessage}>{validationError}</div>
+            <div style={ts.modalActionsList}>
+              <button style={ts.modalConfirmBtn} onClick={() => setValidationError(null)}>확인</button>
+            </div>
+          </div>
+        </div>
       )}
       
       {/* 접수 컨펌 다이얼로그 */}
@@ -264,6 +285,8 @@ export function AttendanceAdjustmentView(props: UseAttendanceAdjustmentReturn) {
             attachedFiles={props.attachedFiles}
             clockTarget={props.clockTarget}
             isConfirmOpen={props.isConfirmOpen}
+            hasCommuteRecord={props.hasCommuteRecord}
+            validationError={props.validationError}
             onWorkDateChange={props.onWorkDateChange}
             onTimeFromChange={props.onTimeFromChange}
             onTimeToChange={props.onTimeToChange}
@@ -272,6 +295,8 @@ export function AttendanceAdjustmentView(props: UseAttendanceAdjustmentReturn) {
             onClockTargetChange={props.onClockTargetChange}
             setIsConfirmOpen={props.setIsConfirmOpen}
             onSubmitConfirm={props.onSubmitConfirm}
+            setValidationError={props.setValidationError}
+            handleSubmitClick={props.handleSubmitClick}
           />
         ) : (
           <ApprovalTab 

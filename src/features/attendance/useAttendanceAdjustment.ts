@@ -45,6 +45,9 @@ export interface UseAttendanceAdjustmentReturn {
 
   isConfirmOpen: boolean;
 
+  hasCommuteRecord: boolean | null;
+  validationError: string | null;
+
   onTabChange: (t: AdjustTabType) => void;
   onWorkDateChange: (d: string) => void;
   onTimeFromChange: (t: string) => void;
@@ -53,8 +56,10 @@ export interface UseAttendanceAdjustmentReturn {
   onRequestAttachment: () => void;
   onClockTargetChange: (t: 'from' | 'to' | null) => void;
   
+  setValidationError: (msg: string | null) => void;
   setIsConfirmOpen: (open: boolean) => void;
   onSubmitConfirm: () => void;
+  handleSubmitClick: () => void;
 
   onRefresh: () => void;
   onLoadMore: () => void;
@@ -71,6 +76,9 @@ export function useAttendanceAdjustment(): UseAttendanceAdjustmentReturn {
   const [timeTo, setTimeTo]         = useState('17:30');
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [clockTarget, setClockTarget] = useState<'from' | 'to' | null>(null);
+
+  const [hasCommuteRecord, setHasCommuteRecord] = useState<boolean | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // 스크롤 및 페이징 상태
   const [page, setPage] = useState(1);
@@ -92,29 +100,85 @@ export function useAttendanceAdjustment(): UseAttendanceAdjustmentReturn {
 
       setAttachedFiles((prev) => [...prev, { name, base64, sizeKb }]);
     };
+
+    (window as any).updateDailyTripHistory = (jsonString: string) => {
+      try {
+        const parsed = JSON.parse(jsonString);
+        const { attendance } = parsed;
+        if (attendance && attendance.checkIn && attendance.checkIn !== '--:--') {
+          setHasCommuteRecord(true);
+          setTimeFrom(attendance.checkIn);
+          if (attendance.checkOut && attendance.checkOut !== '--:--') {
+            setTimeTo(attendance.checkOut);
+          } else {
+            setTimeTo(attendance.checkIn);
+          }
+        } else {
+          setHasCommuteRecord(false);
+          setTimeFrom('08:30');
+          setTimeTo('17:30');
+        }
+      } catch (e) {
+        console.error('Failed to parse daily trip history for adjustment JSON', e);
+        setHasCommuteRecord(false);
+      }
+    };
+
+    (window as any).updateAttendanceAdjustments = (jsonString: string) => {
+      try {
+        const parsed = JSON.parse(jsonString);
+        const { adjustments: fetchedList, hasMore: newHasMore, offset } = parsed;
+        if (offset === 0) {
+          setAdjustments(fetchedList);
+        } else {
+          setAdjustments((prev) => [...prev, ...fetchedList]);
+        }
+        setHasMore(newHasMore);
+      } catch (e) {
+        console.error('Failed to parse attendance adjustments JSON', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     return () => {
       delete (window as any).onImageAttached;
+      delete (window as any).updateDailyTripHistory;
+      delete (window as any).updateAttendanceAdjustments;
     };
   }, []);
 
-  // 15개 더미 데이터 페이징 흉내
+  const handleWorkDateChange = (d: string) => {
+    setWorkDate(d);
+    setHasCommuteRecord(null);
+    if ((window as any).FlutterBridge) {
+      (window as any).FlutterBridge.postMessage(JSON.stringify({
+        action: 'requestDailyTripHistory',
+        payload: { date: d }
+      }));
+    } else {
+      // 웹 임시 테스트
+      setHasCommuteRecord(false);
+    }
+  };
+
   const loadData = useCallback(async (pageNum: number, isRefresh = false) => {
     setLoading(true);
-    // 가짜 네트워크 딜레이
-    await new Promise(r => setTimeout(r, 600)); 
-
     const limit = 5;
     const offset = (pageNum - 1) * limit;
-    const nextData: AdjustmentRecord[] = [];
 
-    if (isRefresh) {
-      setAdjustments(nextData);
+    if ((window as any).FlutterBridge) {
+      (window as any).FlutterBridge.postMessage(JSON.stringify({
+        action: 'requestAttendanceAdjustments',
+        payload: { limit, offset }
+      }));
     } else {
-      setAdjustments(prev => [...prev, ...nextData]);
+      setTimeout(() => {
+        if (isRefresh) setAdjustments([]);
+        setHasMore(false);
+        setLoading(false);
+      }, 600);
     }
-
-    setHasMore(false);
-    setLoading(false);
   }, []);
 
   // 탭이 바뀔 때 결재현황이면 첫 페이지 로드
@@ -183,9 +247,51 @@ export function useAttendanceAdjustment(): UseAttendanceAdjustmentReturn {
   // 모달 제어
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
+  const handleSubmitClick = () => {
+    if (!workDate) {
+      setValidationError('근무일자를 먼저 선택해주세요.');
+      return;
+    }
+    if (hasCommuteRecord === false) {
+      setValidationError('해당일에 출/퇴근 기록이 존재하지 않아 근태조정을 신청할 수 없습니다. (시간 변경 불가)');
+      return;
+    }
+    if (!timeFrom || !timeTo) {
+      setValidationError('조정 근무시간을 입력해주세요.');
+      return;
+    }
+    if (attachedFiles.length === 0) {
+      setValidationError('변경될 출/퇴근 시간에 대한 증거자료를 첨부해주세요.');
+      return;
+    }
+    setIsConfirmOpen(true);
+  };
+
   const onSubmitConfirm = () => {
     setIsConfirmOpen(false);
-    // 실제 API 연동은 이곳에 추가 (현재는 다이얼로그 닫기만 수행)
+    
+    if ((window as any).FlutterBridge) {
+      (window as any).FlutterBridge.postMessage(JSON.stringify({
+        action: 'createAttendanceAdjustment',
+        payload: {
+          workDate,
+          timeFrom,
+          timeTo,
+        }
+      }));
+      
+      setTab('approval');
+      setPage(1);
+      loadData(1, true);
+      
+      setWorkDate('');
+      setTimeFrom('08:30');
+      setTimeTo('17:30');
+      setAttachedFiles([]);
+      setHasCommuteRecord(null);
+    } else {
+      alert("웹 디버그: 등록 성공 (FlutterBridge 없음)");
+    }
   };
 
   return {
@@ -204,15 +310,21 @@ export function useAttendanceAdjustment(): UseAttendanceAdjustmentReturn {
     scrollAreaRef,
     isConfirmOpen,
 
+    hasCommuteRecord,
+    validationError,
+
     onTabChange:        setTab,
-    onWorkDateChange:   setWorkDate,
+    onWorkDateChange:   handleWorkDateChange,
     onTimeFromChange:   setTimeFrom,
     onTimeToChange:     setTimeTo,
     onRemoveFile,
     onRequestAttachment,
     onClockTargetChange: setClockTarget,
+    
+    setValidationError,
     setIsConfirmOpen,
     onSubmitConfirm,
+    handleSubmitClick,
     
     onRefresh,
     onLoadMore,

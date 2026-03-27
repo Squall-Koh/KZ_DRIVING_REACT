@@ -28,6 +28,10 @@ export const openDevMenu = () => {
   sendNativeMessage('OPEN_DEV_MENU');
 };
 
+export const resetBgService = () => {
+  sendNativeMessage('RESET_BG_SERVICE');
+};
+
 export const requestBleScan = () => {
   sendNativeMessage('REQUEST_BLE_SCAN');
 };

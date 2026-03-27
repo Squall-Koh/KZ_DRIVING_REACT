@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { openDevMenu } from '../bridge/nativeInterface';
+import { openDevMenu, resetBgService } from '../bridge/nativeInterface';
 import { ScanLine, Bell, Menu, Megaphone, ArrowLeft, Home, Map, Clock, DollarSign, Wrench, Bluetooth } from 'lucide-react';
 import type { DrivingStateContext } from '../features/dashboard/useOperationDashboard';
 
@@ -36,6 +36,29 @@ export function MainLayout() {
       openDevMenu();
     }
   }, [tapCount]);
+
+  // User Name 5x Taps to Reset BG Service
+  const [userNameTapCount, setUserNameTapCount] = useState(0);
+  const userNameTapTimerRef = useRef<number | null>(null);
+
+  const handleUserNameTap = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setUserNameTapCount((prev) => prev + 1);
+
+    if (userNameTapTimerRef.current) {
+      clearTimeout(userNameTapTimerRef.current);
+    }
+    userNameTapTimerRef.current = window.setTimeout(() => {
+      setUserNameTapCount(0);
+    }, 1500);
+  };
+
+  React.useEffect(() => {
+    if (userNameTapCount === 5) {
+      console.log('Secret 5 taps on user name detected. Resetting Background Service...');
+      resetBgService();
+    }
+  }, [userNameTapCount]);
 
   // 2. Real Global State Sync from Native
   const [drivingState, setDrivingState] = useState<0 | 1 | 2>(1);
@@ -129,7 +152,7 @@ export function MainLayout() {
       <div style={styles.header}>
         <div style={styles.headerLeft} onClick={handleLogoTap}>
           <img src={IconKz} alt="KZ" style={{ width: 'auto', height: 'auto', objectFit: 'contain', borderRadius: 8 }} />
-          <span style={styles.userName}>{syncPayload?.userName || '사용자 정보 확인 중...'}</span>
+          <span style={styles.userName} onClick={handleUserNameTap}>{syncPayload?.userName || '사용자 정보 확인 중...'}</span>
         </div>
         <div style={styles.headerRight}>
           <button style={styles.iconBtn} onClick={() => console.log('Barcode/Scan clicked')}>

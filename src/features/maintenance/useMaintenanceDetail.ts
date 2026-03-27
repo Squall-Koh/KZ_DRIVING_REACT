@@ -206,12 +206,15 @@ export function useMaintenanceDetail(): UseMaintenanceDetailReturn {
 
     const parsedOdometer = parseInt(finalMileage.replace(/[^0-9]/g, ''), 10);
 
+    // "2026.03.27" 포맷 -> "2026-03-27" ISO 포맷으로 변환 (DB 날짜 비교 일관성)
+    const isoDate = mainDate ? mainDate.replace(/\./g, '-') : new Date().toISOString().split('T')[0];
+
     const payload = {
       action: 'createMaintenanceHistory',
       driverId: 'driver_tester', // Default driver
-      vehicleId: location.state?.vehicle?.id ?? 1,
+      vehicleId: Number(location.state?.vehicle?.id ?? 1),
       itemId: item.id,
-      maintenanceDate: mainDate,
+      maintenanceDate: isoDate,
       odometerKm: parsedOdometer,
       cost: attachedFile ? 130000 : 0,
       shopName: attachedFile ? '그랑서울 카센터' : '',

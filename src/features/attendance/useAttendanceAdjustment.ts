@@ -61,6 +61,10 @@ export interface UseAttendanceAdjustmentReturn {
   onSubmitConfirm: () => void;
   handleSubmitClick: () => void;
 
+  onCancelAdjustment: (id: number) => void;
+  onEditAdjustment: (id: number) => void;
+  editId: number | null;
+
   onRefresh: () => void;
   onLoadMore: () => void;
   onBack: () => void;
@@ -79,6 +83,7 @@ export function useAttendanceAdjustment(): UseAttendanceAdjustmentReturn {
 
   const [hasCommuteRecord, setHasCommuteRecord] = useState<boolean | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [editId, setEditId] = useState<number | null>(null);
 
   // 스크롤 및 페이징 상태
   const [page, setPage] = useState(1);
@@ -101,9 +106,9 @@ export function useAttendanceAdjustment(): UseAttendanceAdjustmentReturn {
       setAttachedFiles((prev) => [...prev, { name, base64, sizeKb }]);
     };
 
-    (window as any).updateDailyTripHistory = (jsonString: string) => {
+    (window as any).updateDailyTripHistory = (payload: any) => {
       try {
-        const parsed = JSON.parse(jsonString);
+        const parsed = typeof payload === 'string' ? JSON.parse(payload) : payload;
         const { attendance } = parsed;
         if (attendance && attendance.checkIn && attendance.checkIn !== '--:--') {
           setHasCommuteRecord(true);
@@ -124,9 +129,9 @@ export function useAttendanceAdjustment(): UseAttendanceAdjustmentReturn {
       }
     };
 
-    (window as any).updateAttendanceAdjustments = (jsonString: string) => {
+    (window as any).updateAttendanceAdjustments = (payload: any) => {
       try {
-        const parsed = JSON.parse(jsonString);
+        const parsed = typeof payload === 'string' ? JSON.parse(payload) : payload;
         const { adjustments: fetchedList, hasMore: newHasMore, offset } = parsed;
         if (offset === 0) {
           setAdjustments(fetchedList);
@@ -141,10 +146,19 @@ export function useAttendanceAdjustment(): UseAttendanceAdjustmentReturn {
       }
     };
 
+    (window as any).onAttendanceAdjustmentDuplicateCheck = (isDuplicate: boolean) => {
+      if (isDuplicate) {
+        setValidationError('해당 날짜에 이미 등록된 근태조정 신청이 있습니다.');
+      } else {
+        setIsConfirmOpen(true);
+      }
+    };
+
     return () => {
       delete (window as any).onImageAttached;
       delete (window as any).updateDailyTripHistory;
       delete (window as any).updateAttendanceAdjustments;
+      delete (window as any).onAttendanceAdjustmentDuplicateCheck;
     };
   }, []);
 
@@ -244,6 +258,33 @@ export function useAttendanceAdjustment(): UseAttendanceAdjustmentReturn {
     setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const onCancelAdjustment = (id: number) => {
+    if ((window as any).FlutterBridge) {
+      (window as any).FlutterBridge.postMessage(JSON.stringify({
+        action: 'cancelAttendanceAdjustment',
+        payload: { id }
+      }));
+      // 결재현황 리스트 reload
+      setPage(1);
+      loadData(1, true);
+    } else {
+      alert(`웹 디버그: 취소 처리됨 ID ${id}`);
+    }
+  };
+
+  const onEditAdjustment = (id: number) => {
+    const item = adjustments.find(a => a.id === id);
+    if (!item) return;
+
+    setEditId(id);
+    setWorkDate(item.workDate);
+    setTimeFrom(item.timeFrom);
+    setTimeTo(item.timeTo);
+    setAttachedFiles([]);
+    setHasCommuteRecord(true); // 수정의 경우 이미 통과했다고 가정
+    setTab('adjust');
+  };
+
   // 모달 제어
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
@@ -264,20 +305,29 @@ export function useAttendanceAdjustment(): UseAttendanceAdjustmentReturn {
       setValidationError('변경될 출/퇴근 시간에 대한 증거자료를 첨부해주세요.');
       return;
     }
-    setIsConfirmOpen(true);
+
+    if ((window as any).FlutterBridge) {
+      (window as any).FlutterBridge.postMessage(JSON.stringify({
+        action: 'checkAttendanceAdjustmentDuplicate',
+        payload: { workDate, editId }
+      }));
+    } else {
+      setIsConfirmOpen(true); // 웹 디버그용
+    }
   };
 
   const onSubmitConfirm = () => {
     setIsConfirmOpen(false);
     
     if ((window as any).FlutterBridge) {
+      const actionRef = editId ? 'updateAttendanceAdjustment' : 'createAttendanceAdjustment';
+      const payloadRef = editId 
+        ? { id: editId, workDate, timeFrom, timeTo }
+        : { workDate, timeFrom, timeTo };
+
       (window as any).FlutterBridge.postMessage(JSON.stringify({
-        action: 'createAttendanceAdjustment',
-        payload: {
-          workDate,
-          timeFrom,
-          timeTo,
-        }
+        action: actionRef,
+        payload: payloadRef
       }));
       
       setTab('approval');
@@ -289,8 +339,9 @@ export function useAttendanceAdjustment(): UseAttendanceAdjustmentReturn {
       setTimeTo('17:30');
       setAttachedFiles([]);
       setHasCommuteRecord(null);
+      setEditId(null);
     } else {
-      alert("웹 디버그: 등록 성공 (FlutterBridge 없음)");
+      alert(`웹 디버그: ${editId ? '수정' : '등록'} 성공 (FlutterBridge 없음)`);
     }
   };
 
@@ -320,6 +371,9 @@ export function useAttendanceAdjustment(): UseAttendanceAdjustmentReturn {
     onRemoveFile,
     onRequestAttachment,
     onClockTargetChange: setClockTarget,
+    onCancelAdjustment,
+    onEditAdjustment,
+    editId,
     
     setValidationError,
     setIsConfirmOpen,

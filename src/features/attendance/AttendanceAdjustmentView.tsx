@@ -149,7 +149,7 @@ function AdjustTab({
 // ─── 결재현황 탭 ─────────────────────────────────────────────
 function ApprovalTab({
   adjustments, loading, hasMore, observerRef, 
-  onRefresh, isRefreshing
+  onRefresh, isRefreshing, onCancelItem, onEditItem
 }: {
   adjustments: AdjustmentRecord[];
   loading: boolean;
@@ -157,6 +157,8 @@ function ApprovalTab({
   observerRef: React.RefObject<HTMLDivElement | null>;
   onRefresh: () => void;
   isRefreshing: boolean;
+  onCancelItem: (id: number) => void;
+  onEditItem: (id: number) => void;
 }) {
   const [dialogConfig, setDialogConfig] = useState<{type: 'cancel' | 'edit'; id: number} | null>(null);
   const [isFabVisible, setIsFabVisible] = useState(false);
@@ -248,7 +250,11 @@ function ApprovalTab({
             <div style={ts.modalMessage}>해당 내용을 {dialogConfig.type === 'cancel' ? '취소' : '수정'}하시겠습니까?</div>
             <div style={ts.modalActionsList}>
               <button style={ts.modalCancelBtn} onClick={() => setDialogConfig(null)}>닫기</button>
-              <button style={ts.modalConfirmBtn} onClick={() => setDialogConfig(null)}>확인</button>
+              <button style={ts.modalConfirmBtn} onClick={() => {
+                if (dialogConfig.type === 'cancel') onCancelItem(dialogConfig.id);
+                else onEditItem(dialogConfig.id);
+                setDialogConfig(null);
+              }}>확인</button>
             </div>
           </div>
         </div>
@@ -306,6 +312,8 @@ export function AttendanceAdjustmentView(props: UseAttendanceAdjustmentReturn) {
             observerRef={props.observerRef}
             onRefresh={props.onRefresh}
             isRefreshing={props.loading && props.adjustments.length > 0}
+            onCancelItem={props.onCancelAdjustment}
+            onEditItem={props.onEditAdjustment}
           />
         )}
       </div>

@@ -95,10 +95,10 @@ export function MainLayout() {
       }
     };
     window.addEventListener('message', handleNativeMessage);
-    
+
     // 컴포넌트 마운트 시, 혹은 뒤로가기로 다시 그려질 때 Native에 현재 상태 재요청
     import('../bridge/nativeInterface').then(m => m.requestSync());
-    
+
     return () => window.removeEventListener('message', handleNativeMessage);
   }, []);
 
@@ -113,7 +113,7 @@ export function MainLayout() {
         currentAlive = (timeDiff < 6000 && heartbeat.isScanning);
       }
       setIsAlive(currentAlive);
-      
+
       if (currentAlive) {
         setBlink(b => !b);
       } else {
@@ -171,7 +171,7 @@ export function MainLayout() {
       <div style={{ ...styles.statusBar, borderColor: config.color }} onClick={cycleState}>
         <Megaphone size={18} fill={config.color} color={config.color} style={{ marginRight: 6 }} />
         <span style={{ ...styles.statusTitle, color: config.color }}>{config.title}</span>
-        
+
         {/* Tiny Health Indicator */}
         <div style={{
           width: 6, height: 6, borderRadius: '50%', marginLeft: 6,
@@ -183,7 +183,7 @@ export function MainLayout() {
 
         <div style={styles.divider} />
         <span style={{ ...styles.statusDesc, flex: 1 }}>{config.desc}</span>
-        
+
         {syncPayload?.bleConnectedMac && (
           <div style={{ display: 'flex', alignItems: 'center', marginLeft: 8, gap: 4 }}>
             <Bluetooth size={14} color="#2B5CFF" strokeWidth={2} />

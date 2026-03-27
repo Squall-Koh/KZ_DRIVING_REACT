@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 // ─── 타입 정의 ───────────────────────────────────────────────
 export interface MaintenanceItem {
-  id: string;
+  id: number;
   name: string;
   elapsedKm: number | null;
   intervalKm: number;
@@ -18,15 +18,15 @@ export interface Vehicle {
 }
 
 export interface MaintenanceHistory {
-  id: string;
+  id: number;
   vehicleId: string;
-  itemId: string;
-  lastKm: number; // 최근 정비 시점의 누적 주행거리
+  itemId: number;
+  lastKm: number;
   lastDate: string;
 }
 
 export interface MaintenanceStatus {
-  itemId: string;
+  itemId: number;
   lastDate: string;
   lastKm: number;
 }
@@ -45,14 +45,14 @@ export function barWidth(elapsed: number | null, interval: number): number {
   return Math.min((elapsed / interval) * 100, 100);
 }
 
-// 2. 정비 아이템 마스터 테이블
+// 2. 정비 아이템 마스터 테이블 (id는 DB INTEGER AUTOINCREMENT: 1~6)
 export const MAINTENANCE_MASTER = [
-  { id: 'engine_oil',   name: '엔진오일',          intervalKm: 10000 },
-  { id: 'air_filter',   name: '공기 / 에어컨 필터', intervalKm: 10000 },
-  { id: 'battery',      name: '배터리',             intervalKm: 40000 },
-  { id: 'trans_oil',    name: '변속기 오일',         intervalKm: 40000 },
-  { id: 'tire',         name: '타이어',             intervalKm: 50000 },
-  { id: 'spark_plug',   name: '점화플러그',          intervalKm: 60000 },
+  { id: 1, name: '엔진오일',          intervalKm: 10000 },
+  { id: 2, name: '공기 / 에어컨 필터', intervalKm: 10000 },
+  { id: 3, name: '배터리',             intervalKm: 40000 },
+  { id: 4, name: '변속기 오일',         intervalKm: 40000 },
+  { id: 5, name: '타이어',             intervalKm: 50000 },
+  { id: 6, name: '점화플러그',          intervalKm: 60000 },
 ];
 
 // ─── 반환 타입 ───────────────────────────────────────────────
@@ -121,7 +121,7 @@ export function useMaintenance(): UseMaintenanceReturn {
   // 선택된 차량에 해당하는 정비 항목 목록 계산 로직
   const items: MaintenanceItem[] = selectedVehicleId 
     ? MAINTENANCE_MASTER.map((master) => {
-        const historyRow = maintenanceStatus.find(s => s.itemId === master.id);
+        const historyRow = maintenanceStatus.find(s => Number(s.itemId) === master.id);
         let elapsedKm: number | null = null;
         let lastDate: string | undefined = undefined;
 

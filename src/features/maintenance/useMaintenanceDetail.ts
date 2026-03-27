@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 // ─── 타입 정의 ───────────────────────────────────────────────
 export interface MaintenanceItem {
-  id: string;
+  id: number;
   name: string;
   elapsedKm: number;
   intervalKm: number;
@@ -36,27 +36,17 @@ export interface HistoryRecord {
 export type TabType = 'register' | 'history';
 
 // ─── 더미 데이터 ─────────────────────────────────────────────
-const DUMMY_RECEIPTS: Record<string, ReceiptRecord[]> = {
-  engine_oil: [
+// 영수증 더미 데이터 (키: maintenance_items.id INTEGER 1~6)
+const DUMMY_RECEIPTS: Record<number, ReceiptRecord[]> = {
+  1: [ // 엔진오일
     { id: 1, date: '2026.01.30', shopName: '그랑서울 카센터', amount: 130000, address: '서울특별시 종로구 종로 33' },
   ],
-  air_filter: [
+  2: [ // 공기/에어컨 필터
     { id: 1, date: '2025.11.10', shopName: '강남 자동차서비스', amount: 85000, address: '서울특별시 강남구 역삼로 12' },
   ],
 };
 
-const DUMMY_HISTORY: Record<string, HistoryRecord[]> = {
-  engine_oil: [
-    { id: 1, date: '2026.03.01', km: 42800, description: '합성 엔진오일 교환 및 코팅제 주입', manager: '김철수' },
-    { id: 2, date: '2025.12.13', km: 33200, description: '순정 엔진오일 세트 교환', manager: '홍길동' },
-    { id: 3, date: '2025.08.01', km: 24000, description: '엔진오일 교환 및 에어필터 점검', manager: '이영희' },
-    { id: 4, date: '2025.03.15', km: 15500, description: '순정 엔진오일 교환', manager: '박지성' },
-    { id: 5, date: '2024.11.02', km:  8000, description: '성능점검 및 최초 엔진오일 교환', manager: '김철수' },
-  ],
-  air_filter: [
-    { id: 1, date: '2025.11.10', km: 11500, description: '에어컨 필터 교환', manager: '김민준' },
-  ],
-};
+
 
 // ─── 반환 타입 ───────────────────────────────────────────────
 export interface UseMaintenanceDetailReturn {
@@ -67,6 +57,7 @@ export interface UseMaintenanceDetailReturn {
   memo: string;
   receipts: ReceiptRecord[];
   historyRecords: HistoryRecord[];
+  isHistoryLoading: boolean;
   attachedFile: AttachedFile | null;
   onTabChange: (tab: TabType) => void;
   onDateChange: (date: string) => void;
@@ -96,7 +87,7 @@ export function useMaintenanceDetail(): UseMaintenanceDetailReturn {
   const location = useLocation();
 
   const item: MaintenanceItem = (location.state as any)?.item ?? {
-    id: 'engine_oil', name: '엔진오일', elapsedKm: 2000, intervalKm: 10000,
+    id: 1, name: '엔진오일', elapsedKm: 2000, intervalKm: 10000,
   };
 
   // Vehicle state passed from previous screen
@@ -117,9 +108,12 @@ export function useMaintenanceDetail(): UseMaintenanceDetailReturn {
   const [isSubmitConfirmOpen, setIsSubmitConfirmOpen] = useState(false);
 
   const [receipts] = useState<ReceiptRecord[]>(
-    DUMMY_RECEIPTS[item.id] ?? DUMMY_RECEIPTS['engine_oil']
+    DUMMY_RECEIPTS[item.id] ?? DUMMY_RECEIPTS[1] ?? []
   );
-  const historyRecords = DUMMY_HISTORY[item.id] ?? DUMMY_HISTORY['engine_oil'];
+
+  // ─── DB에서 불러오는 정비 이력 ──────────────────────────────
+  const [historyRecords, setHistoryRecords] = useState<HistoryRecord[]>([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
 
@@ -132,6 +126,43 @@ export function useMaintenanceDetail(): UseMaintenanceDetailReturn {
   const onMemoChange = (text: string) => setMemo(text);
   const onBack       = ()           => navigate(-1);
   const closeAlert   = () => setAlertInfo(prev => ({ ...prev, isOpen: false }));
+
+  // ─── 정비내역 데이터 요청 ────────────────────────────────────
+  const requestHistory = () => {
+    if (!(window as any).FlutterBridge) return;
+    setIsHistoryLoading(true);
+    (window as any).FlutterBridge.postMessage(JSON.stringify({
+      action: 'requestMaintenanceHistory',
+      vehicleId: Number(vehicle?.id ?? 1),
+      itemId: item.id,
+    }));
+  };
+
+  // 마운트 시 히스토리 요청
+  useEffect(() => {
+    requestHistory();
+  }, []);
+
+  // 히스토리 탭으로 전환 시 새로고침
+  useEffect(() => {
+    if (tab === 'history') requestHistory();
+  }, [tab]);
+
+  // Flutter → Web: 정비 이력 응답 콜백
+  useEffect(() => {
+    (window as any).updateMaintenanceHistory = (records: any[]) => {
+      setIsHistoryLoading(false);
+      const parsed: HistoryRecord[] = records.map((r, i) => ({
+        id: i + 1,
+        date: r.date ?? '',
+        km: typeof r.odometerKm === 'number' ? r.odometerKm : Number(r.odometerKm ?? 0),
+        description: r.memo ?? '',
+        manager: r.driverName || '-',
+      }));
+      setHistoryRecords(parsed);
+    };
+    return () => { delete (window as any).updateMaintenanceHistory; };
+  }, []);
 
   // 네이티브 앱에서 발생한 에러 알림을 브릿징
   useEffect(() => {
@@ -211,7 +242,7 @@ export function useMaintenanceDetail(): UseMaintenanceDetailReturn {
 
     const payload = {
       action: 'createMaintenanceHistory',
-      driverId: 'driver_tester', // Default driver
+      driverId: 1, // 고승주(admin), drivers.id INTEGER 기준
       vehicleId: Number(location.state?.vehicle?.id ?? 1),
       itemId: item.id,
       maintenanceDate: isoDate,
@@ -243,6 +274,7 @@ export function useMaintenanceDetail(): UseMaintenanceDetailReturn {
     memo,
     receipts,
     historyRecords,
+    isHistoryLoading,
     attachedFile,
     onTabChange,
     onDateChange,

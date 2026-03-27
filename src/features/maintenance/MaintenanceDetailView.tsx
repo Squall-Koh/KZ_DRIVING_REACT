@@ -210,12 +210,19 @@ function RegisterTab({
 }
 
 // ─── 정비내역 탭 ─────────────────────────────────────────────
-function HistoryTab({ records }: { records: HistoryRecord[] }) {
+function HistoryTab({ records, isLoading }: { records: HistoryRecord[]; isLoading: boolean }) {
+  if (isLoading) {
+    return (
+      <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af', fontSize: 14 }}>
+        이력을 불러오는 중...
+      </div>
+    );
+  }
   return (
     <div style={ts.historyList}>
       {records.length === 0 && (
         <div style={{ textAlign: 'center', color: '#aaa', padding: 40, fontSize: 14 }}>
-          정비 내역이 없습니다.
+          이 차량의 정비 이력이 없습니다.
         </div>
       )}
       {records.map((r) => (
@@ -241,6 +248,7 @@ export function MaintenanceDetailView({
   memo,
   receipts,
   historyRecords,
+  isHistoryLoading,
   attachedFile,
   onTabChange,
   onDateChange,
@@ -320,7 +328,7 @@ export function MaintenanceDetailView({
             onRemoveFile={onRemoveFile}
           />
         ) : (
-          <HistoryTab records={historyRecords} />
+          <HistoryTab records={historyRecords} isLoading={isHistoryLoading} />
         )}
       </div>
     </div>

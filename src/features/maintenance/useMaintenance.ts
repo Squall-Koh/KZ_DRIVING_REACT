@@ -108,16 +108,17 @@ export function useMaintenance(): UseMaintenanceReturn {
   };
 
 
+  const selectedVehicle = vehicles.find(v => String(v.id) === String(selectedVehicleId));
+
   const onItemClick = (item: MaintenanceItem) => {
-    navigate('/maintenance/detail', { state: { item } });
+    navigate('/maintenance/detail', { state: { item, vehicle: selectedVehicle } });
   };
 
   const onRegisterClick = (item: MaintenanceItem) => {
-    navigate('/maintenance/detail', { state: { item } });
+    navigate('/maintenance/detail', { state: { item, vehicle: selectedVehicle } });
   };
 
   // 선택된 차량에 해당하는 정비 항목 목록 계산 로직
-  const selectedVehicle = vehicles.find(v => String(v.id) === String(selectedVehicleId));
   const items: MaintenanceItem[] = selectedVehicleId 
     ? MAINTENANCE_MASTER.map((master) => {
         const historyRow = maintenanceStatus.find(s => s.itemId === master.id);

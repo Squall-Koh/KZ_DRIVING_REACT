@@ -7,18 +7,52 @@ import type {
   HistoryRecord,
   UseMaintenanceDetailReturn,
 } from './useMaintenanceDetail';
-import { ReceiptRegisterPopup } from './ReceiptRegisterPopup';
 
 function RegisterTab({
   mainDate,
+  finalMileage,
+  memo,
   receipts,
+  attachedFile,
   onDateChange,
+  onFinalMileageChange,
+  onMemoChange,
+  alertInfo,
+  closeAlert,
   onAddReceiptClick,
+  isReceiptConfirmOpen,
+  setIsReceiptConfirmOpen,
+  onConfirmAddReceipt,
+  onSubmitRegistrationClick,
+  isSubmitConfirmOpen,
+  setIsSubmitConfirmOpen,
+  onConfirmSubmitRegistration,
+  onRemoveFile,
 }: {
   mainDate: string;
+  finalMileage: string;
+  memo: string;
   receipts: ReceiptRecord[];
+  attachedFile: { name: string; base64: string } | null;
   onDateChange: (date: string) => void;
+  onFinalMileageChange: (mileage: string) => void;
+  onMemoChange: (memo: string) => void;
+  
+  alertInfo: { isOpen: boolean; title: string; message: string };
+  closeAlert: () => void;
+
   onAddReceiptClick: () => void;
+  
+  isReceiptConfirmOpen: boolean;
+  setIsReceiptConfirmOpen: (open: boolean) => void;
+  onConfirmAddReceipt: () => void;
+
+  onSubmitRegistrationClick: () => void;
+  isSubmitConfirmOpen: boolean;
+  setIsSubmitConfirmOpen: (open: boolean) => void;
+  onConfirmSubmitRegistration: () => void;
+
+  onRemoveFile: () => void;
 }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const displayDate = mainDate ? mainDate : '';
@@ -45,8 +79,49 @@ function RegisterTab({
         </div>
 
         <div style={ts.fieldGroup}>
+          <label style={ts.label}>최종 주행거리 <span style={{ color: '#ef4444' }}>*</span></label>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <input
+              style={{ ...ts.input, border: '1px solid #e5e7eb', borderRadius: 10, padding: '10px 12px', paddingRight: 32, textAlign: 'right', width: '100%', boxSizing: 'border-box' }}
+              value={finalMileage}
+              onChange={(e) => onFinalMileageChange(e.target.value)}
+              placeholder="0"
+            />
+            <span style={{ position: 'absolute', right: 12, color: '#111', fontSize: 14, fontWeight: 500 }}>km</span>
+          </div>
+        </div>
+
+        <div style={ts.fieldGroup}>
+          <label style={ts.label}>정비 내용 <span style={{ color: '#ef4444' }}>*</span></label>
+          <textarea
+            style={{ ...ts.input, border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px', resize: 'none', height: 80, boxSizing: 'border-box' }}
+            placeholder="정비 내역을 상세히 입력해주세요. (예: 엔진오일 교환 및 필터 교체)"
+            value={memo}
+            onChange={(e) => onMemoChange(e.target.value)}
+          />
+        </div>
+
+        <div style={ts.fieldGroup}>
           <label style={ts.label}>경비내역</label>
           <button style={ts.addBtn} onClick={onAddReceiptClick}>정비 영수증 추가 +</button>
+          {attachedFile && (() => {
+            const sizeBytes = Math.floor(attachedFile.base64.length * 0.75);
+            let adjusted = sizeBytes;
+            if (attachedFile.base64.endsWith('==')) adjusted -= 2;
+            else if (attachedFile.base64.endsWith('=')) adjusted -= 1;
+            const sizeKb = Math.floor(adjusted / 1024);
+            return (
+              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', backgroundColor: '#eff6ff', borderRadius: 6, gap: 8 }}>
+                  <img src={attachedFile.base64} alt="thumb" style={{ width: 36, height: 36, borderRadius: 4, objectFit: 'cover', flexShrink: 0, border: '1px solid #d1d5db' }} />
+                  <span style={{ flex: 1, fontSize: 13, color: '#4f7cff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {attachedFile.name} <span style={{ color: '#888' }}>({sizeKb}KB)</span>
+                  </span>
+                  <button style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 14, cursor: 'pointer', padding: '0 4px' }} onClick={onRemoveFile}>✕</button>
+                </div>
+              </div>
+            );
+          })()}
           <p style={ts.hint}>* 차량 정비를 위한 경비가 발생한 경우 경비를 등록해주세요.</p>
         </div>
       </div>
@@ -62,26 +137,74 @@ function RegisterTab({
         />
       )}
 
-      <div style={ts.receiptScroll}>
-        {receipts.map((r) => (
-          <div key={r.id} style={ts.receiptCard}>
-            <div style={ts.receiptTop}>
-              <span style={ts.receiptDate}>{r.date}</span>
-              <div style={{ display: 'flex', gap: 12 }}>
-                <span style={ts.editBtn}>수정</span>
-                <span style={ts.deleteBtn}>삭제</span>
+      {attachedFile && (
+        <div style={ts.receiptScroll}>
+          {receipts.map((r) => (
+            <div key={r.id} style={ts.receiptCard}>
+              <div style={ts.receiptTop}>
+                <span style={ts.receiptDate}>{displayDate}</span>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <span style={ts.editBtn}>수정</span>
+                  <span style={ts.deleteBtn}>삭제</span>
+                </div>
               </div>
+              <div style={ts.receiptShop}>{r.shopName}</div>
+              <div style={ts.receiptInfo}>거래금액 : {r.amount.toLocaleString()}원</div>
+              <div style={ts.receiptInfo}>가맹점주소 : {r.address}</div>
             </div>
-            <div style={ts.receiptShop}>{r.shopName}</div>
-            <div style={ts.receiptInfo}>거래금액 : {r.amount.toLocaleString()}원</div>
-            <div style={ts.receiptInfo}>가맹점주소 : {r.address}</div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       <div style={ts.submitWrap}>
-        <button style={ts.submitBtn}>등록완료</button>
+        <button style={ts.submitBtn} onClick={onSubmitRegistrationClick}>등록완료</button>
       </div>
+
+      {/* 범용 알림 팝업 (버튼 1개) */}
+      {alertInfo.isOpen && (
+        <div style={ts.modalOverlay}>
+          <div style={ts.modalContent}>
+            <div style={ts.modalTitle}>{alertInfo.title}</div>
+            <div style={ts.modalMessage}>{alertInfo.message}</div>
+            <div style={ts.modalActionsList}>
+              <button style={ts.modalConfirmBtn} onClick={closeAlert}>확인</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 영수증 사진 첨부 확인 팝업 (버튼 2개) */}
+      {isReceiptConfirmOpen && (
+        <div style={ts.modalOverlay}>
+          <div style={ts.modalContent}>
+            <div style={ts.modalTitle}>영수증 사진 첨부</div>
+            <div style={ts.modalMessage}>
+              영수증 사진을 첨부하시겠습니까?
+            </div>
+            <div style={ts.modalActionsList}>
+              <button style={ts.modalCancelBtn} onClick={() => setIsReceiptConfirmOpen(false)}>취소</button>
+              <button style={ts.modalConfirmBtn} onClick={onConfirmAddReceipt}>확인</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 정비 등록 완료 확인 팝업 */}
+      {isSubmitConfirmOpen && (
+        <div style={ts.modalOverlay}>
+          <div style={ts.modalContent}>
+            <div style={ts.modalTitle}>정비 내역 등록</div>
+            <div style={ts.modalMessage}>
+              작성하신 내용으로 정비 내역을<br/>
+              등록하시겠습니까?
+            </div>
+            <div style={ts.modalActionsList}>
+              <button style={ts.modalCancelBtn} onClick={() => setIsSubmitConfirmOpen(false)}>취소</button>
+              <button style={ts.modalConfirmBtn} onClick={onConfirmSubmitRegistration}>확인</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -114,15 +237,30 @@ export function MaintenanceDetailView({
   item,
   tab,
   mainDate,
+  finalMileage,
+  memo,
   receipts,
   historyRecords,
-  isReceiptPopupOpen,
-  isProcessingImage,
+  attachedFile,
   onTabChange,
   onDateChange,
+  onFinalMileageChange,
+  onMemoChange,
+  
+  alertInfo,
+  closeAlert,
+
   onAddReceiptClick,
-  onCloseReceiptPopup,
-  onConfirmReceipt,
+  isReceiptConfirmOpen,
+  setIsReceiptConfirmOpen,
+  onConfirmAddReceipt,
+
+  onSubmitRegistrationClick,
+  isSubmitConfirmOpen,
+  setIsSubmitConfirmOpen,
+  onConfirmSubmitRegistration,
+
+  onRemoveFile,
   onBack,
 }: UseMaintenanceDetailReturn) {
   return (
@@ -162,31 +300,29 @@ export function MaintenanceDetailView({
         {tab === 'register' ? (
           <RegisterTab
             mainDate={mainDate}
+            finalMileage={finalMileage}
+            memo={memo}
             receipts={receipts}
+            attachedFile={attachedFile}
             onDateChange={onDateChange}
+            onFinalMileageChange={onFinalMileageChange}
+            onMemoChange={onMemoChange}
+            alertInfo={alertInfo}
+            closeAlert={closeAlert}
             onAddReceiptClick={onAddReceiptClick}
+            isReceiptConfirmOpen={isReceiptConfirmOpen}
+            setIsReceiptConfirmOpen={setIsReceiptConfirmOpen}
+            onConfirmAddReceipt={onConfirmAddReceipt}
+            onSubmitRegistrationClick={onSubmitRegistrationClick}
+            isSubmitConfirmOpen={isSubmitConfirmOpen}
+            setIsSubmitConfirmOpen={setIsSubmitConfirmOpen}
+            onConfirmSubmitRegistration={onConfirmSubmitRegistration}
+            onRemoveFile={onRemoveFile}
           />
         ) : (
           <HistoryTab records={historyRecords} />
         )}
       </div>
-
-      {/* 팝업 영역 */}
-      {isReceiptPopupOpen && (
-        <ReceiptRegisterPopup
-          initialData={{ date: mainDate }} // 기본 거래일자 세팅 가능
-          onClose={onCloseReceiptPopup}
-          onSubmit={onConfirmReceipt}
-        />
-      )}
-
-      {/* 이미지 처리 로딩 오버레이 */}
-      {isProcessingImage && (
-        <div style={ts.loadingOverlay}>
-          <div style={ts.loadingSpinner} />
-          <span style={ts.loadingText}>영수증 이미지를 분석 중입니다...</span>
-        </div>
-      )}
     </div>
   );
 }
@@ -285,4 +421,27 @@ const ts: Record<string, React.CSSProperties> = {
     animation: 'spin 1s linear infinite',
   },
   loadingText: { fontSize: 15, fontWeight: 600, color: '#fff' },
+
+  // ─── 팝업 모달 스타일 ───
+  modalOverlay: {
+    position: 'fixed' as const, top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 10000,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
+  },
+  modalContent: {
+    backgroundColor: '#fff', borderRadius: 16, width: '100%', maxWidth: 320,
+    padding: '24px 20px 20px', boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+    display: 'flex', flexDirection: 'column', textAlign: 'center' as const
+  },
+  modalTitle: { fontSize: 18, fontWeight: 700, color: '#111', marginBottom: 12 },
+  modalMessage: { fontSize: 15, color: '#555', lineHeight: 1.5, marginBottom: 24 },
+  modalActionsList: { display: 'flex', gap: 8 },
+  modalCancelBtn: {
+    flex: 1, padding: '12px 0', fontSize: 14, fontWeight: 600,
+    backgroundColor: '#f1f1f5', color: '#555', border: 'none', borderRadius: 10, cursor: 'pointer'
+  },
+  modalConfirmBtn: {
+    flex: 1, padding: '12px 0', fontSize: 14, fontWeight: 600,
+    backgroundColor: '#2b5cff', color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer'
+  }
 };

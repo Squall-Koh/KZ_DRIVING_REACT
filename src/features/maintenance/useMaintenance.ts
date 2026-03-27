@@ -5,14 +5,16 @@ import { useNavigate } from 'react-router-dom';
 export interface MaintenanceItem {
   id: string;
   name: string;
-  elapsedKm: number;
+  elapsedKm: number | null;
   intervalKm: number;
+  lastMaintenanceDate?: string;
 }
 
 export interface Vehicle {
   id: string;
   name: string; // 차량 모델명 (예: 벤츠 스프린터)
   plateNumber: string; // 번호판 (예: 154 후 5698)
+  finalDistance?: number;
 }
 
 export interface MaintenanceHistory {
@@ -23,15 +25,23 @@ export interface MaintenanceHistory {
   lastDate: string;
 }
 
+export interface MaintenanceStatus {
+  itemId: string;
+  lastDate: string;
+  lastKm: number;
+}
+
 // ─── 유틸 함수 ───────────────────────────────────────────────
-export function barColor(elapsed: number, interval: number): string {
+export function barColor(elapsed: number | null, interval: number): string {
+  if (elapsed === null) return '#e5e7eb';
   const pct = elapsed / interval;
   if (pct >= 1)    return '#ef4444';
   if (pct >= 0.75) return '#f59e0b';
   return '#22c55e';
 }
 
-export function barWidth(elapsed: number, interval: number): number {
+export function barWidth(elapsed: number | null, interval: number): number {
+  if (elapsed === null) return 0;
   return Math.min((elapsed / interval) * 100, 100);
 }
 
@@ -63,6 +73,7 @@ export function useMaintenance(): UseMaintenanceReturn {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [showVehicleMenu, setShowVehicleMenu] = useState(false);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>(''); // 아무 것도 선택되지 않은 상태
+  const [maintenanceStatus, setMaintenanceStatus] = useState<MaintenanceStatus[]>([]);
 
   useEffect(() => {
     const handleNativeMessage = (event: MessageEvent) => {
@@ -70,6 +81,8 @@ export function useMaintenance(): UseMaintenanceReturn {
         const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
         if (data.type === 'SYNC_VEHICLES' && Array.isArray(data.payload)) {
           setVehicles(data.payload);
+        } else if (data.type === 'SYNC_MAINTENANCE_STATUS' && Array.isArray(data.payload)) {
+          setMaintenanceStatus(data.payload);
         }
       } catch (e) {}
     };
@@ -78,6 +91,14 @@ export function useMaintenance(): UseMaintenanceReturn {
     import('../../bridge/nativeInterface').then(m => m.requestVehicles());
     return () => window.removeEventListener('message', handleNativeMessage);
   }, []);
+
+  useEffect(() => {
+    if (selectedVehicleId) {
+      import('../../bridge/nativeInterface').then(m => m.requestMaintenanceStatus(selectedVehicleId));
+    } else {
+      setMaintenanceStatus([]);
+    }
+  }, [selectedVehicleId]);
 
   const onToggleVehicleMenu = () => setShowVehicleMenu((v) => !v);
   
@@ -95,14 +116,28 @@ export function useMaintenance(): UseMaintenanceReturn {
     navigate('/maintenance/detail', { state: { item } });
   };
 
-  // 선택된 차량에 해당하는 정비 항목 목록 계산 로직 (Native 연동 전 0으로 초기화)
+  // 선택된 차량에 해당하는 정비 항목 목록 계산 로직
+  const selectedVehicle = vehicles.find(v => String(v.id) === String(selectedVehicleId));
   const items: MaintenanceItem[] = selectedVehicleId 
-    ? MAINTENANCE_MASTER.map((master) => ({
-        id: master.id,
-        name: master.name,
-        intervalKm: master.intervalKm,
-        elapsedKm: 0,
-      }))
+    ? MAINTENANCE_MASTER.map((master) => {
+        const historyRow = maintenanceStatus.find(s => s.itemId === master.id);
+        let elapsedKm: number | null = null;
+        let lastDate: string | undefined = undefined;
+
+        if (historyRow) {
+          const finalDist = selectedVehicle?.finalDistance || 0;
+          elapsedKm = Math.max(0, finalDist - historyRow.lastKm);
+          lastDate = historyRow.lastDate;
+        }
+
+        return {
+          id: master.id,
+          name: master.name,
+          intervalKm: master.intervalKm,
+          elapsedKm,
+          lastMaintenanceDate: lastDate,
+        };
+      })
     : [];
 
   return {

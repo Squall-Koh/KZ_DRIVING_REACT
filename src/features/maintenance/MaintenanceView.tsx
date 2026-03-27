@@ -15,25 +15,44 @@ function MaintenanceCard({
 }) {
   const color = barColor(item.elapsedKm, item.intervalKm);
   const width = barWidth(item.elapsedKm, item.intervalKm);
-  const over  = item.elapsedKm >= item.intervalKm;
+  const over  = item.elapsedKm !== null && item.elapsedKm >= item.intervalKm;
+
+  // Format date: "2026-03-01T10:00:00" -> "2026-03-01"
+  const dateText = item.lastMaintenanceDate 
+    ? item.lastMaintenanceDate.substring(0, 10).replace(/\./g, '-') 
+    : '-';
 
   return (
     <div style={styles.card} onClick={() => onItemClick(item)}>
       <div style={styles.cardHeader}>
         <span style={styles.itemName}>{item.name}</span>
-        <span
-          style={styles.registerBtn}
-          onClick={(e) => { e.stopPropagation(); onRegisterClick(item); }}
-        >
-          정비등록
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span
+            style={styles.registerBtn}
+            onClick={(e) => { e.stopPropagation(); onRegisterClick(item); }}
+          >
+            정비등록
+          </span>
+          <span style={{ 
+            fontSize: 12, 
+            color: item.lastMaintenanceDate ? '#4f7cff' : '#9ca3af', 
+            fontWeight: 600, 
+            backgroundColor: item.lastMaintenanceDate ? '#f0f4ff' : '#f3f4f6', 
+            padding: '4px 8px', 
+            borderRadius: 6 
+          }}>
+            {dateText}
+          </span>
+        </div>
       </div>
       <div style={styles.barBg}>
         <div style={{ ...styles.barFill, width: `${width}%`, backgroundColor: color }} />
       </div>
       <div style={styles.barLabels}>
-        <span style={{ color, fontSize: 12, fontWeight: 600 }}>
-          {item.elapsedKm.toLocaleString()}km {over ? '초과' : '경과'}
+        <span style={{ color: item.elapsedKm === null ? '#999' : color, fontSize: 12, fontWeight: 600 }}>
+          {item.elapsedKm === null 
+            ? '- km 경과' 
+            : `${item.elapsedKm.toLocaleString()}km ${over ? '초과' : '경과'}`}
         </span>
         <span style={styles.intervalLabel}>{item.intervalKm.toLocaleString()}km</span>
       </div>

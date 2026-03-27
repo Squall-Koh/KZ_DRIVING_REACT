@@ -46,3 +46,4 @@ export const triggerCheckOut = () => sendNativeMessage('CHECK_OUT');
 
 export const requestSync = () => sendNativeMessage('REQUEST_SYNC');
 export const requestVehicles = () => sendNativeMessage('REQUEST_VEHICLES');
+export const requestMaintenanceStatus = (vehicleId: string) => sendNativeMessage('REQUEST_MAINTENANCE_STATUS', { vehicleId });

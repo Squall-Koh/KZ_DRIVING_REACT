@@ -139,7 +139,15 @@ export function OperationDashboardView({
               </div>
               <div style={styles.drivingItemRow}>
                 <span style={styles.vehicleName}>{item.vehicle}</span>
-                <span style={styles.distanceText}>{item.km} <span style={{ fontSize: 13, color: '#999', fontWeight: 'normal' }}>km</span></span>
+                <span style={styles.distanceText}>
+                  {item.isDriving ? (
+                    <span style={{ fontSize: 15, color: '#10B981', fontWeight: 'bold' }}>운행중</span>
+                  ) : (
+                    <>
+                      {item.km} <span style={{ fontSize: 13, color: '#999', fontWeight: 'normal' }}>km</span>
+                    </>
+                  )}
+                </span>
               </div>
             </div>
           ))}
@@ -161,24 +169,25 @@ export function OperationDashboardView({
             return (
               <div key={item.id} style={{
                 ...styles.expenseItemRow,
-                borderBottom: index !== recentExpenseData.length - 1 ? '1px solid #EDF0F4' : 'none'
+                borderBottom: index !== recentExpenseData.length - 1 ? '1px solid #EDF0F4' : 'none',
+                flexDirection: 'column',
+                alignItems: 'stretch',
+                gap: '8px',
+                padding: '16px 0'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, overflow: 'hidden' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, minWidth: 70 }}>
-                      <span style={{ fontSize: 12, color: '#64748b' }}>{dPart}</span>
-                      {tPart && <span style={{ fontSize: 11, color: '#94a3b8' }}>{tPart}</span>}
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                      {item.cardType === 'simple' && <span style={{ ...styles.badge, color: '#f97316', backgroundColor: '#ffedd5' }}>{item.cardTypeLabel}</span>}
-                      {item.cardType === 'corporate' && <span style={{ ...styles.badge, color: '#10b981', backgroundColor: '#d1fae5' }}>{item.cardTypeLabel}</span>}
-                      {item.cardType === 'personal' && <span style={{ ...styles.badge, color: '#4f7cff', backgroundColor: '#eff6ff' }}>{item.cardTypeLabel}</span>}
-                      {item.isSync && <span style={{ width: 62, textAlign: 'center', padding: '3px 0', borderRadius: 4, fontSize: 10, color: '#ef4444', backgroundColor: '#fee2e2', boxSizing: 'border-box' }}>전송완료</span>}
-                    </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: 12, color: '#64748b' }}>{dPart} {tPart}</span>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    {item.cardType === 'simple' && <span style={{ ...styles.badge, color: '#f97316', backgroundColor: '#ffedd5' }}>{item.cardTypeLabel}</span>}
+                    {item.cardType === 'corporate' && <span style={{ ...styles.badge, color: '#10b981', backgroundColor: '#d1fae5' }}>{item.cardTypeLabel}</span>}
+                    {item.cardType === 'personal' && <span style={{ ...styles.badge, color: '#4f7cff', backgroundColor: '#eff6ff' }}>{item.cardTypeLabel}</span>}
+                    {item.isSync && <span style={{ width: 62, padding: '3px 0', textAlign: 'center', borderRadius: 4, fontSize: 10, color: '#ef4444', backgroundColor: '#fee2e2', boxSizing: 'border-box' }}>전송완료</span>}
                   </div>
-                  <span style={styles.expenseMerchant}>{item.merchant}</span>
                 </div>
-                <span style={styles.priceText}>{item.amount} <span style={{ fontSize: 13, color: '#333', fontWeight: 'normal' }}>원</span></span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ ...styles.expenseMerchant, margin: 0 }}>{item.merchant}</span>
+                  <span style={styles.priceText}>{item.amount ? item.amount.toLocaleString() : '0'} <span style={{ fontSize: 13, color: '#333', fontWeight: 'normal' }}>원</span></span>
+                </div>
               </div>
             );
           })}

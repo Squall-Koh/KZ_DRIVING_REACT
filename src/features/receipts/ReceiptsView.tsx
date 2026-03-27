@@ -102,29 +102,36 @@ export function ReceiptsView({
           </div>
           
           <div style={styles.historyList}>
-            {recentExpenses.map((item, index) => (
-              <div key={item.id} style={{ ...styles.historyItem, borderBottom: index < recentExpenses.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
-                <div style={styles.historyLeft}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, minWidth: 70 }}>
-                      <span style={{ fontSize: 12, color: '#64748b' }}>{item.date.split(' ')[0]}</span>
-                      {item.date.split(' ')[1] && <span style={{ fontSize: 11, color: '#94a3b8' }}>{item.date.split(' ')[1].substring(0, 5)}</span>}
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+            {recentExpenses.map((item, index) => {
+              const dateStr = item.date || '';
+              const dPart = dateStr.includes(' ') ? dateStr.split(' ')[0] : dateStr;
+              const tPart = dateStr.includes(' ') && dateStr.split(' ')[1] ? dateStr.split(' ')[1].substring(0, 5) : '';
+
+              return (
+                <div key={item.id} style={{ 
+                  ...styles.historyItem, 
+                  borderBottom: index < recentExpenses.length - 1 ? '1px solid #f0f0f0' : 'none',
+                  flexDirection: 'column',
+                  alignItems: 'stretch',
+                  gap: '8px',
+                  padding: '16px 0'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: 12, color: '#64748b' }}>{dPart} {tPart}</span>
+                    <div style={{ display: 'flex', gap: '4px' }}>
                       {item.cardType === 'simple' && <span style={{ ...styles.badge, color: '#f97316', backgroundColor: '#ffedd5' }}>{item.cardTypeLabel}</span>}
                       {item.cardType === 'corporate' && <span style={{ ...styles.badge, color: '#10b981', backgroundColor: '#d1fae5' }}>{item.cardTypeLabel}</span>}
                       {item.cardType === 'personal' && <span style={{ ...styles.badge, color: '#4f7cff', backgroundColor: '#eff6ff' }}>{item.cardTypeLabel}</span>}
-                      {item.isSync && <span style={{ width: 62, textAlign: 'center', padding: '3px 0', borderRadius: 4, fontSize: 10, color: '#ef4444', backgroundColor: '#fee2e2', boxSizing: 'border-box' }}>전송완료</span>}
+                      {item.isSync && <span style={{ width: 62, padding: '3px 0', textAlign: 'center', borderRadius: 4, fontSize: 10, color: '#ef4444', backgroundColor: '#fee2e2', boxSizing: 'border-box' }}>전송완료</span>}
                     </div>
                   </div>
-                  <span style={styles.historyStore}>{item.store}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ ...styles.historyStore, margin: 0 }}>{item.store}</span>
+                    <span style={styles.historyAmount}>{item.amount.toLocaleString()} <span style={styles.historyAmountUnit}>원</span></span>
+                  </div>
                 </div>
-                <div style={styles.historyRight}>
-                  <span style={styles.historyAmount}>{item.amount.toLocaleString()}</span>
-                  <span style={styles.historyAmountUnit}>원</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

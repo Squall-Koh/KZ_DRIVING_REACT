@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 
 // ─── 타입들 ────────────────────────────────────────────
+export interface ObdDebugData {
+  time: string;
+  raw: string;
+  km: number;
+}
 
 // ─── 로직 훅 ────────────────────────────────────────────────
 export interface DrivingStateContext {
@@ -16,6 +21,7 @@ export interface UseOperationDashboardReturn {
   syncPayload: any;
   recentDrivingData: any[];
   recentExpenseData: any[];
+  obdDebugData: ObdDebugData | null;
   onMoreAttendance: () => void;
   onMoreDriving: () => void;
   onMoreExpense: () => void;
@@ -28,6 +34,7 @@ export function useOperationDashboard(): UseOperationDashboardReturn {
   
   const [recentDrivingData, setRecentDrivingData] = useState<any[]>([]);
   const [recentExpenseData, setRecentExpenseData] = useState<any[]>([]);
+  const [obdDebugData, setObdDebugData] = useState<ObdDebugData | null>(null);
 
   // React Router Outlet을 통해 MainLayout 쪽에서 주입해줄 상태를 받음
   const context = (useOutletContext<DrivingStateContext>() || { drivingState: 1, cycleState: () => {}, syncPayload: null });
@@ -41,12 +48,24 @@ export function useOperationDashboard(): UseOperationDashboardReturn {
       } catch (e) {}
     };
 
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (data && data.type === 'SYNC_OBD_DEBUG_DATA') {
+          setObdDebugData(data.payload);
+        }
+      } catch (e) {}
+    };
+
+    window.addEventListener('message', handleMessage);
+
     if ((window as any).FlutterBridge) {
       (window as any).FlutterBridge.postMessage(JSON.stringify({ action: 'requestDashboardData' }));
     }
     
     return () => {
       delete (window as any).updateDashboardData;
+      window.removeEventListener('message', handleMessage);
     };
   }, []);
 
@@ -56,6 +75,7 @@ export function useOperationDashboard(): UseOperationDashboardReturn {
     syncPayload: context.syncPayload,
     recentDrivingData,
     recentExpenseData,
+    obdDebugData,
     onMoreAttendance: () => navigate('/daily-trip-history'),
     onMoreDriving: () => navigate('/driving-history'),
     onMoreExpense: () => navigate('/receipts'),

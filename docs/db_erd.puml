@@ -1,0 +1,323 @@
+@startuml SORIN_DB_ERD
+
+!define TABLE(name,desc) class name as "desc" << (T,#AAAAFF) >>
+!define PK(x) <b><color:#DAA520>PK</color> x</b>
+!define FK(x) <color:#6A9BFF>FK</color> x
+!define NN * 
+
+skinparam class {
+  BackgroundColor #1e2030
+  BorderColor #444466
+  FontColor #e2e8f0
+  HeaderBackgroundColor #2d3057
+  HeaderFontColor #818cf8
+}
+skinparam arrow {
+  Color #6366f1
+  FontColor #94a3b8
+}
+skinparam note {
+  BackgroundColor #252836
+  BorderColor #444466
+  FontColor #94a3b8
+}
+skinparam linetype ortho
+
+' =========================================
+' [TYPE 1] 정의(마스터) 테이블
+' =========================================
+package "① 정의(마스터) 테이블\nWeb Admin에서 관리" #1a1f38 {
+
+  class adjustment_types {
+    PK id : INTEGER
+    --
+    code : TEXT UNIQUE
+    name : TEXT
+    sort_order : INTEGER
+    --
+    결재대기/결재완료/결재반려
+  }
+
+  class attendance_types {
+    PK id : INTEGER
+    --
+    code : TEXT UNIQUE
+    name : TEXT
+    sort_order : INTEGER
+    --
+    연장근무/지각/조퇴/휴일근무
+  }
+
+  class card_types {
+    PK id : INTEGER
+    --
+    code : TEXT UNIQUE
+    label : TEXT
+    sort_order : INTEGER
+    --
+    법인카드/개인카드/간이영수증
+  }
+
+  class driving_states {
+    PK id : INTEGER
+    --
+    code : TEXT UNIQUE
+    name : TEXT
+    sort_order : INTEGER
+    --
+    대기/운행대기/운행중
+  }
+
+  class expense_categories {
+    PK id : INTEGER
+    --
+    code : TEXT UNIQUE
+    name : TEXT
+    sort_order : INTEGER
+    --
+    주유비/통행료/주차비/수리비/식비
+  }
+
+  class maintenance_items {
+    PK id : INTEGER
+    --
+    name : TEXT
+    interval_km : INTEGER
+    sort_order : INTEGER
+    --
+    엔진오일/배터리/타이어 등
+  }
+
+  class push_message_item {
+    PK id : INTEGER
+    --
+    type_code : TEXT UNIQUE NOT NULL
+    type_name : TEXT NOT NULL
+    title_template : TEXT NOT NULL
+    body_template : TEXT NOT NULL
+    created_at : TEXT NOT NULL
+    --
+    TRIP_START/TRIP_END/CHECK_IN 등
+  }
+
+  class obd_devices {
+    PK id : INTEGER
+    --
+    ble_name : TEXT NOT NULL
+    mac_address : TEXT NOT NULL
+    service_uuid : TEXT
+    characteristic_uuid : TEXT
+    protocol_type : TEXT
+    is_active : INTEGER DEFAULT 1
+    created_at : TEXT NOT NULL
+    updated_at : TEXT NOT NULL
+  }
+
+  class vehicles {
+    PK id : INTEGER
+    FK obd_device_id : INTEGER
+    --
+    name : TEXT NOT NULL
+    vin : TEXT
+    license_plate : TEXT
+    model : TEXT
+    year : INTEGER
+    created_at : TEXT NOT NULL
+    updated_at : TEXT NOT NULL
+  }
+
+  class drivers {
+    PK id : INTEGER
+    --
+    emp_no : TEXT
+    name : TEXT
+    phone : TEXT
+    department : TEXT
+    role : TEXT
+    is_active : INTEGER DEFAULT 1
+    created_at : TEXT
+    updated_at : TEXT
+  }
+
+  class cards {
+    PK id : INTEGER
+    FK card_type : INTEGER
+    --
+    card_name : TEXT
+    card_number : TEXT
+    is_active : INTEGER DEFAULT 1
+  }
+}
+
+' =========================================
+' [TYPE 2] 승인 관련 테이블
+' =========================================
+package "② 승인 관련 테이블\n원천시스템 연동" #1a2a20 {
+
+  class attendance_adjustments {
+    PK id : TEXT (UUID)
+    --
+    driver_id : TEXT
+    work_date : TEXT
+    time_from : TEXT
+    time_to : TEXT
+    FK adjustment_type_id : TEXT
+    reason : TEXT
+    status : TEXT
+    submit_date : TEXT
+    is_canceled : INTEGER DEFAULT 0
+    created_at : TEXT
+    updated_at : TEXT
+  }
+
+  class expenses {
+    PK id : INTEGER
+    FK driver_id : INTEGER
+    --
+    expense_date : TEXT
+    FK card_id : INTEGER
+    FK category_id : TEXT
+    amount : INTEGER
+    merchant_name : TEXT
+    address : TEXT
+    memo : TEXT
+    receipt_image_path : TEXT
+    is_sync : INTEGER DEFAULT 0
+    created_at : TEXT
+    updated_at : TEXT
+  }
+
+  class maintenance_histories {
+    PK id : INTEGER
+    FK driver_id : INTEGER
+    FK vehicle_id : INTEGER
+    FK item_id : INTEGER
+    --
+    maintenance_date : TEXT
+    odometer_km : INTEGER
+    cost : INTEGER
+    shop_name : TEXT
+    memo : TEXT
+    receipt_image_path : TEXT
+    created_at : TEXT
+    updated_at : TEXT
+  }
+}
+
+' =========================================
+' [TYPE 3] 앱 생성 데이터 테이블
+' =========================================
+package "③ 앱 생성 데이터 테이블\nBLE 앱이 직접 생성" #2a2010 {
+
+  class work_days {
+    PK id : INTEGER
+    FK driver_id : INTEGER
+    --
+    date : TEXT UNIQUE NOT NULL
+    check_in_time : TEXT NOT NULL
+    check_out_time : TEXT
+    FK vehicle_id : INTEGER
+    vehicle_vin : TEXT
+    odo_start : INTEGER
+    odo_end : INTEGER
+    created_at : TEXT NOT NULL
+    updated_at : TEXT NOT NULL
+  }
+
+  class trips {
+    PK id : INTEGER
+    FK work_day_id : INTEGER NOT NULL
+    FK vehicle_id : INTEGER
+    FK driver_id : INTEGER
+    --
+    trip_number : INTEGER NOT NULL
+    start_time : TEXT NOT NULL
+    start_lat : REAL
+    start_lng : REAL
+    start_odo : INTEGER
+    end_time : TEXT
+    end_lat : REAL
+    end_lng : REAL
+    end_odo : INTEGER
+    distance_km : REAL
+    created_at : TEXT NOT NULL
+    updated_at : TEXT NOT NULL
+  }
+
+  class track_data {
+    PK id : INTEGER
+    FK trip_id : INTEGER NOT NULL
+    --
+    latitude : REAL NOT NULL
+    longitude : REAL NOT NULL
+    distance_km : REAL NOT NULL
+    recorded_at : TEXT NOT NULL
+  }
+
+  class notifications {
+    PK id : INTEGER
+    FK item_id : INTEGER NOT NULL
+    --
+    title : TEXT NOT NULL
+    body : TEXT NOT NULL
+    FK work_day_id : INTEGER
+    FK trip_id : INTEGER
+    is_read : INTEGER DEFAULT 0
+    is_synced : INTEGER DEFAULT 0
+    occurred_at : TEXT NOT NULL
+    created_at : TEXT NOT NULL
+  }
+}
+
+' =========================================
+' [TYPE 4] 로그 테이블
+' =========================================
+package "④ 로그 테이블\n앱 분석용" #2a1020 {
+
+  class ble_scan_logs {
+    PK id : INTEGER
+    --
+    recorded_at : TEXT NOT NULL
+    FK driving_state : INTEGER NOT NULL
+    is_device_found : INTEGER NOT NULL
+    rssi : INTEGER
+    last_seen_secs : INTEGER
+    trip_id : INTEGER
+    work_day_id : INTEGER
+    battery_level : INTEGER
+    event_str : TEXT
+  }
+}
+
+' =========================================
+' 관계 정의
+' =========================================
+
+' 마스터 → 마스터
+vehicles "0..*" --> "0..1" obd_devices : obd_device_id
+cards "0..*" --> "1" card_types : card_type
+
+' 마스터 → 승인
+attendance_adjustments "0..*" --> "1" adjustment_types : adjustment_type_id
+expenses "0..*" --> "1" drivers : driver_id
+expenses "0..*" --> "1" cards : card_id
+expenses "0..*" --> "1" expense_categories : category_id
+maintenance_histories "0..*" --> "1" drivers : driver_id
+maintenance_histories "0..*" --> "1" vehicles : vehicle_id
+maintenance_histories "0..*" --> "1" maintenance_items : item_id
+
+' 마스터 → 앱 데이터
+work_days "0..*" --> "1" drivers : driver_id
+work_days "0..*" --> "0..1" vehicles : vehicle_id
+trips "0..*" --> "1" work_days : work_day_id (CASCADE)
+trips "0..*" --> "0..1" vehicles : vehicle_id
+trips "0..*" --> "1" drivers : driver_id
+track_data "0..*" --> "1" trips : trip_id (CASCADE)
+notifications "0..*" --> "1" push_message_item : item_id
+notifications "0..*" --> "0..1" work_days : work_day_id
+notifications "0..*" --> "0..1" trips : trip_id
+
+' 마스터 → 로그
+ble_scan_logs "0..*" --> "1" driving_states : driving_state
+
+@enduml

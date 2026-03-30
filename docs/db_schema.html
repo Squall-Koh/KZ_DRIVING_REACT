@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SORIN 앱 DB 스키마 문서</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  :root {
+    --bg: #0f1117; --bg2: #1a1d27; --bg3: #252836;
+    --border: #2e3348; --text: #e2e8f0; --muted: #8892a4;
+    --c1: #6366f1; --c2: #10b981; --c3: #f59e0b; --c4: #ef4444;
+    --c1l: #3730a3; --c2l: #065f46; --c3l: #92400e; --c4l: #7f1d1d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+  header { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e3a5f 100%); padding: 60px 40px; text-align: center; border-bottom: 1px solid var(--border); }
+  header h1 { font-size: 2.4rem; font-weight: 700; background: linear-gradient(90deg, #818cf8, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  header p { color: #a5b4fc; margin-top: 12px; font-size: 1rem; }
+  .stats { display: flex; gap: 20px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
+  .stat { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 14px 24px; text-align: center; }
+  .stat-num { font-size: 2rem; font-weight: 700; }
+  .stat-lbl { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
+  .nav { display: flex; gap: 8px; justify-content: center; padding: 20px; flex-wrap: wrap; background: var(--bg2); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+  .nav a { padding: 8px 18px; border-radius: 20px; text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: all 0.2s; }
+  .nav a:hover { transform: translateY(-1px); }
+  .nav a.c1 { background: var(--c1l); color: #a5b4fc; border: 1px solid var(--c1); }
+  .nav a.c2 { background: var(--c2l); color: #6ee7b7; border: 1px solid var(--c2); }
+  .nav a.c3 { background: var(--c3l); color: #fcd34d; border: 1px solid var(--c3); }
+  .nav a.c4 { background: var(--c4l); color: #fca5a5; border: 1px solid var(--c4); }
+  main { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+  .section { margin-bottom: 60px; }
+  .section-header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; padding-bottom: 16px; border-bottom: 2px solid var(--border); }
+  .badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.05em; }
+  .badge.t1 { background: rgba(99,102,241,0.2); border: 1px solid var(--c1); color: #818cf8; }
+  .badge.t2 { background: rgba(16,185,129,0.2); border: 1px solid var(--c2); color: #34d399; }
+  .badge.t3 { background: rgba(245,158,11,0.2); border: 1px solid var(--c3); color: #fbbf24; }
+  .badge.t4 { background: rgba(239,68,68,0.2); border: 1px solid var(--c4); color: #f87171; }
+  .section-title { font-size: 1.6rem; font-weight: 700; }
+  .section-desc { color: var(--muted); font-size: 0.95rem; margin-bottom: 24px; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
+  .tables-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+  .table-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; transition: box-shadow 0.2s; }
+  .table-card:hover { box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 8px 32px rgba(0,0,0,0.4); }
+  .card-header { padding: 16px 20px; display: flex; align-items: center; gap: 10px; }
+  .card-header.c1 { background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(99,102,241,0.08)); border-bottom: 1px solid rgba(99,102,241,0.3); }
+  .card-header.c2 { background: linear-gradient(135deg, rgba(16,185,129,0.25), rgba(16,185,129,0.08)); border-bottom: 1px solid rgba(16,185,129,0.3); }
+  .card-header.c3 { background: linear-gradient(135deg, rgba(245,158,11,0.25), rgba(245,158,11,0.08)); border-bottom: 1px solid rgba(245,158,11,0.3); }
+  .card-header.c4 { background: linear-gradient(135deg, rgba(239,68,68,0.25), rgba(239,68,68,0.08)); border-bottom: 1px solid rgba(239,68,68,0.3); }
+  .card-icon { font-size: 1.4rem; }
+  .table-name { font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: 600; }
+  .table-desc-text { font-size: 0.82rem; color: var(--muted); margin-top: 2px; }
+  .card-body { padding: 16px 20px; }
+  .field-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .field-table th { text-align: left; color: var(--muted); font-weight: 500; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  .field-table td { padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: top; }
+  .field-table tr:last-child td { border-bottom: none; }
+  .col-name { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #e2e8f0; }
+  .col-type { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #94a3b8; }
+  .tag { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; margin: 1px; }
+  .tag.pk { background: rgba(250,204,21,0.2); color: #fde68a; border: 1px solid rgba(250,204,21,0.4); }
+  .tag.fk { background: rgba(99,102,241,0.2); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.4); }
+  .tag.nn { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+  .tag.uq { background: rgba(236,72,153,0.15); color: #f9a8d4; border: 1px solid rgba(236,72,153,0.3); }
+  .tag.idx { background: rgba(139,92,246,0.15); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.3); }
+  .legend { display: flex; gap: 10px; flex-wrap: wrap; margin: 6px 0 20px; }
+  .legend span { font-size: 0.78rem; display: flex; align-items: center; gap: 4px; }
+  footer { text-align: center; padding: 40px; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+<header>
+  <h1>🚗 SORIN 앱 DB 스키마</h1>
+  <p>sorin_android_03_30_09_24_37.db — 차량 운행 관리 앱의 로컬 SQLite 데이터베이스</p>
+  <div class="stats">
+    <div class="stat"><div class="stat-num" style="color:#818cf8">10</div><div class="stat-lbl">정의(마스터) 테이블</div></div>
+    <div class="stat"><div class="stat-num" style="color:#34d399">3</div><div class="stat-lbl">승인 관련 테이블</div></div>
+    <div class="stat"><div class="stat-num" style="color:#fbbf24">5</div><div class="stat-lbl">앱 생성 데이터 테이블</div></div>
+    <div class="stat"><div class="stat-num" style="color:#f87171">1</div><div class="stat-lbl">로그 테이블</div></div>
+  </div>
+</header>
+
+<nav class="nav">
+  <a href="#type1" class="c1">① 정의(마스터) 테이블</a>
+  <a href="#type2" class="c2">② 승인 관련 테이블</a>
+  <a href="#type3" class="c3">③ 앱 생성 데이터 테이블</a>
+  <a href="#type4" class="c4">④ 로그 테이블</a>
+</nav>
+
+<main>
+
+<!-- ===== TYPE 1: 정의 테이블 ===== -->
+<section class="section" id="type1">
+  <div class="section-header">
+    <span class="badge t1">① TYPE 1</span>
+    <span class="section-title">정의(마스터) 테이블</span>
+  </div>
+  <div class="legend">
+    <span><span class="tag pk">PK</span>기본키</span>
+    <span><span class="tag fk">FK</span>외래키</span>
+    <span><span class="tag nn">NN</span>NOT NULL</span>
+    <span><span class="tag uq">UQ</span>UNIQUE</span>
+    <span><span class="tag idx">IDX</span>인덱스</span>
+  </div>
+  <p class="section-desc">
+    ⚙️ <strong>Web Admin 페이지에서 create / update / delete 관리</strong>하는 코드성 테이블입니다.<br>
+    앱의 각종 선택지(드롭다운), 장치 목록, 운전자 목록, 차량 정보 등 앱 전체에서 참조하는 기준 데이터를 담고 있습니다.
+    앱은 기동 시 이 테이블들을 동기화하여 로컬에 캐싱합니다.
+  </p>
+  <div class="tables-grid">
+
+    <!-- adjustment_types -->
+    <div class="table-card">
+      <div class="card-header c1">
+        <span class="card-icon">🏷️</span>
+        <div><div class="table-name">adjustment_types</div><div class="table-desc-text">근태 조정 신청 상태 코드</div></div>
+      </div>
+      <div class="card-body">
+        <table class="field-table">
+          <tr><th>컬럼</th><th>타입</th><th>제약</th></tr>
+          <tr><td class="col-name">id</td><td class="col-type">INTEGER</td><td><span class="tag pk">PK</span></td></tr>
+          <tr><td class="col-name">code</td><td class="col-type">TEXT</td><td><span class="tag uq">UQ</span></td></tr>
+          <tr><td class="col-name">name</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">sort_order</td><td class="col-type">INTEGER</td><td></td></tr>
+        </table>
+        <div style="margin-top:12px;font-size:0.78rem;color:var(--muted)">샘플: pending(결재대기), approved(결재완료), rejected(결재반려)</div>
+      </div>
+    </div>
+
+    <!-- attendance_types -->
+    <div class="table-card">
+      <div class="card-header c1">
+        <span class="card-icon">📅</span>
+        <div><div class="table-name">attendance_types</div><div class="table-desc-text">근태 유형 코드</div></div>
+      </div>
+      <div class="card-body">
+        <table class="field-table">
+          <tr><th>컬럼</th><th>타입</th><th>제약</th></tr>
+          <tr><td class="col-name">id</td><td class="col-type">INTEGER</td><td><span class="tag pk">PK</span></td></tr>
+          <tr><td class="col-name">code</td><td class="col-type">TEXT</td><td><span class="tag uq">UQ</span></td></tr>
+          <tr><td class="col-name">name</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">sort_order</td><td class="col-type">INTEGER</td><td></td></tr>
+        </table>
+        <div style="margin-top:12px;font-size:0.78rem;color:var(--muted)">샘플: overtime(연장근무), tardy(지각), early_leave(조퇴), holiday(휴일근무)</div>
+      </div>
+    </div>
+
+    <!-- card_types -->
+    <div class="table-card">
+      <div class="card-header c1">
+        <span class="card-icon">💳</span>
+        <div><div class="table-name">card_types</div><div class="table-desc-text">카드 종류 코드</div></div>
+      </div>
+      <div class="card-body">
+        <table class="field-table">
+          <tr><th>컬럼</th><th>타입</th><th>제약</th></tr>
+          <tr><td class="col-name">id</td><td class="col-type">INTEGER</td><td><span class="tag pk">PK</span></td></tr>
+          <tr><td class="col-name">code</td><td class="col-type">TEXT</td><td><span class="tag uq">UQ</span></td></tr>
+          <tr><td class="col-name">label</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">sort_order</td><td class="col-type">INTEGER</td><td></td></tr>
+        </table>
+        <div style="margin-top:12px;font-size:0.78rem;color:var(--muted)">샘플: corporate(법인카드), personal(개인카드), simple(간이영수증)</div>
+      </div>
+    </div>
+
+    <!-- driving_states -->
+    <div class="table-card">
+      <div class="card-header c1">
+        <span class="card-icon">🚦</span>
+        <div><div class="table-name">driving_states</div><div class="table-desc-text">운행 상태 코드</div></div>
+      </div>
+      <div class="card-body">
+        <table class="field-table">
+          <tr><th>컬럼</th><th>타입</th><th>제약</th></tr>
+          <tr><td class="col-name">id</td><td class="col-type">INTEGER</td><td><span class="tag pk">PK</span></td></tr>
+          <tr><td class="col-name">code</td><td class="col-type">TEXT</td><td><span class="tag uq">UQ</span></td></tr>
+          <tr><td class="col-name">name</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">sort_order</td><td class="col-type">INTEGER</td><td></td></tr>
+        </table>
+        <div style="margin-top:12px;font-size:0.78rem;color:var(--muted)">샘플: idle(대기), waiting(운행대기), driving(운행중)</div>
+      </div>
+    </div>
+
+    <!-- expense_categories -->
+    <div class="table-card">
+      <div class="card-header c1">
+        <span class="card-icon">🧾</span>
+        <div><div class="table-name">expense_categories</div><div class="table-desc-text">경비 항목 분류 코드</div></div>
+      </div>
+      <div class="card-body">
+        <table class="field-table">
+          <tr><th>컬럼</th><th>타입</th><th>제약</th></tr>
+          <tr><td class="col-name">id</td><td class="col-type">INTEGER</td><td><span class="tag pk">PK</span></td></tr>
+          <tr><td class="col-name">code</td><td class="col-type">TEXT</td><td><span class="tag uq">UQ</span></td></tr>
+          <tr><td class="col-name">name</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">sort_order</td><td class="col-type">INTEGER</td><td></td></tr>
+        </table>
+        <div style="margin-top:12px;font-size:0.78rem;color:var(--muted)">샘플: fuel(주유비), toll(통행료), parking(주차비), repair(수리비), meal(식비)</div>
+      </div>
+    </div>
+
+    <!-- maintenance_items -->
+    <div class="table-card">
+      <div class="card-header c1">
+        <span class="card-icon">🔧</span>
+        <div><div class="table-name">maintenance_items</div><div class="table-desc-text">정비 항목 및 교체 주기</div></div>
+      </div>
+      <div class="card-body">
+        <table class="field-table">
+          <tr><th>컬럼</th><th>타입</th><th>제약</th></tr>
+          <tr><td class="col-name">id</td><td class="col-type">INTEGER</td><td><span class="tag pk">PK</span></td></tr>
+          <tr><td class="col-name">name</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">interval_km</td><td class="col-type">INTEGER</td><td></td></tr>
+          <tr><td class="col-name">sort_order</td><td class="col-type">INTEGER</td><td></td></tr>
+        </table>
+        <div style="margin-top:12px;font-size:0.78rem;color:var(--muted)">샘플: 엔진오일(10,000km), 배터리(40,000km), 타이어(50,000km)</div>
+      </div>
+    </div>
+
+    <!-- push_message_item -->
+    <div class="table-card">
+      <div class="card-header c1">
+        <span class="card-icon">🔔</span>
+        <div><div class="table-name">push_message_item</div><div class="table-desc-text">푸시 알림 메시지 템플릿</div></div>
+      </div>
+      <div class="card-body">
+        <table class="field-table">
+          <tr><th>컬럼</th><th>타입</th><th>제약</th></tr>
+          <tr><td class="col-name">id</td><td class="col-type">INTEGER</td><td><span class="tag pk">PK</span></td></tr>
+          <tr><td class="col-name">type_code</td><td class="col-type">TEXT</td><td><span class="tag uq">UQ</span> <span class="tag nn">NN</span></td></tr>
+          <tr><td class="col-name">type_name</td><td class="col-type">TEXT</td><td><span class="tag nn">NN</span></td></tr>
+          <tr><td class="col-name">title_template</td><td class="col-type">TEXT</td><td><span class="tag nn">NN</span></td></tr>
+          <tr><td class="col-name">body_template</td><td class="col-type">TEXT</td><td><span class="tag nn">NN</span></td></tr>
+          <tr><td class="col-name">created_at</td><td class="col-type">TEXT</td><td><span class="tag nn">NN</span></td></tr>
+        </table>
+        <div style="margin-top:12px;font-size:0.78rem;color:var(--muted)">샘플: TRIP_START, TRIP_END, CHECK_IN, CHECK_OUT 등 — {plateNumber}, {time} 치환자 포함</div>
+      </div>
+    </div>
+
+    <!-- obd_devices -->
+    <div class="table-card">
+      <div class="card-header c1">
+        <span class="card-icon">📡</span>
+        <div><div class="table-name">obd_devices</div><div class="table-desc-text">BLE OBD 장치 목록</div></div>
+      </div>
+      <div class="card-body">
+        <table class="field-table">
+          <tr><th>컬럼</th><th>타입</th><th>제약</th></tr>
+          <tr><td class="col-name">id</td><td class="col-type">INTEGER</td><td><span class="tag pk">PK</span></td></tr>
+          <tr><td class="col-name">ble_name</td><td class="col-type">TEXT</td><td><span class="tag nn">NN</span></td></tr>
+          <tr><td class="col-name">mac_address</td><td class="col-type">TEXT</td><td><span class="tag nn">NN</span></td></tr>
+          <tr><td class="col-name">service_uuid</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">characteristic_uuid</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">protocol_type</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">is_active</td><td class="col-type">INTEGER</td><td>DEFAULT 1</td></tr>
+          <tr><td class="col-name">created_at / updated_at</td><td class="col-type">TEXT</td><td><span class="tag nn">NN</span></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- vehicles -->
+    <div class="table-card">
+      <div class="card-header c1">
+        <span class="card-icon">🚙</span>
+        <div><div class="table-name">vehicles</div><div class="table-desc-text">관리 차량 목록</div></div>
+      </div>
+      <div class="card-body">
+        <table class="field-table">
+          <tr><th>컬럼</th><th>타입</th><th>제약</th></tr>
+          <tr><td class="col-name">id</td><td class="col-type">INTEGER</td><td><span class="tag pk">PK</span></td></tr>
+          <tr><td class="col-name">obd_device_id</td><td class="col-type">INTEGER</td><td><span class="tag fk">FK</span> → obd_devices</td></tr>
+          <tr><td class="col-name">name</td><td class="col-type">TEXT</td><td><span class="tag nn">NN</span></td></tr>
+          <tr><td class="col-name">vin</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">license_plate</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">model</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">year</td><td class="col-type">INTEGER</td><td></td></tr>
+          <tr><td class="col-name">created_at / updated_at</td><td class="col-type">TEXT</td><td><span class="tag nn">NN</span></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- drivers -->
+    <div class="table-card">
+      <div class="card-header c1">
+        <span class="card-icon">👤</span>
+        <div><div class="table-name">drivers</div><div class="table-desc-text">운전자(직원) 정보</div></div>
+      </div>
+      <div class="card-body">
+        <table class="field-table">
+          <tr><th>컬럼</th><th>타입</th><th>제약</th></tr>
+          <tr><td class="col-name">id</td><td class="col-type">INTEGER</td><td><span class="tag pk">PK</span></td></tr>
+          <tr><td class="col-name">emp_no</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">name</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">phone</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">department</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">role</td><td class="col-type">TEXT</td><td>admin / driver</td></tr>
+          <tr><td class="col-name">is_active</td><td class="col-type">INTEGER</td><td>DEFAULT 1</td></tr>
+          <tr><td class="col-name">created_at / updated_at</td><td class="col-type">TEXT</td><td></td></tr>
+        </table>
+        <div style="margin-top:12px;font-size:0.78rem;color:var(--muted)">cards 테이블과 함께 운전자별 카드 매핑에 활용</div>
+      </div>
+    </div>
+
+    <!-- cards -->
+    <div class="table-card">
+      <div class="card-header c1">
+        <span class="card-icon">💰</span>
+        <div><div class="table-name">cards</div><div class="table-desc-text">법인/개인 카드 등록 정보</div></div>
+      </div>
+      <div class="card-body">
+        <table class="field-table">
+          <tr><th>컬럼</th><th>타입</th><th>제약</th></tr>
+          <tr><td class="col-name">id</td><td class="col-type">INTEGER</td><td><span class="tag pk">PK</span></td></tr>
+          <tr><td class="col-name">card_type</td><td class="col-type">INTEGER</td><td><span class="tag fk">FK</span> → card_types</td></tr>
+          <tr><td class="col-name">card_name</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">card_number</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">is_active</td><td class="col-type">INTEGER</td><td>DEFAULT 1</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ===== TYPE 2: 승인 관련 테이블 ===== -->
+<section class="section" id="type2">
+  <div class="section-header">
+    <span class="badge t2">② TYPE 2</span>
+    <span class="section-title">승인 관련 테이블</span>
+  </div>
+  <p class="section-desc">
+    ✅ <strong>원천 시스템(ERP/HR)에서 데이터를 동기화받아 채우는 테이블</strong>입니다.<br>
+    근태 조정, 경비 청구, 차량 정비 이력 등 <em>결재/승인 워크플로우</em>와 연동되며,
+    앱에서 초안 작성 → 관리자 승인 → 상태 반영의 흐름으로 운영됩니다.
+  </p>
+  <div class="tables-grid">
+
+    <!-- attendance_adjustments -->
+    <div class="table-card">
+      <div class="card-header c2">
+        <span class="card-icon">📝</span>
+        <div><div class="table-name">attendance_adjustments</div><div class="table-desc-text">근태 조정 신청 내역</div></div>
+      </div>
+      <div class="card-body">
+        <table class="field-table">
+          <tr><th>컬럼</th><th>타입</th><th>제약</th></tr>
+          <tr><td class="col-name">id</td><td class="col-type">TEXT</td><td><span class="tag pk">PK</span> (UUID)</td></tr>
+          <tr><td class="col-name">driver_id</td><td class="col-type">TEXT</td><td>신청 운전자</td></tr>
+          <tr><td class="col-name">work_date</td><td class="col-type">TEXT</td><td>대상 근무일</td></tr>
+          <tr><td class="col-name">time_from / time_to</td><td class="col-type">TEXT</td><td>조정 시간 범위</td></tr>
+          <tr><td class="col-name">adjustment_type_id</td><td class="col-type">TEXT</td><td><span class="tag fk">FK</span> → adjustment_types</td></tr>
+          <tr><td class="col-name">reason</td><td class="col-type">TEXT</td><td>조정 사유</td></tr>
+          <tr><td class="col-name">status</td><td class="col-type">TEXT</td><td>결재 상태</td></tr>
+          <tr><td class="col-name">submit_date</td><td class="col-type">TEXT</td><td>제출일</td></tr>
+          <tr><td class="col-name">is_canceled</td><td class="col-type">INTEGER</td><td>취소 여부 (0/1)</td></tr>
+          <tr><td class="col-name">created_at / updated_at</td><td class="col-type">TEXT</td><td></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- expenses -->
+    <div class="table-card">
+      <div class="card-header c2">
+        <span class="card-icon">💸</span>
+        <div><div class="table-name">expenses</div><div class="table-desc-text">경비 지출 내역</div></div>
+      </div>
+      <div class="card-body">
+        <table class="field-table">
+          <tr><th>컬럼</th><th>타입</th><th>제약</th></tr>
+          <tr><td class="col-name">id</td><td class="col-type">INTEGER</td><td><span class="tag pk">PK</span></td></tr>
+          <tr><td class="col-name">driver_id</td><td class="col-type">INTEGER</td><td><span class="tag fk">FK</span> → drivers</td></tr>
+          <tr><td class="col-name">expense_date</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">card_id</td><td class="col-type">INTEGER</td><td><span class="tag fk">FK</span> → cards</td></tr>
+          <tr><td class="col-name">category_id</td><td class="col-type">TEXT</td><td><span class="tag fk">FK</span> → expense_categories</td></tr>
+          <tr><td class="col-name">amount</td><td class="col-type">INTEGER</td><td>금액(원)</td></tr>
+          <tr><td class="col-name">merchant_name</td><td class="col-type">TEXT</td><td>가맹점명</td></tr>
+          <tr><td class="col-name">address</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">memo</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">receipt_image_path</td><td class="col-type">TEXT</td><td>영수증 이미지 경로</td></tr>
+          <tr><td class="col-name">is_sync</td><td class="col-type">INTEGER</td><td>서버 동기화 여부</td></tr>
+          <tr><td class="col-name">created_at / updated_at</td><td class="col-type">TEXT</td><td></td></tr>
+        </table>
+        <div style="margin-top:12px;font-size:0.78rem;color:var(--muted)">현재 41건 기록됨</div>
+      </div>
+    </div>
+
+    <!-- maintenance_histories -->
+    <div class="table-card">
+      <div class="card-header c2">
+        <span class="card-icon">🛠️</span>
+        <div><div class="table-name">maintenance_histories</div><div class="table-desc-text">차량 정비 이력</div></div>
+      </div>
+      <div class="card-body">
+        <table class="field-table">
+          <tr><th>컬럼</th><th>타입</th><th>제약</th></tr>
+          <tr><td class="col-name">id</td><td class="col-type">INTEGER</td><td><span class="tag pk">PK</span></td></tr>
+          <tr><td class="col-name">driver_id</td><td class="col-type">INTEGER</td><td><span class="tag fk">FK</span> → drivers</td></tr>
+          <tr><td class="col-name">vehicle_id</td><td class="col-type">INTEGER</td><td><span class="tag fk">FK</span> → vehicles</td></tr>
+          <tr><td class="col-name">item_id</td><td class="col-type">INTEGER</td><td><span class="tag fk">FK</span> → maintenance_items</td></tr>
+          <tr><td class="col-name">maintenance_date</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">odometer_km</td><td class="col-type">INTEGER</td><td>정비 시점 주행거리</td></tr>
+          <tr><td class="col-name">cost</td><td class="col-type">INTEGER</td><td>정비 비용(원)</td></tr>
+          <tr><td class="col-name">shop_name</td><td class="col-type">TEXT</td><td>정비소명</td></tr>
+          <tr><td class="col-name">memo</td><td class="col-type">TEXT</td><td></td></tr>
+          <tr><td class="col-name">receipt_image_path</td><td class="col-type">TEXT</td><td>영수증 이미지 경로</td></tr>
+          <tr><td class="col-name">created_at / updated_at</td><td class="col-type">TEXT</td><td></td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ===== TYPE 3: 앱 생성 데이터 테이블 ===== -->
+<section class="section" id="type3">
+  <div class="section-header">
+    <span class="badge t3">③ TYPE 3</span>
+    <span class="section-title">앱 생성 데이터 테이블</span>
+  </div>
+  <p class="section-desc">
+    📱 <strong>앱이 직접 생성·기록하는 핵심 운행 데이터 테이블</strong>입니다.<br>
+    BLE OBD 장치 감지 → 운행 시작/종료 → GPS 트랙 기록의 흐름으로 데이터가 쌓이며,
+    출퇴근 기록(work_days), 개별 운행(trips), GPS 궤적(track_data), 알림(notifications)으로 구성됩니다.
+  </p>
+  <div class="tables-grid">
+
+    <!-- work_days -->
+    <div class="table-card">
+      <div class="card-header c3">
+        <span class="card-icon">🗓️</span>
+        <div><div class="table-name">work_days</div><div class="table-desc-text">일별 출퇴근 기록 (현재 2건)</div></div>
+      </div>
+      <div class="card-body">
+        <table class="field-table">
+          <tr><th>컬럼</th><th>타입</th><th>제약</th></tr>
+          <tr><td class="col-name">id</td><td class="col-type">INTEGER</td><td><span class="tag pk">PK</span></td></tr>
+          <tr><td class="col-name">driver_id</td><td class="col-type">INTEGER</td><td><span class="tag fk">FK</span> → drivers</td></tr>
+          <tr><td class="col-name">date</td><td class="col-type">TEXT</td><td><span class="tag uq">UQ</span> <span class="tag nn">NN</span></td></tr>
+          <tr><td class="col-name">check_in_time</td><td class="col-type">TEXT</td><td><span class="tag nn">NN</span></td></tr>
+          <tr><td class="col-name">check_out_time</td><td class="col-type">TEXT</td><td>퇴근 시 기록</td></tr>
+          <tr><td class="col-name">vehicle_id</td><td class="col-type">INTEGER</td><td><span class="tag fk">FK</span> → vehicles</td></tr>
+          <tr><td class="col-name">vehicle_vin</td><td class="col-type">TEXT</td><td>VIN 스냅샷</td></tr>
+          <tr><td class="col-name">odo_start / odo_end</td><td class="col-type">INTEGER</td><td>일 시작/종료 주행거리</td></tr>
+          <tr><td class="col-name">created_at / updated_at</td><td class="col-type">TEXT</td><td><span class="tag nn">NN</span></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- trips -->
+    <div class="table-card">
+      <div class="card-header c3">
+        <span class="card-icon">🛣️</span>
+        <div><div class="table-name">trips</div><div class="table-desc-text">개별 운행 기록 (현재 6건)</div></div>
+      </div>
+      <div class="card-body">
+        <table class="field-table">
+          <tr><th>컬럼</th><th>타입</th><th>제약</th></tr>
+          <tr><td class="col-name">id</td><td class="col-type">INTEGER</td><td><span class="tag pk">PK</span></td></tr>
+          <tr><td class="col-name">work_day_id</td><td class="col-type">INTEGER</td><td><span class="tag fk">FK</span> → work_days (CASCADE)</td></tr>
+          <tr><td class="col-name">vehicle_id</td><td class="col-type">INTEGER</td><td><span class="tag fk">FK</span> → vehicles</td></tr>
+          <tr><td class="col-name">driver_id</td><td class="col-type">INTEGER</td><td><span class="tag fk">FK</span> → drivers</td></tr>
+          <tr><td class="col-name">trip_number</td><td class="col-type">INTEGER</td><td>당일 운행 순번</td></tr>
+          <tr><td class="col-name">start_time / end_time</td><td class="col-type">TEXT</td><td>운행 시작/종료 시각</td></tr>
+          <tr><td class="col-name">start_lat/lng</td><td class="col-type">REAL</td><td>출발 좌표</td></tr>
+          <tr><td class="col-name">end_lat/lng</td><td class="col-type">REAL</td><td>도착 좌표</td></tr>
+          <tr><td class="col-name">start_odo / end_odo</td><td class="col-type">INTEGER</td><td>OBD 주행 계기 값</td></tr>
+          <tr><td class="col-name">distance_km</td><td class="col-type">REAL</td><td>운행 거리(km)</td></tr>
+          <tr><td class="col-name">created_at / updated_at</td><td class="col-type">TEXT</td><td><span class="tag nn">NN</span></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- track_data -->
+    <div class="table-card">
+      <div class="card-header c3">
+        <span class="card-icon">📍</span>
+        <div><div class="table-name">track_data</div><div class="table-desc-text">GPS 위치 궤적 (현재 315건)</div></div>
+      </div>
+      <div class="card-body">
+        <table class="field-table">
+          <tr><th>컬럼</th><th>타입</th><th>제약</th></tr>
+          <tr><td class="col-name">id</td><td class="col-type">INTEGER</td><td><span class="tag pk">PK</span></td></tr>
+          <tr><td class="col-name">trip_id</td><td class="col-type">INTEGER</td><td><span class="tag fk">FK</span> → trips (CASCADE) <span class="tag idx">IDX</span></td></tr>
+          <tr><td class="col-name">latitude</td><td class="col-type">REAL</td><td><span class="tag nn">NN</span></td></tr>
+          <tr><td class="col-name">longitude</td><td class="col-type">REAL</td><td><span class="tag nn">NN</span></td></tr>
+          <tr><td class="col-name">distance_km</td><td class="col-type">REAL</td><td>이 포인트까지 누적 거리</td></tr>
+          <tr><td class="col-name">recorded_at</td><td class="col-type">TEXT</td><td><span class="tag nn">NN</span></td></tr>
+        </table>
+        <div style="margin-top:12px;font-size:0.78rem;color:var(--muted)">운행당 평균 52개 GPS 포인트. idx_track_trip 인덱스로 빠른 조회</div>
+      </div>
+    </div>
+
+    <!-- notifications -->
+    <div class="table-card">
+      <div class="card-header c3">
+        <span class="card-icon">🔕</span>
+        <div><div class="table-name">notifications</div><div class="table-desc-text">앱 내 알림 이력 (현재 23건)</div></div>
+      </div>
+      <div class="card-body">
+        <table class="field-table">
+          <tr><th>컬럼</th><th>타입</th><th>제약</th></tr>
+          <tr><td class="col-name">id</td><td class="col-type">INTEGER</td><td><span class="tag pk">PK</span></td></tr>
+          <tr><td class="col-name">item_id</td><td class="col-type">INTEGER</td><td><span class="tag fk">FK</span> → push_message_item</td></tr>
+          <tr><td class="col-name">title / body</td><td class="col-type">TEXT</td><td><span class="tag nn">NN</span> 실제 발송된 내용</td></tr>
+          <tr><td class="col-name">work_day_id</td><td class="col-type">INTEGER</td><td><span class="tag fk">FK</span> → work_days</td></tr>
+          <tr><td class="col-name">trip_id</td><td class="col-type">INTEGER</td><td><span class="tag fk">FK</span> → trips</td></tr>
+          <tr><td class="col-name">is_read</td><td class="col-type">INTEGER</td><td>읽음 여부 (0/1)</td></tr>
+          <tr><td class="col-name">is_synced</td><td class="col-type">INTEGER</td><td>서버 동기화 여부</td></tr>
+          <tr><td class="col-name">occurred_at</td><td class="col-type">TEXT</td><td><span class="tag idx">IDX</span> DESC</td></tr>
+          <tr><td class="col-name">created_at</td><td class="col-type">TEXT</td><td><span class="tag nn">NN</span></td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ===== TYPE 4: 로그 테이블 ===== -->
+<section class="section" id="type4">
+  <div class="section-header">
+    <span class="badge t4">④ TYPE 4</span>
+    <span class="section-title">로그 테이블</span>
+  </div>
+  <p class="section-desc">
+    🔍 <strong>앱 동작 분석 및 디버깅 목적의 로그 테이블</strong>입니다.<br>
+    BLE 스캔 이벤트, 장치 감지 여부, RSSI 신호 강도, 배터리 수준 등을 주기적으로 기록하여
+    OBD 연결 품질 및 운행 상태 전환 이력을 추적합니다. 현재 34건 기록됨.
+  </p>
+  <div class="tables-grid">
+
+    <!-- ble_scan_logs -->
+    <div class="table-card">
+      <div class="card-header c4">
+        <span class="card-icon">📶</span>
+        <div><div class="table-name">ble_scan_logs</div><div class="table-desc-text">BLE 스캔 이벤트 로그 (현재 34건)</div></div>
+      </div>
+      <div class="card-body">
+        <table class="field-table">
+          <tr><th>컬럼</th><th>타입</th><th>제약</th></tr>
+          <tr><td class="col-name">id</td><td class="col-type">INTEGER</td><td><span class="tag pk">PK</span></td></tr>
+          <tr><td class="col-name">recorded_at</td><td class="col-type">TEXT</td><td><span class="tag nn">NN</span> 스캔 시각</td></tr>
+          <tr><td class="col-name">driving_state</td><td class="col-type">INTEGER</td><td><span class="tag fk">FK</span> → driving_states <span class="tag nn">NN</span></td></tr>
+          <tr><td class="col-name">is_device_found</td><td class="col-type">INTEGER</td><td>장치 감지 여부 (0/1)</td></tr>
+          <tr><td class="col-name">rssi</td><td class="col-type">INTEGER</td><td>BLE 신호강도 (dBm)</td></tr>
+          <tr><td class="col-name">last_seen_secs</td><td class="col-type">INTEGER</td><td>마지막 감지 후 경과 초</td></tr>
+          <tr><td class="col-name">trip_id</td><td class="col-type">INTEGER</td><td>운행 중인 경우 연결 trip</td></tr>
+          <tr><td class="col-name">work_day_id</td><td class="col-type">INTEGER</td><td>해당 근무일</td></tr>
+          <tr><td class="col-name">battery_level</td><td class="col-type">INTEGER</td><td>OBD 장치 배터리 (%)</td></tr>
+          <tr><td class="col-name">event_str</td><td class="col-type">TEXT</td><td>이벤트 상세 메시지</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</main>
+<footer>
+  <p>SORIN DB Schema Documentation — Generated 2026-03-30</p>
+  <p style="margin-top:6px">총 19개 테이블 (android_metadata, sqlite_sequence 제외 시 17개 유효 테이블)</p>
+</footer>
+</body>
+</html>

@@ -20,6 +20,7 @@ export function OperationDashboardView({
   syncPayload,
   recentDrivingData,
   recentExpenseData,
+  obdDebugData,
   onMoreAttendance,
   onMoreDriving,
   onMoreExpense,
@@ -193,6 +194,56 @@ export function OperationDashboardView({
           })}
         </div>
       </div>
+
+      {/* OBD 실시간 통신 상태 */}
+      <div style={{
+        marginTop: 16,
+        padding: 16,
+        backgroundColor: '#1E293B',
+        borderRadius: 16,
+        border: '1px solid rgba(34, 197, 94, 0.3)',
+        color: '#F8FAFC',
+        fontFamily: 'monospace'
+      }}>
+        <h3 style={{ margin: '0 0 16px 0', fontSize: 14, color: '#4ADE80', fontWeight: 'bold' }}>
+          🛠 OBD 실시간 통신 상태
+        </h3>
+        {obdDebugData ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: 13 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#94A3B8' }}>현재 시간 (갱신)</span>
+              <span style={{ fontWeight: 'bold' }}>{obdDebugData.time}</span>
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#94A3B8' }}>응답 Raw Data</span>
+              <span style={{ 
+                color: (obdDebugData.raw === 'ERROR' || obdDebugData.raw === 'TIMEOUT') ? '#F87171' : '#A7F3D0', 
+                fontWeight: 'bold', 
+                wordBreak: 'break-all', textAlign: 'right', flex: 1, marginLeft: 16 
+              }}>
+                {obdDebugData.raw}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#94A3B8' }}>Distance (추출 KMs)</span>
+              <span style={{ 
+                fontWeight: 'bold', 
+                color: obdDebugData.km > 0 ? '#60A5FA' : (obdDebugData.km === -1 ? '#F87171' : '#94A3B8'), 
+                fontSize: 15 
+              }}>
+                {obdDebugData.km > 0 ? `${obdDebugData.km.toLocaleString()} km` : (obdDebugData.km === -1 ? '수신 실패 (ERROR)' : '계산중..')}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '20px 0', color: '#94A3B8', fontSize: 13 }}>
+            차량 OBD 장치와 통신 대기중입니다...
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }

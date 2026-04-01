@@ -110,7 +110,9 @@ export function MainLayout() {
       let currentAlive = false;
       if (heartbeat) {
         const timeDiff = Date.now() - heartbeat.timestamp;
-        currentAlive = (timeDiff < 6000 && heartbeat.isScanning);
+        // OBD 통신 중에는 스캔을 일시 정지하므로 (isScanning: false) 
+        // heartbeat 수신만으로 서비스 생존을 판단합니다.
+        currentAlive = timeDiff < 6000;
       }
       setIsAlive(currentAlive);
 

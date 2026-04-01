@@ -236,6 +236,27 @@ export function OperationDashboardView({
                 {obdDebugData.km > 0 ? `${obdDebugData.km.toLocaleString()} km` : (obdDebugData.km === -1 ? '수신 실패 (ERROR)' : '계산중..')}
               </span>
             </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#94A3B8' }}>BLE RSSI</span>
+              <span style={{ fontWeight: 'bold' }}>
+                {obdDebugData.rssi ? `${obdDebugData.rssi} dBm` : '-- dBm'}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#94A3B8' }}>RPM</span>
+              <span style={{ fontWeight: 'bold', color: '#FCD34D' }}>
+                {obdDebugData.rpm && obdDebugData.rpm > 0 ? `${obdDebugData.rpm.toLocaleString()} rpm` : '--'}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#94A3B8' }}>전압 (V)</span>
+              <span style={{ fontWeight: 'bold', color: '#818CF8' }}>
+                {obdDebugData.voltage && obdDebugData.voltage > 0 ? `${obdDebugData.voltage.toFixed(1)} V` : '--'}
+              </span>
+            </div>
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '20px 0', color: '#94A3B8', fontSize: 13 }}>

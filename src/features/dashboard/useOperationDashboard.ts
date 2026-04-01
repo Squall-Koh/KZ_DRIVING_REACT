@@ -6,6 +6,9 @@ export interface ObdDebugData {
   time: string;
   raw: string;
   km: number;
+  rssi?: number;
+  rpm?: number;
+  voltage?: number;
 }
 
 // ─── 로직 훅 ────────────────────────────────────────────────

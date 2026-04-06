@@ -40,12 +40,14 @@ function TripCard({ trip, isLast }: { trip: TripRecord; isLast: boolean }) {
           {trip.departureAt.slice(11, 16)} ~ {trip.arrivalAt.slice(11, 16)}
         </span>
         <span style={styles.tripDistance}>
-          <span style={styles.tripDistanceNum}>{trip.distanceKm}</span>
+          <span style={styles.tripDistanceNum}>{trip.distanceKm ?? trip.km ?? 0}</span>
           <span style={styles.tripDistanceUnit}> km</span>
         </span>
       </div>
       <div style={styles.tripBottom}>
-        {trip.plateNumber} | {trip.vehicleName}
+        <div style={{color: '#888888'}}>
+          {(trip.plateNumber && !trip.plateNumber.includes('미배정') ? trip.plateNumber : (trip.plate && !trip.plate.includes('미배정') ? trip.plate : '차량 미배정'))} | {(trip.vehicleName && !trip.vehicleName.includes('스캔') ? trip.vehicleName : (trip.vehicle && !trip.vehicle.includes('스캔') ? trip.vehicle : '스캔 대기중'))}
+        </div>
       </div>
     </div>
   );

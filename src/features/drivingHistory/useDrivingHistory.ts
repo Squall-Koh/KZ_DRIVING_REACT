@@ -8,6 +8,9 @@ export interface TripRecord {
   distanceKm: number;
   plateNumber: string;
   vehicleName: string;
+  plate?: string;
+  vehicle?: string;
+  km?: number;
 }
 
 export interface DayGroup {
@@ -116,9 +119,9 @@ export function useDrivingHistory(): UseDrivingHistoryReturn {
     }, 0);
     const totalHours = Math.round((totalMinutes / 60) * 10) / 10;
 
-    const totalDistanceKm = allTrips.reduce((acc, t) => acc + t.distanceKm, 0);
+    const totalDistanceKm = allTrips.reduce((acc, t) => acc + (t.distanceKm ?? t.km ?? 0), 0);
 
-    const uniquePlates = new Set(allTrips.map((t) => t.plateNumber));
+    const uniquePlates = new Set(allTrips.map((t) => t.plate || t.plateNumber));
     const totalVehicleCount = uniquePlates.size;
 
     return { totalHours, totalDistanceKm, totalVehicleCount };

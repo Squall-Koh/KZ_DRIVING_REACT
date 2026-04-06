@@ -26,6 +26,7 @@ export function OperationDashboardView({
   onMoreExpense,
   onCheckIn,
   onCheckOut,
+  appVersion,
 }: UseOperationDashboardReturn) {
   
   const getHeroConfig = () => {
@@ -196,8 +197,10 @@ export function OperationDashboardView({
       </div>
 
       {/* OBD 실시간 통신 상태 */}
+      <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end', paddingRight: 4, marginBottom: 4 }}>
+        <span style={{ fontSize: 12, color: '#9ca3af' }}>{appVersion || 'ver. -'}</span>
+      </div>
       <div style={{
-        marginTop: 16,
         padding: 16,
         backgroundColor: '#1E293B',
         borderRadius: 16,

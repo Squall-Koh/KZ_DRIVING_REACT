@@ -146,7 +146,7 @@ export function useDrivingHistory(): UseDrivingHistoryReturn {
   };
 
   const onTogglePopup = () => setShowPopup((v) => !v);
-  const onClosePopup  = () => setShowPopup(false);
+  const onClosePopup = () => setShowPopup(false);
 
   return {
     bridge,

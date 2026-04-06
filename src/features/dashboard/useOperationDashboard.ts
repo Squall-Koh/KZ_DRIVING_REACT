@@ -30,6 +30,7 @@ export interface UseOperationDashboardReturn {
   onMoreExpense: () => void;
   onCheckIn: () => void;
   onCheckOut: () => void;
+  appVersion: string;
 }
 
 export function useOperationDashboard(): UseOperationDashboardReturn {
@@ -38,6 +39,7 @@ export function useOperationDashboard(): UseOperationDashboardReturn {
   const [recentDrivingData, setRecentDrivingData] = useState<any[]>([]);
   const [recentExpenseData, setRecentExpenseData] = useState<any[]>([]);
   const [obdDebugData, setObdDebugData] = useState<ObdDebugData | null>(null);
+  const [appVersion, setAppVersion] = useState<string>('');
 
   // React Router Outlet을 통해 MainLayout 쪽에서 주입해줄 상태를 받음
   const context = (useOutletContext<DrivingStateContext>() || { drivingState: 1, cycleState: () => {}, syncPayload: null });
@@ -56,6 +58,9 @@ export function useOperationDashboard(): UseOperationDashboardReturn {
         const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
         if (data && data.type === 'SYNC_OBD_DEBUG_DATA') {
           setObdDebugData(data.payload);
+        } else if (data && data.type === 'SYNC_APP_VERSION') {
+          const { version, buildNumber } = data.payload;
+          setAppVersion(`ver. ${version}(${buildNumber})`);
         }
       } catch (e) {}
     };
@@ -64,6 +69,7 @@ export function useOperationDashboard(): UseOperationDashboardReturn {
 
     if ((window as any).FlutterBridge) {
       (window as any).FlutterBridge.postMessage(JSON.stringify({ action: 'requestDashboardData' }));
+      (window as any).FlutterBridge.postMessage(JSON.stringify({ action: 'REQUEST_APP_VERSION' }));
     }
     
     return () => {
@@ -88,5 +94,6 @@ export function useOperationDashboard(): UseOperationDashboardReturn {
     onCheckOut: () => {
       import('../../bridge/nativeInterface').then(m => m.triggerCheckOut());
     },
+    appVersion,
   };
 }

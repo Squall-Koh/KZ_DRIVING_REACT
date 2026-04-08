@@ -2,22 +2,20 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useSwipeNavigation } from './hooks/useSwipeNavigation';
 
 // ─── Mobile Pages ─────────────────────────────────────────────
-import { Notifications }        from './pages/m/Notifications';
-import { DrivingHistory }       from './pages/m/DrivingHistory';
-import { Attendance }           from './pages/m/Attendance';
-import { AttendanceDetail }     from './pages/m/AttendanceDetail';
-import { AttendanceAdjustment } from './pages/m/AttendanceAdjustment';
-import { Maintenance }          from './pages/m/Maintenance';
-import { MaintenanceDetail }    from './pages/m/MaintenanceDetail';
-import { Receipts }             from './pages/m/Receipts';
-import { ReceiptsList }         from './pages/m/ReceiptsList';
-import { ReceiptsHistory }      from './pages/m/ReceiptsHistory';
+import { Notifications }        from './pages/Notifications';
+import { DrivingHistory }       from './pages/DrivingHistory';
+import { Attendance }           from './pages/Attendance';
+import { AttendanceDetail }     from './pages/AttendanceDetail';
+import { AttendanceAdjustment } from './pages/AttendanceAdjustment';
+import { Maintenance }          from './pages/Maintenance';
+import { MaintenanceDetail }    from './pages/MaintenanceDetail';
+import { Receipts }             from './pages/Receipts';
+import { ReceiptsList }         from './pages/ReceiptsList';
+import { ReceiptsHistory }      from './pages/ReceiptsHistory';
 
-import { DailyTripHistory }     from './pages/m/DailyTripHistory';
+import { DailyTripHistory }     from './pages/DailyTripHistory';
 
-// ─── Web Pages ────────────────────────────────────────────────
-import { MainPage } from './pages/web/MainPage';
-import { OperationDashboard } from './pages/m/OperationDashboard';
+import { OperationDashboard } from './pages/OperationDashboard';
 
 import { MainLayout } from './layouts/MainLayout';
 
@@ -26,9 +24,6 @@ function AppRoutes() {
 
   return (
     <Routes>
-      {/* Web / Desktop Intro */}
-      <Route path="/intro"    element={<MainPage />} />
-
       {/* Main Tabs (Layout with Header, NavBar, Hero) */}
       <Route element={<MainLayout />}>
         <Route path="/"                       element={<OperationDashboard />} />

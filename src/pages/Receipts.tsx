@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import { useReceipts } from '../../features/receipts/useReceipts';
-import { ReceiptsView } from '../../features/receipts/ReceiptsView';
+import { useReceipts } from '../features/receipts/useReceipts';
+import { ReceiptsView } from '../features/receipts/ReceiptsView';
 
 export function Receipts() {
   const navigate = useNavigate();

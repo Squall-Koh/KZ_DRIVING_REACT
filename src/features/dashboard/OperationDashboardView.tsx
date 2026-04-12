@@ -30,7 +30,7 @@ export function OperationDashboardView({
   scanRssi,
   isConnected,
 }: UseOperationDashboardReturn) {
-  
+
   const getHeroConfig = () => {
     switch (drivingState) {
       case 0: return { color: '#9BA3AF', img: DrivingIdle, title: '현재 연결 대기중 입니다', sub: '차량에 탑승해 주세요.' };
@@ -56,10 +56,10 @@ export function OperationDashboardView({
   const workDay = syncPayload?.workDay;
   const isCheckedIn = !!workDay;
   const isCheckedOut = !!workDay?.checkOutTime;
-  
+
   const checkInTimeStr = workDay?.checkInTime ? formatTime(workDay.checkInTime) : '--:--';
   const checkOutTimeStr = workDay?.checkOutTime ? formatTime(workDay.checkOutTime) : '--:--';
-  
+
   // 총 운행(근무) 시간 및 프로그레스 바 계산
   let workTimeStr = '';
   let progressPercent = 0;
@@ -69,20 +69,20 @@ export function OperationDashboardView({
     const dIn = new Date(workDay.checkInTime);
     const dOut = isCheckedOut && workDay?.checkOutTime ? new Date(workDay.checkOutTime) : new Date();
     const diffMs = dOut.getTime() - dIn.getTime();
-    
+
     if (!isNaN(diffMs) && diffMs >= 0) {
       const diffMins = Math.floor(diffMs / 60000);
       const h = Math.floor(diffMins / 60);
       const m = diffMins % 60;
       workTimeStr = `${h}시간 ${m}분`;
-      
+
       progressPercent = Math.min(100, (diffMs / EIGHT_HOURS_MS) * 100);
     }
   }
-  
+
   const primaryBtnText = isCheckedIn ? (isCheckedOut ? `퇴근완료 (${checkInTimeStr} - ${checkOutTimeStr})` : '퇴근 등록') : '출근 등록';
   const primaryBtnColor = isCheckedIn ? (isCheckedOut ? '#ced4da' : '#22c55e') : '#2B5CFF';
-  const handlePrimaryBtn = isCheckedIn ? (isCheckedOut ? () => {} : onCheckOut) : onCheckIn;
+  const handlePrimaryBtn = isCheckedIn ? (isCheckedOut ? () => { } : onCheckOut) : onCheckIn;
 
   return (
     <div style={styles.pageContent}>
@@ -109,15 +109,15 @@ export function OperationDashboardView({
           </div>
           <div style={styles.progressBarBg}>
             <div style={{
-              ...styles.progressBarFill, 
-              width: `${progressPercent}%`, 
+              ...styles.progressBarFill,
+              width: `${progressPercent}%`,
               backgroundColor: isCheckedOut ? '#22c55e' : '#2B5CFF'
             }} />
           </div>
         </div>
         <div style={styles.attendanceTimes}>
-          <div style={{color: isCheckedIn ? '#333' : '#999', fontSize: 14, fontWeight: 'bold' }}>출발 {checkInTimeStr}</div>
-          
+          <div style={{ color: isCheckedIn ? '#333' : '#999', fontSize: 14, fontWeight: 'bold' }}>출발 {checkInTimeStr}</div>
+
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 10px' }}>
             <div style={{ flex: 1, height: 1, backgroundColor: '#eee' }} />
             {workTimeStr && (
@@ -128,10 +128,10 @@ export function OperationDashboardView({
             <div style={{ flex: 1, height: 1, backgroundColor: '#eee' }} />
           </div>
 
-          <div style={{color: isCheckedOut ? '#333' : '#999', fontSize: 14, fontWeight: 'bold' }}>도착 {checkOutTimeStr}</div>
+          <div style={{ color: isCheckedOut ? '#333' : '#999', fontSize: 14, fontWeight: 'bold' }}>도착 {checkOutTimeStr}</div>
         </div>
-        <button 
-          style={{...styles.primaryBtn, backgroundColor: primaryBtnColor, cursor: isCheckedOut ? 'not-allowed' : 'pointer'}} 
+        <button
+          style={{ ...styles.primaryBtn, backgroundColor: primaryBtnColor, cursor: isCheckedOut ? 'not-allowed' : 'pointer' }}
           onClick={handlePrimaryBtn}
           disabled={isCheckedOut}
         >
@@ -231,13 +231,13 @@ export function OperationDashboardView({
               <span style={{ color: '#94A3B8' }}>현재 시간 (갱신)</span>
               <span style={{ fontWeight: 'bold' }}>{obdDebugData.time}</span>
             </div>
-            
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: '#94A3B8' }}>응답 Raw Data</span>
-              <span style={{ 
-                color: (obdDebugData.raw === 'ERROR' || obdDebugData.raw === 'TIMEOUT') ? '#F87171' : '#A7F3D0', 
-                fontWeight: 'bold', 
-                wordBreak: 'break-all', textAlign: 'right', flex: 1, marginLeft: 16 
+              <span style={{
+                color: (obdDebugData.raw === 'ERROR' || obdDebugData.raw === 'TIMEOUT') ? '#F87171' : '#A7F3D0',
+                fontWeight: 'bold',
+                wordBreak: 'break-all', textAlign: 'right', flex: 1, marginLeft: 16
               }}>
                 {obdDebugData.raw}
               </span>
@@ -245,10 +245,10 @@ export function OperationDashboardView({
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: '#94A3B8' }}>Distance (추출 KMs)</span>
-              <span style={{ 
-                fontWeight: 'bold', 
-                color: obdDebugData.km > 0 ? '#60A5FA' : (obdDebugData.km === -1 ? '#F87171' : '#94A3B8'), 
-                fontSize: 15 
+              <span style={{
+                fontWeight: 'bold',
+                color: obdDebugData.km > 0 ? '#60A5FA' : (obdDebugData.km === -1 ? '#F87171' : '#94A3B8'),
+                fontSize: 15
               }}>
                 {obdDebugData.km > 0 ? `${obdDebugData.km.toLocaleString()} km` : (obdDebugData.km === -1 ? '수신 실패 (ERROR)' : '계산중..')}
               </span>

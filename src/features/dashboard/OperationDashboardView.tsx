@@ -27,6 +27,8 @@ export function OperationDashboardView({
   onCheckIn,
   onCheckOut,
   appVersion,
+  scanRssi,
+  isConnected,
 }: UseOperationDashboardReturn) {
   
   const getHeroConfig = () => {
@@ -37,6 +39,17 @@ export function OperationDashboardView({
       default: return { color: '#5A8BFF', img: DrivingStop, title: '', sub: '' };
     }
   };
+
+  const getRssiDisplayInfo = () => {
+    if (isConnected && obdDebugData?.rssi) {
+      return { text: `${obdDebugData.rssi} dBm`, color: '#EF4444' };
+    }
+    if (!isConnected && scanRssi !== null) {
+      return { text: `${scanRssi} dBm`, color: '#22C55E' };
+    }
+    return { text: '-- dBm', color: '#9ca3af' };
+  };
+  const rssiInfo = getRssiDisplayInfo();
   const hero = getHeroConfig();
 
   // 실제 데이터 맵핑
@@ -197,7 +210,8 @@ export function OperationDashboardView({
       </div>
 
       {/* OBD 실시간 통신 상태 */}
-      <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end', paddingRight: 4, marginBottom: 4 }}>
+      <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingLeft: 4, paddingRight: 4, marginBottom: 4 }}>
+        <span style={{ fontSize: 12, color: rssiInfo.color, fontWeight: 'bold' }}>RSSI: {rssiInfo.text}</span>
         <span style={{ fontSize: 12, color: '#9ca3af' }}>{appVersion || 'ver. -'}</span>
       </div>
       <div style={{

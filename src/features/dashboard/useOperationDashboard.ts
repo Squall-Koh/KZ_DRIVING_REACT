@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 
 // ─── 타입들 ────────────────────────────────────────────
@@ -31,6 +31,8 @@ export interface UseOperationDashboardReturn {
   onCheckIn: () => void;
   onCheckOut: () => void;
   appVersion: string;
+  scanRssi: number | null;
+  isConnected: boolean;
 }
 
 export function useOperationDashboard(): UseOperationDashboardReturn {
@@ -40,6 +42,10 @@ export function useOperationDashboard(): UseOperationDashboardReturn {
   const [recentExpenseData, setRecentExpenseData] = useState<any[]>([]);
   const [obdDebugData, setObdDebugData] = useState<ObdDebugData | null>(null);
   const [appVersion, setAppVersion] = useState<string>('');
+  
+  const [scanRssi, setScanRssi] = useState<number | null>(null);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const scanRssiTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // React Router Outlet을 통해 MainLayout 쪽에서 주입해줄 상태를 받음
   const context = (useOutletContext<DrivingStateContext>() || { drivingState: 1, cycleState: () => {}, syncPayload: null });
@@ -61,6 +67,16 @@ export function useOperationDashboard(): UseOperationDashboardReturn {
         } else if (data && data.type === 'SYNC_APP_VERSION') {
           const { version, buildNumber } = data.payload;
           setAppVersion(`ver. ${version}(${buildNumber})`);
+        } else if (data && data.type === 'SYNC_DEVICE_FOUND') {
+          setScanRssi(data.payload.rssi);
+          if (scanRssiTimerRef.current) clearTimeout(scanRssiTimerRef.current);
+          scanRssiTimerRef.current = setTimeout(() => setScanRssi(null), 5000);
+        } else if (data && data.type === 'SYNC_BLE_CONNECTION') {
+          setIsConnected(data.payload.connected);
+          if (!data.payload.connected) {
+            setObdDebugData(null);
+            setScanRssi(null);
+          }
         }
       } catch (e) {}
     };
@@ -95,5 +111,7 @@ export function useOperationDashboard(): UseOperationDashboardReturn {
       import('../../bridge/nativeInterface').then(m => m.triggerCheckOut());
     },
     appVersion,
+    scanRssi,
+    isConnected,
   };
 }
